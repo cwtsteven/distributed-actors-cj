@@ -1,0 +1,9 @@
+[dependencies]
+    actors = { path = "../" }
+
+[package]
+    cjc-version = "1.0.0"
+    description = "Tests for the distributed actor framework."
+    version = "1.0.0"
+    name = "actors_tests"
+    output-type = "executable"

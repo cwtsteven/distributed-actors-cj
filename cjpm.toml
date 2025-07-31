@@ -1,0 +1,6 @@
+[package]
+    cjc-version = "1.0.0"
+    description = "A distributed actor framework."
+    version = "1.0.0"
+    name = "actors"
+    output-type = "dynamic"
