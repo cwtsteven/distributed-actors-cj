@@ -83,6 +83,34 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
     }
 }
 
+public class DistributedActorFuture<T> <: ActorFuture<T> {
+    init() {}
+
+    public func fulfull(value: Any): Bool {
+        if (isReady.load()) {
+            return false
+        }
+
+        let res: FutureResult<T> = match (value) {
+            case v: T => Okay(v)
+            case e: Exception => Exc(e)
+            case e: Error => Err(e)
+            case _ =>
+                throw IllegalArgumentException("TODO")
+        }
+
+        synchronized(mtx) {
+            if (isReady.load()) {
+                return false
+            }
+            this.result = res
+            isReady.store(true)
+            cond.notifyAll()
+            true
+        }
+    }
+}
+
 protected enum FutureResult<T> {
     Okay(T)
     | Exc(Exception)
