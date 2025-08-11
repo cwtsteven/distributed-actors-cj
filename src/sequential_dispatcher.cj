@@ -32,7 +32,7 @@ public class SequentialDispatcher {
         }
     }
 
-    public func post<T>(f: () -> T, priority!: Int64 = 5): ActorFuture<T> {
+    public func post<T>(f: () -> T, priority!: Int64 = 5): LocalActorFuture<T> {
         let fut = LocalActorFuture<T>(f)
         mailbox.add((this, fut.execute), priority)
         numMsg.signal()

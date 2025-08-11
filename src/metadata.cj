@@ -1,17 +1,5 @@
 package actors
 
-import std.reflect.*
-
-import stdx.serialization.serialization.*
-
-// const KEY_METHOD_NAME = "m"
-// const KEY_TYPE_ARGS = "t"
-// const KEY_PARAM_TYPES = "pt"
-// const KEY_QNAME = "q"
-// const KEY_PAYLOAD = "pl"
-
-// const FROM_JSON = "from_json"
-
 public type CustomInfo = Array<(String, String)>
 
 public struct Metadata {
@@ -22,7 +10,7 @@ public struct Metadata {
     ) {}
 }
 
-public struct ReceiverInfo <: ToString {
+public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
     
     public ReceiverInfo(
         public let methodName: String,
@@ -38,16 +26,26 @@ public struct ReceiverInfo <: ToString {
         res += "): ${retTypeModel}"
         res
     }
+
+    public override operator func ==(other: ReceiverInfo): Bool {
+        this.methodName == other.methodName
+    }
+
+    public override operator func !=(other: ReceiverInfo): Bool {
+        !(this == other)
+    }
 }
 
 public enum TypeModel <: ToString {
-    IntType // more primitive types
+    AnyType
+    | IntType // more primitive types
     | StringType
     | SeqType
     | StructType(String, Array<FieldModel>)
 
     public override func toString(): String {
         match (this) {
+            case AnyType => "Any"
             case IntType => "Int"
             case StringType => "String"
             case SeqType => "Seq"

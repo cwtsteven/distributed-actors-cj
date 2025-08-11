@@ -3,196 +3,122 @@ macro package actors.macros
 import std.ast.*
 import std.collection.*
 
-const DEFAULT_PRIORITY = 5
-
+/**
+ * This macro can be only defined at non-inheritable class, i.e. a class that is not open nor abstract nor sealed.
+ *
+ * @since 
+ *
+ * @throws MacroException if 
+ *   1. the input is not a ClassDecl; or
+ *   2. the ClassDecl has a OPEN modifier; or
+ *   3. the ClassDecl has a ABSTRACT modifier; or
+ *   4. the ClassDecl has a SEALED modifier.
+ *
+ * @throws MacroException for invalid options. TODO
+ *
+ * This macro essentially does the following translation:
+ *
+ *   @Actor[opts1]
+ *   class MyActor {
+ *     @prefixReceiver[opts2]
+ *     func foo(arg: T1): T { body }
+ *   }
+ *
+ *     == translate into ==>
+ *
+ *   class MyActor {
+ *     private let sequentialDispatch = SequentialDispatcher(enableReceiverPriority: `get from opts1`)
+ *
+ *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> { 
+ *       sequentialDispatch.post<T>( { => body } `, priority: priority` )
+ *     }
+ *   }
+ *
+ * where the parts inside `...` depends on the options provided by the users. 
+ *
+ */
 public macro Actor(attrs: Tokens, input: Tokens): Tokens {
-    ActorMacro.Run(attrs, input)
+    GenerateActorClass.Run(attrs, input)
 }
 
 public macro Actor(input: Tokens): Tokens {
-    ActorMacro.Run(Tokens(), input)
+    GenerateActorClass.Run(Tokens(), input)
 }
 
-class ActorMacro {
+class GenerateActorClass {
 
     static func Run(attrs: Tokens, input: Tokens): Tokens {
-        let errors = MacroErrors()
-
-        // parse the options
-        let opts = MacroOptionParser.Run(attrs, errors)
-        errors.report()
-
-        let actorMacro = ActorMacro(input, opts, errors)
-
-        // check the options
-        actorMacro.checkOptions()
-
-        // check if it is a class decl
-        actorMacro.checkOptions()
-
-        // check if it is a class decl
-        actorMacro.checkDecl()
-
-        // check if thi classs decl is valid
-        actorMacro.checkClassDecl()
-
-        // modify actor body
-        actorMacro.processBody()
-
-        // return the headDecl
-        actorMacro.headDecl.toTokens()
+        GenerateActorClass(attrs, input).run()
     }
 
-    private let opts: MacroOptionSet
-    private let errors: MacroErrors
-    /*
-        When using annotations within @Actor, for example
-            @Actor
-            @Annotation1 // the headDecl
-            @Annotation2
-            class MyActor { ... }
-        These annotations are interpreter as MacroExpandDecl, and thus
-        the input tokens could be parsed into the following structure:
-        head-MacroExpandDecl --> ... --> actual ClassDecl
-    */
-    private let headDecl: Decl
-    private var cd: ClassDecl = unsafe { zeroValue<ClassDecl>() }
+    let errors: MacroErrors
+    let aOpts: MacroOptionSet
+    let headDecl: Decl
+    let decl: ClassDecl
 
-    private init(input: Tokens, opts: MacroOptionSet, errors: MacroErrors) {
-        this.opts = opts
-        this.errors = errors
-        this.headDecl = parseDecl(input)
+    private init(attrs: Tokens, input: Tokens) {
+        errors = MacroErrors()
+        aOpts = MacroOptionParser.Run(attrs, errors)
+        headDecl = parseDecl(input)
+        decl = findDeclUnderMacro<ClassDecl>(headDecl, errors)
+    }
+
+    private func run(): Tokens {
+
+        checkOptions()
+        checkClassDecl()
+
+        let newDecls = ArrayList<Decl>()
+        processReceivers(decl.body.decls, { d => newDecls.add(d) }, { mDecl => newDecls.add(newReceiver(mDecl))})
+        decl.body.decls = newDecls
+        
+        addDispatcherVar()
+
+        headDecl.toTokens()
     }
 
     private func checkOptions(): Unit {
-        opts.iterate { opt =>
-            match (opt) {
-                case EnableReceiverPriority(_) => ()
-                case _ => errors.add()
-            }
-            true
-        }
+        aOpts.checkOptions([EnableReceiverPriority(true)], errors)
         errors.report()
-    }
-
-    private func checkDecl(): Unit {
-        var decl = headDecl
-        while (true) {
-            if (let Some(cd) <- (decl as ClassDecl)) {
-                this.cd = cd
-                return
-            }
-            if (let Some(mc) <- (decl as MacroExpandDecl)) {
-                decl = mc.macroInputDecl
-            } else {
-                errors.add()
-                errors.doThrow()
-            }
-        }
     }
 
     private func checkClassDecl(): Unit {
-        for (mod in cd.modifiers) {
-            if (mod.keyword.kind == ABSTRACT || mod.keyword.kind == OPEN || mod.keyword.kind == SEALED) {
-                errors.add()
-            }
-        }
+        checkModifiers(decl.modifiers, [ABSTRACT, OPEN, SEALED], errors)
         errors.report()
     }
 
-    private func processBody(): Unit {
-        let newDecls = ArrayList<Decl>()
-
-        // add dispatcher member
-        addDispatcherVar(newDecls)
-
-        for (decl in cd.body.decls) {
-            match (decl) {
-                case mDecl: MacroExpandDecl =>
-                    // not a receiver
-                    if (mDecl.identifier.value != receiverMarkerToken.value) {
-                        newDecls.add(decl)
-                        continue
-                    }
-                    // a receiver
-                    let receiverOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
-                    newDecls.add(ReceiverModification.Run(mDecl.macroInputs, opts, receiverOpts, errors))
-                case _ => newDecls.add(decl)
-            }
-        }
-        cd.body.decls = newDecls
-    }
-
-    private func addDispatcherVar(newDecls: ArrayList<Decl>): Unit {
+    private func addDispatcherVar(): Unit {
         let dInit = quote(
-            SequentialDispatcher(enableReceiverPriority: $(opts.hasEnabledReceiverPriority()))
+            $seqDispatcherTypeToken($enableReceiverPriorityToken: $(aOpts.hasEnabledReceiverPriority()))
         )
 
-        newDecls.add(VarDecl(quote(
+        decl.body.decls.add(VarDecl(quote(
             private let $dispatcherToken = $dInit
         )))
     }
-}
 
-private class ReceiverModification {
+    private func newReceiver(mDecl: MacroExpandDecl): Decl {
+        let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
 
-    static func Run(input: Tokens, actorOpts: MacroOptionSet, receiverOpts: MacroOptionSet, errors: MacroErrors): Decl {
-        let rModify = ReceiverModification(input, actorOpts, receiverOpts, errors)
+        checkReceiverOptions(rOpts)
 
-        rModify.checkReceiverOptions()
+        let headDecl: Decl = parseDecl(mDecl.macroInputs)
+        let fd = findDeclUnderMacro<FuncDecl>(headDecl, errors)
 
-        rModify.checkDecl()
-
-        rModify.checkReceiver()
-
-        rModify.modifyReceiver()
-
-        rModify.headDecl
+        checkReceiverDecl(fd)
+        modifyFuncDecl(rOpts, fd)
+        headDecl
     }
 
-    private let headDecl: Decl
-    private var fd: FuncDecl = unsafe { zeroValue<FuncDecl>() }
-
-    private ReceiverModification(
-        input: Tokens,
-        private let actorOpts: MacroOptionSet,
-        private let receiverOpts: MacroOptionSet,
-        private let errors: MacroErrors
-    ) {
-        headDecl = parseDecl(input)
-    }
-
-    private func checkDecl(): Unit {
-        var decl = headDecl
-        while (true) {
-            if (let Some(fd) <- (decl as FuncDecl)) {
-                this.fd = fd
-                return
-            }
-            if (let Some(mc) <- (decl as MacroExpandDecl)) {
-                decl = mc.macroInputDecl
-            } else {
-                errors.add()
-                errors.doThrow()
-            }
-        }
-    }
-
-    private func checkReceiverOptions(): Unit {
-        if (!actorOpts.hasEnabledReceiverPriority()) {
-            receiverOpts.iterate { opt =>
-                match (opt) {
-                    case Priority(_) => errors.add()
-                    case _ => ()
-                }
-                true
-            }
+    private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
+        if (!aOpts.hasEnabledReceiverPriority()) {
+            rOpts.checkOptions([Priority(5)], errors)
         }
         errors.report()
     }
 
-    private func checkReceiver(): Unit {
-        if (actorOpts.hasEnabledReceiverPriority()) {
+    private func checkReceiverDecl(fd: FuncDecl): Unit {
+        if (aOpts.hasEnabledReceiverPriority()) {
             for (param in fd.funcParams) {
                 // a named parameter named "priority"
                 if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
@@ -203,42 +129,29 @@ private class ReceiverModification {
         errors.report()
     }
 
-    private func modifyReceiver(): Unit {
-        if (actorOpts.hasEnabledReceiverPriority()) {
-            modifyReceiverWithPriority()
-            return
+    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl): Unit {
+        if (aOpts.hasEnabledReceiverPriority()) {
+            let defaultPriority = getPriority(rOpts)
+            fd.funcParams.add(FuncParam(quote(
+                priority!: Int64 = $defaultPriority
+            )))
         }
-
+        
         let retTy = fd.declType
-        fd.declType = actorFutureType(retTy)
-
-        let retExpr = ReturnExpr(quote(
-            return $dispatcherToken.post<$retTy>({ => $(fd.block.nodes)})
+        // fd.declType = actorFutureType(retTy) TODO
+        fd.declType = RefType(quote(
+            LocalActorFuture<$retTy>
         ))
 
-        fd.block.nodes.clear()
-        fd.block.nodes.add(retExpr)
-    }
-
-    private func modifyReceiverWithPriority(): Unit {
-        let defaultPriorityBox: Box<Int64> = Box(DEFAULT_PRIORITY)
-        receiverOpts.iterate { opt =>
-            match (opt) {
-                case Priority(p) => defaultPriorityBox.value = Int64(p); false
-                case _ => true
-            }
-        }
-        let defaultPriority = defaultPriorityBox.value
-
-        let retTy = fd.declType
-        fd.declType = actorFutureType(retTy)
-        fd.funcParams.add(FuncParam(quote(
-            priority!: Int64 = $defaultPriority
-        )))
-
-        let retExpr = ReturnExpr(quote(
-            return $dispatcherToken.post<$retTy>({ => $(fd.block.nodes), priority: priority})
-        ))
+        let retExpr = ReturnExpr(if (aOpts.hasEnabledReceiverPriority()) {
+            quote(
+                return $dispatcherToken.post<$retTy>({ => $(fd.block.nodes), priority: priority})
+            )
+        } else {
+            quote(
+                return $dispatcherToken.post<$retTy>({ => $(fd.block.nodes)})
+            )
+        })
 
         fd.block.nodes.clear()
         fd.block.nodes.add(retExpr)

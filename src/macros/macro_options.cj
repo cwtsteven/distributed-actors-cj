@@ -7,11 +7,13 @@ import std.convert.*
 enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     EnableReceiverPriority(Bool)
     | Priority(Int64)
+    | Distributed(Bool)
 
     public override func hashCode(): Int64 {
         match (this) {
             case EnableReceiverPriority(_) => 0
             case Priority(_) => 1
+            case Distributed(_) => 2
         }
     }
 
@@ -27,6 +29,7 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
         match (this) {
             case EnableReceiverPriority(b) => "enableReceiverPriority: ${b}"
             case Priority(p) => "priority: ${p}"
+            case Distributed(b) => "distributed: ${b}"
         }
     }
 }
@@ -58,6 +61,24 @@ class MacroOptionSet {
             }
         }
         false
+    }
+
+    func isDistributed(): Bool {
+        for (opt in opts) {
+            match (opt) {
+                case Distributed(b) where b == true => return true
+                case _ => continue
+            }
+        }
+        false
+    }
+
+    func checkOptions(allowed: Array<MacroOption>, errors: MacroErrors): Unit {
+        for (opt in opts) {
+            if (!allowed.contains(opt)) {
+                errors.add()
+            }
+        }
     }
 }
 
@@ -141,6 +162,14 @@ class MacroOptionParser {
                     return
                 }
                 addOption(Priority(res))
+            case "distributed" =>
+                let res: Bool = try {
+                    Bool.parse(val.value)
+                } catch (_: IllegalArgumentException) {
+                    errors.add()
+                    return
+                }
+                addOption(Distributed(res)) 
             case _ =>
                 errors.add()
         }

@@ -67,6 +67,10 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
         closure = task
     }
 
+    public override func get(): T {
+        super.get()
+    }
+
     func execute(): Unit {
         synchronized(mtx) {
             try {
@@ -86,7 +90,7 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
 public class DistributedActorFuture<T> <: ActorFuture<T> {
     init() {}
 
-    public func fulfull(value: Any): Bool {
+    public func fulfill(value: Any): Bool {
         if (isReady.load()) {
             return false
         }

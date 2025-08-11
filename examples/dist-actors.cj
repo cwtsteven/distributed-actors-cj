@@ -5,6 +5,7 @@ import actors.macros.*
 
 // @ActorInterface
 // public interface Service {
+//     @Receiver
 //     func foo(x: Int64): Int64
 // }
 
@@ -20,7 +21,7 @@ public interface Service <: Distributable<Service> {
         Metadata([ServiceProxy.fooInfo], "", [])
     }
 
-    static func dispatch<Actor>(a: Actor, info: ReceiverInfo, args: Array<DataModel>): Any where Actor <: Service {
+    static func dispatch(a: Service, info: ReceiverInfo, args: Array<DataModel>): Any {
         // here it should compare info with all other info and chooese the one to call
         let _ = info
         let x = Int64.deserialize(args[0])
@@ -49,4 +50,6 @@ public class MyService <: Service {
     }
 }
 
-main() {}
+main() {
+    println("ok")
+}

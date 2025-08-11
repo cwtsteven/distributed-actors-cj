@@ -7,6 +7,7 @@ import stdx.serialization.serialization.*
 public interface Distributable<T> {
     static func newProxy(name: String, actorSystem: ActorSystem): T
     static func getMetadata(): Metadata
+    static func dispatch(a: T, info: ReceiverInfo, args: Array<DataModel>): Any
 }
 
 public class ActorProxy {
@@ -27,8 +28,8 @@ public interface ActorSystem {
     func deregister(name: String): Bool
     func find<T>(name: String): Option<T> where T <: Distributable<T>
     func findAll<T>(): Array<T> where T <: Distributable<T>
-    func findGeneric(name: String): Option<ActorProxy>
     func remoteCall<T>(name: String, info: ReceiverInfo, args: Array<DataModel>, fut: DistributedActorFuture<T>): Unit
 
     func getAll(): Array<(String, Metadata)>
+    func findGeneric(name: String): Option<ActorProxy>
 }
