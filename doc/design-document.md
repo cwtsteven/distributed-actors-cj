@@ -18,6 +18,7 @@
 - authorization and security
 - failure handling, message-loss, node crash, etc.
 
+
 ## Concept/Tutorial
 
 ### Step 1: defining a distributed actor interface
@@ -108,7 +109,7 @@ main() {
     println(res) // 42
 
     let genericProxy: ActorProxy = actorSystem.find("myService")
-    let fut: ActorFuture<Int64> = genericProxy.remoteCall<Int64>(ReceiverInfo("foo"), [])
+    let fut: ActorFuture<Int64> = genericProxy.post<Int64>(ReceiverInfo("foo"), [])
     let res: Int64 = fut.get()
     println(res) // 42
 }
@@ -134,12 +135,10 @@ main() {
 
 ## Design
 
-### Metadata
+### Use case diagram
 
-```cangjie
-public struct Metadata {
-    // need someone to do this
-}
-```
+![Use case](use-case.png)
 
-### @ActorInterface macro
+### Component diagram
+
+![Components](component.png)
