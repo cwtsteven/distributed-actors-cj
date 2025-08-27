@@ -8,12 +8,14 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     EnableReceiverPriority(Bool)
     | Priority(Int64)
     | Distributed(Bool)
+    | Mode(ReceiverMode)
 
     public override func hashCode(): Int64 {
         match (this) {
             case EnableReceiverPriority(_) => 0
             case Priority(_) => 1
             case Distributed(_) => 2
+            case Mode(_) => 3
         }
     }
 
@@ -30,6 +32,7 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
             case EnableReceiverPriority(b) => "enableReceiverPriority: ${b}"
             case Priority(p) => "priority: ${p}"
             case Distributed(b) => "distributed: ${b}"
+            case Mode(m) => "mode: ${m}"
         }
     }
 }
@@ -61,6 +64,28 @@ class MacroOptionSet {
             }
         }
         false
+    }
+
+    func shouldTell(): Bool {
+        for (opt in opts) {
+            match (opt) {
+                case Mode(AskOnly) => return false
+                case Mode(_) => return true
+                case _ => continue
+            }
+        }
+        true
+    }
+
+    func shouldAsk(): Bool {
+        for (opt in opts) {
+            match (opt) {
+                case Mode(TellOnly) => return false
+                case Mode(_) => return true
+                case _ => continue
+            }
+        }
+        true
     }
 
     func isDistributed(): Bool {
@@ -150,7 +175,7 @@ class MacroOptionParser {
                     return
                 }
                 addOption(EnableReceiverPriority(res))
-            case "prirotiy" =>
+            case "priority" =>
                 let res: Int64 = try {
                     Int64.parse(val.value)
                 } catch (_: IllegalArgumentException) {
@@ -162,6 +187,14 @@ class MacroOptionParser {
                     return
                 }
                 addOption(Priority(res))
+            case "mode" =>
+                let res: ReceiverMode = try {
+                    ReceiverMode.parse(val.value)
+                } catch (_: IllegalArgumentException) {
+                    errors.add(MacroOptionModeIllegalArgument)
+                    return
+                }
+                addOption(Mode(res))
             case "distributed" =>
                 let res: Bool = try {
                     Bool.parse(val.value)

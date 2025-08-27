@@ -369,6 +369,58 @@ class MyActor {
 
 Calling `this.bar()` will add the receiver to the end of the queue. However, blocking within a receiver causes the actor's thread to block, so `bar()` will never be executed. As a result, calling `fut.get()` inside `foo()` will block indefinitely.
 
+# Calling Receivers in Tell mode
+
+As discussed previously, receivers return an `ActorFuture` that allows the caller to wait for the receiver call to return and
+to obtain the returned value. We say that these calls are in "Ask" mode, given that the caller expects the actor to reply in the form of a completed `ActorFuture`.
+However, in some scenarios, the caller may not need to synchronize with the actor nor need the result of the receiver.
+In this context, one 
+might want to avoid the overhead introduced by creating an `ActorFuture`, and call the receiver in "Tell" mode.
+Calling a receiver in "Tell" mode does not create any `ActorFuture`, returns `Unit`, and requires an additional parameter named 
+`tell` that only accepts the value `Tell.True`:
+
+```cangjie
+func foo(account: Account) {
+    let _: Unit = account.withdraw(100.0, priority: 10, tell: True)
+}
+```
+
+It is also possible to for users to restrict the ways in which a receiver can be called by providing the `mode` option
+to the `@Receiver` macro:
+
+```cangjie
+@Actor
+public class Account {
+    ...
+
+    @Receiver[mode: TellOnly]
+    public func deposit(amount: Float64): Unit {
+        balance += amount
+    }
+
+    @Receiver[mode: AskAndTell]
+    public func withdraw(amount: Float64): Unit {
+        if (balance < amount) {
+            throw BalanceNotEnoughException(name)
+        }
+        balance -= amount
+    }
+
+    @Receiver[mode: AskOnly]
+    public func getBalance(): Float64 {
+        balance
+    }
+}
+```
+
+In the above example,
+
+- The function `getBalance` can only be called in "Ask" mode.
+- The function `deposit(Float64)` can only be called in "Tell" mode.
+- The function `withdraw(Float64)` can be called both in "Ask" and "Tell" modes.
+
+Note that the sequential guarantees that apply to receiver calls in "Ask" mode also apply to receiver calls in "Tell" mode.
+
 # Complete example
 
 <!-- compile -->

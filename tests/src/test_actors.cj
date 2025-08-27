@@ -25,6 +25,30 @@ class MyActor {
     }
 }
 
+@Actor
+class NumberActor {
+    private var isClosed = false
+    public NumberActor(private var state: Int64) {}
+
+    @Receiver[mode: AskAndTell]
+    func add(x: Int64): Int64 {
+        if (!isClosed) {
+            state += x
+        }
+        return state
+    }
+
+    @Receiver
+    func increment(): Unit {
+        if (!isClosed) { state++ }
+    }
+
+    @Receiver[mode: TellOnly]
+    func close(): Unit {
+        isClosed = true
+    }
+}
+
 @Test
 public class ActorTest {
     @TestCase
@@ -47,5 +71,25 @@ public class ActorTest {
         let fut = a.bar(21)
         let res = fut.get()
         @Expect(res, 42)
+    }
+
+    @TestCase
+    func testMessage1() {
+        let n = NumberActor(13)
+        n.increment(tell: True)
+        n.close(tell: True)
+        let fut = n.add(42)
+        let res = fut.get()
+        @Expect(res, 14)
+    }
+
+    @TestCase
+    func testReceiverMirror1() {
+        let n = NumberActor(42)
+        n.add(103, tell: True)
+        n.close(tell: True)
+        let fut = n.add(0)
+        let res = fut.get()
+        @Expect(res, 145)
     }
 }

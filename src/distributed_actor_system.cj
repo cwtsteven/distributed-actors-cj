@@ -1,7 +1,5 @@
 package actors
 
-import std.collection.*
-
 import stdx.serialization.serialization.*
 
 public interface Distributable<T> {

@@ -1,4 +1,4 @@
-package actors
+package actors.dummy_actor_system
 
 import std.collection.concurrent.*
 import std.reflect.*
@@ -7,6 +7,7 @@ import std.sync.*
 import stdx.serialization.serialization.*
 
 import actors.macros.*
+import actors.*
 
 let rInfoTi = TypeInfo.of<ReceiverInfo>()
 let argsTi = TypeInfo.of<Array<DataModel>>()
@@ -61,7 +62,7 @@ public class DummyActorSystem <: ActorSystem {
         throw Exception()
     }   
 
-    @Receiver 
+    @Receiver[mode: AskOnly]
     func handleResult(id: UInt64, res: Any): Unit {
         match (futMap.remove(id)) {
             case Some((fut, ti)) =>
@@ -71,7 +72,7 @@ public class DummyActorSystem <: ActorSystem {
         }
     }
 
-    @Receiver
+    @Receiver[mode: AskOnly]
     func handleRemoteCall(name: String, info: ReceiverInfo, args: Array<DataModel>, id: UInt64): Unit {
         let (a, ti) = match (actorMap.get(name)) {
             case Some(p) => p

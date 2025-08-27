@@ -10,6 +10,7 @@ const RECEIVER_MARKER_NAME = PREFIX + "Receiver"
 const DISPATCHER_NAME = PREFIX + "dispatcher"
 const ACTOR_PROXY_NAME = "ActorProxy"
 const RECEIVER_INFO_NAME = "ReceiverInfo"
+const TELL_TYPE_NAME = "Tell"
 const PROXY_NAME = "proxy"
 const SEQ_DISPATCHER_NAME = "SequentialDispatcher"
 const ENABLE_RECEIVER_PRIORITY_NAME = "enableReceiverPriority"
@@ -28,6 +29,8 @@ let dispatcherToken = Token(IDENTIFIER, DISPATCHER_NAME)
 let actorProxyToken = Token(IDENTIFIER, ACTOR_PROXY_NAME)
 
 let receiverInfoToken = Token(IDENTIFIER, RECEIVER_INFO_NAME)
+
+let tellTypeToken = Token(IDENTIFIER, TELL_TYPE_NAME)
 
 let proxyVarToken = Token(IDENTIFIER, PROXY_NAME)
 

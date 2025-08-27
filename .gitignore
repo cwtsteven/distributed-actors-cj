@@ -1,2 +1,5 @@
 cjpm.lock
 target/
+**.cj.macrocall
+/.vscode/
+/.cache/

@@ -50,6 +50,7 @@ Function: Transform a member function into a receiver function
 > - If the annotated method does not explicitly use the `override` modifier but actually overrides an interface method, a compilation error will occur after macro expansion;
 > - The annotated method cannot be `open`;
 > - When used inside an `@Actor` macro with `enableReceiverPriority` set to `true`, the annotated method cannot have a parameter named `priority`.
+> - The annotated method cannot have a parameter named `tell`.
 
 Violating these restrictions will result in a compilation error during macro expansion.
 
@@ -59,6 +60,22 @@ Options: The `Receiver` macro accepts a list of options in the form of `opt1: va
 @Receiver[option1: value1, option2: value2]
 ```
 
-The currently available option is only `priority: value` - specifies the default priority level for the receiving function. The provided value must be an integer literal between 1 and 10; otherwise, an error will be thrown during macro expansion. This option is only available when the outer [@Actor](./macros_package_macros.md#actor-macro) macro has the `enableReceiverPriority: true` option.
+Currently, the only available options are:
+- `priority: value` - specifies the default priority level for the receiving function. The provided value must be an integer literal between 1 and 10; otherwise, an error will be thrown during macro expansion. This option is only available when the outer [@Actor](./macros_package_macros.md#actor-macro) macro has the `enableReceiverPriority: true` option.
+- `mode: value` - Specifies whether the annotated function should be modified with
+'Ask' or 'Tell' behaviour. A function modified with `Ask` behaviour returns an `ActorFuture` 
+which allows the caller to obtain the return value of the function and/or wait for the function 
+call to finish.
+A function modified with `Tell` behaviour returns `Unit` and gives no way for the caller to 
+obtain the return value or synchronize with the actor thread.
+If the `Tell` receiver function is generated, it will have the same
+identifier as the `Ask` receiver function, but will expect an additional
+parameter named `tell`, for which the
+[`Tell.True`](../../actors_package_api/actors_package_enums.md#enum-tell) 
+value must be supplied.
+The supplied value to the `mode` option must be one of the following:
+    - `AskOnly`: only generates a receiver function that can be called in `Ask` mode.
+    - `TellOnly`: only generates a receiver function that can be called in `Tell` mode.
+    - `AskAndTell`: generates both receiver functions.
 
 Each option can only appear once, otherwise, an error will be thrown during macro expansion.

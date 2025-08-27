@@ -74,7 +74,14 @@ class GenerateActorClass {
         checkClassDecl()
 
         let newDecls = ArrayList<Decl>()
-        processReceivers(decl.body.decls, { d => newDecls.add(d) }, { mDecl => newDecls.add(newReceiver(mDecl))})
+        processReceivers(
+            decl.body.decls,
+            { d => newDecls.add(d) },
+            { mDecl =>
+                newReceiver(mDecl, behaviour: Ask).map { decl => newDecls.add(decl) }
+                newReceiver(mDecl, behaviour: Tell).map { decl => newDecls.add(decl)}
+            }
+        )
         decl.body.decls = newDecls
         
         addDispatcherVar()
@@ -104,7 +111,7 @@ class GenerateActorClass {
         )))
     }
 
-    private func newReceiver(mDecl: MacroExpandDecl): Decl {
+    private func newReceiver(mDecl: MacroExpandDecl, behaviour!: Behaviour): Option<Decl> {
         let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
 
         checkReceiverOptions(rOpts)
@@ -117,55 +124,101 @@ class GenerateActorClass {
                 errors.doThrow()
         }
 
-        checkReceiverDecl(fd)
-        modifyFuncDecl(rOpts, fd)
-        headDecl
+        checkReceiverDecl(fd, rOpts)
+        modifyFuncDecl(rOpts, fd, behaviour)
+
+        if (behaviour.isAllowed(rOpts)) {
+            headDecl
+        } else {
+            None
+        }
     }
 
     private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
         if (!aOpts.hasEnabledReceiverPriority()) {
-            rOpts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
+            rOpts.checkOptions([Priority(5), Mode(AskAndTell)], errors, RECEIVER_MACRO)
         }
         errors.report()
     }
 
-    private func checkReceiverDecl(fd: FuncDecl): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            for (param in fd.funcParams) {
+    private func checkReceiverDecl(fd: FuncDecl, rOpts: MacroOptionSet): Unit {
+        for (param in fd.funcParams) {
+            if (aOpts.hasEnabledReceiverPriority() && param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
                 // a named parameter named "priority"
-                if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                    errors.add(ReceiverMacroPriorityNameParameter)
-                }
+                errors.add(ReceiverMacroPriorityNameParameter)
+            }
+            if (rOpts.shouldTell() && param.not.kind == TokenKind.NOT && param.identifier.value == "tell") {
+                // a named parameter named "tell"
+                errors.add(ReceiverMacroTellNameParameter)
             }
         }
         errors.report()
     }
 
-    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl): Unit {
+    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         if (aOpts.hasEnabledReceiverPriority()) {
             let defaultPriority = getPriority(rOpts)
             fd.funcParams.add(FuncParam(quote(
                 priority!: Int64 = $defaultPriority
             )))
         }
-        
-        let retTy = fd.declType
-        // fd.declType = actorFutureType(retTy) TODO
-        fd.declType = RefType(quote(
-            LocalActorFuture<$retTy>
-        ))
 
-        let retExpr = ReturnExpr(if (aOpts.hasEnabledReceiverPriority()) {
-            quote(
-                return $dispatcherToken.post<$retTy>({ => $(fd.block.nodes), priority: priority})
+        let declaredType = fd.declType
+
+        fd.declType = match (behaviour) {
+            case Ask => RefType(quote(LocalActorFuture<$declaredType>))
+            case Tell => PrimitiveType(quote(Unit))
+        }
+
+        let priorityArg = Tokens()
+        if (aOpts.hasEnabledReceiverPriority()) {
+            priorityArg.append(Token(COMMA))
+            priorityArg.append(quote(priority: priority))
+        }
+
+        let postCall = match (behaviour) {
+            case Ask => quote(post<$declaredType>({ => $(fd.block.nodes)} $priorityArg))
+            case Tell => quote(
+                postMessage(
+                    { =>
+                        try {
+                            { => $(fd.block.nodes) }()
+                        } catch (e: Exception) {
+                        } catch (e: Error) {}
+                        return 
+                    }
+                    $priorityArg
+                )
             )
-        } else {
-            quote(
-                return $dispatcherToken.post<$retTy>({ => $(fd.block.nodes)})
-            )
-        })
+        }
+
+        let retExpr = ReturnExpr(quote(return $dispatcherToken.$postCall))
 
         fd.block.nodes.clear()
+
+        if (let Tell <- behaviour) {
+            // Add the `tell` parameter
+            fd.funcParams.add(FuncParam(quote(
+                tell!: $tellTypeToken
+            )))
+            let discardTellParam = VarDecl(quote(let dummy = tell))
+            // For some reason VarDecl parses "let _ = tell" as "let = tell"
+            // so we add the wildcard manually instead
+            discardTellParam.identifier = Token(WILDCARD)
+            fd.block.nodes.add(discardTellParam)
+        }
+
         fd.block.nodes.add(retExpr)
+    }
+}
+
+private enum Behaviour {
+    | Ask | Tell
+
+    func isAllowed(rOpts: MacroOptionSet): Bool {
+        match (this) {
+            case Ask => rOpts.shouldAsk()
+            case Tell => rOpts.shouldTell()
+        }
     }
 }

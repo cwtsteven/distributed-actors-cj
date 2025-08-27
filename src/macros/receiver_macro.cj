@@ -1,7 +1,6 @@
 macro package actors.macros
 
 import std.ast.*
-import std.collection.*
 
 /**
  * This macro can be only defined at function declaration inside @Actor or @ActorInterface.
@@ -85,7 +84,7 @@ class ReceiverMacro {
     }
 
     private func checkOptions(): Unit {
-        opts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
+        opts.checkOptions([Priority(5), Mode(AskAndTell)], errors, RECEIVER_MACRO)
         errors.report()
     }
 

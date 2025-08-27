@@ -33,6 +33,7 @@ enum MacroError {
     | ReceiverMacroInvalidReturnType(String)
     | ReceiverMacroPriorityInsideActor
     | ReceiverMacroPriorityNameParameter
+    | ReceiverMacroTellNameParameter
 
     | ReceiverMacroInsideActorInterface
 
@@ -42,6 +43,7 @@ enum MacroError {
     | MacroOptionUnexpectedToken(String)
     | MacroOptionEnableReceiverPriorityIllegalArgument
     | MacroOptionPriorityIllegalArgument
+    | MacroOptionModeIllegalArgument
     | MacroOptionDistributedIllegalArgument
     | MacroOptionDuplicatedOption(MacroOption)
 }
@@ -61,6 +63,7 @@ extend MacroError <: ToString {
             case ReceiverMacroInvalidReturnType(name) => "${RECEIVER_MACRO} macro: receiver method '${name}' must have explicit return type."
             case ReceiverMacroPriorityInsideActor => "${RECEIVER_MACRO} macro: priority option can only be used inside ${ACTOR_MACRO}[enableReceiverPriority: true]."
             case ReceiverMacroPriorityNameParameter => "${RECEIVER_MACRO} macro: the name priority cannot be used as a named parameter."
+            case ReceiverMacroTellNameParameter => "${RECEIVER_MACRO} macro: the name tell cannot be used as a named parameter."
 
             case ReceiverMacroInsideActorInterface => "${RECEIVER_MACRO} macro: receivers inside ${ACTOR_INTERFACE_MACRO} must be empty."
 
@@ -70,6 +73,7 @@ extend MacroError <: ToString {
             case MacroOptionUnexpectedToken(name) => "Macro options: unexpected token '${name}'."
             case MacroOptionEnableReceiverPriorityIllegalArgument => "Macro options: enableReceiverPriority must take a boolean literal."
             case MacroOptionPriorityIllegalArgument => "Macro options: priority must be an integer literal inside the range [1..10]."
+            case MacroOptionModeIllegalArgument => "Macro options: mode must be either AskOnly, TellOnly, or AskAndTell."
             case MacroOptionDistributedIllegalArgument => "Macro options: distributed must must take a boolean literal."
             case MacroOptionDuplicatedOption(opt) => "Macro options: duplicated option '${opt}'."
         }

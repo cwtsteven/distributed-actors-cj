@@ -39,6 +39,11 @@ public class SequentialDispatcher {
         return fut
     }
 
+    public func postMessage(f: () -> Unit, priority!: Int64 = 5): Unit {
+        mailbox.add((this, f), priority)
+        numMsg.signal()
+    }
+
     ~init() {
         while (!threadHandle.thread.hasPendingCancellation) {
             threadHandle.cancel()
