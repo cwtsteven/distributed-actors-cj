@@ -57,7 +57,12 @@ class GenerateActorInterface {
         errors = MacroErrors()
         aOpts = MacroOptionParser.Run(attrs, errors)
         headDecl = parseDecl(input)
-        decl = findDeclUnderMacro<InterfaceDecl>(headDecl, errors)
+        decl = match (findDeclUnderMacro<InterfaceDecl>(headDecl)) {
+            case Some(d) => d
+            case None =>
+                errors.add(ActorInterfaceMacroInvalidDecl)
+                errors.doThrow()
+        }
     }
 
     private func run(): Tokens {
@@ -74,7 +79,7 @@ class GenerateActorInterface {
     }
 
     private func checkOptions(): Unit {
-        aOpts.checkOptions([EnableReceiverPriority(true), Distributed(true)], errors)
+        aOpts.checkOptions([EnableReceiverPriority(true), Distributed(true)], errors, ACTOR_INTERFACE_MACRO)
         errors.report()
     }
 
@@ -84,7 +89,12 @@ class GenerateActorInterface {
         checkReceiverOptions(rOpts)
 
         let headDecl: Decl = parseDecl(mDecl.macroInputs)
-        let fd = findDeclUnderMacro<FuncDecl>(headDecl, errors)
+        let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+            case Some(fd) => fd
+            case None =>
+                errors.add(ReceiverMacroInvalidDecl)
+                errors.doThrow()
+        }
 
         checkReceiverDecl(fd)
         modifyFuncDecl(rOpts, fd)
@@ -93,7 +103,7 @@ class GenerateActorInterface {
 
     private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
         if (!aOpts.hasEnabledReceiverPriority()) {
-            rOpts.checkOptions([Priority(5)], errors)
+            rOpts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
         }
         errors.report()
     }
@@ -103,12 +113,12 @@ class GenerateActorInterface {
             for (param in fd.funcParams) {
                 // a named parameter named "priority"
                 if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                    errors.add()
+                    errors.add(ReceiverMacroPriorityNameParameter)
                 }
             }
         }
         if (fd.block.nodes.size != 0) {
-            errors.add()
+            errors.add(ReceiverMacroInsideActorInterface)
         }
         errors.report()
     }

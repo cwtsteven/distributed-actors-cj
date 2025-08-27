@@ -98,7 +98,12 @@ class GenerateDistributedActorInterface {
             checkReceiverOptions(rOpts)
 
             let headDecl: Decl = parseDecl(mDecl.macroInputs)
-            let fd = findDeclUnderMacro<FuncDecl>(headDecl, errors)
+            let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+                case Some(fd) => fd
+                case None => 
+                    errors.add(ReceiverMacroInvalidDecl)
+                    errors.doThrow()
+            }
             let retTy = fd.declType // original T 
 
             checkReceiverDecl(fd)
@@ -127,7 +132,7 @@ class GenerateDistributedActorInterface {
     }
 
     private func checkOptions(): Unit {
-        aOpts.checkOptions([EnableReceiverPriority(true), Distributed(true)], errors)
+        aOpts.checkOptions([EnableReceiverPriority(true), Distributed(true)], errors, ACTOR_INTERFACE_MACRO)
         errors.report()
     }
 
@@ -175,7 +180,7 @@ class GenerateDistributedActorInterface {
 
     private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
         if (!aOpts.hasEnabledReceiverPriority()) {
-            rOpts.checkOptions([Priority(5)], errors)
+            rOpts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
         }
         errors.report()
     }
@@ -185,12 +190,12 @@ class GenerateDistributedActorInterface {
             for (param in fd.funcParams) {
                 // a named parameter named "priority"
                 if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                    errors.add()
+                    errors.add(ReceiverMacroPriorityNameParameter)
                 }
             }
         }
         if (fd.block.nodes.size != 0) {
-            errors.add()
+            errors.add(ReceiverMacroInsideActorInterface)
         }
         // TODO: check no type args
         errors.report()

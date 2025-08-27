@@ -73,10 +73,10 @@ class MacroOptionSet {
         false
     }
 
-    func checkOptions(allowed: Array<MacroOption>, errors: MacroErrors): Unit {
+    func checkOptions(allowed: Array<MacroOption>, errors: MacroErrors, name: String): Unit {
         for (opt in opts) {
             if (!allowed.contains(opt)) {
-                errors.add()
+                errors.add(MacroOptionNotAllowed(opt, name))
             }
         }
     }
@@ -105,23 +105,23 @@ class MacroOptionParser {
     private func parse(): Unit {
         while (let Some(t) <- it.next()) {
             if (t.kind != TokenKind.IDENTIFIER) {
-                errors.add()
+                errors.add(MacroOptionUnexpectedToken(t.value))
                 break
             }
             // colon
             match (it.next()) {
                 case Some(c) where c.kind == TokenKind.COLON => ()
                 case Some(c) =>
-                    errors.add()
+                    errors.add(MacroOptionUnexpectedToken(c.value))
                     break
                 case None =>
-                    errors.add()
+                    errors.add(MacroOptionInvalidFormat)
                     break
             }
             // value
             it.next()
             if (let None <- it.peek()) {
-                errors.add()
+                errors.add(MacroOptionInvalidFormat)
                 break
             }
 
@@ -132,7 +132,7 @@ class MacroOptionParser {
                 case Some(n) where n.kind == TokenKind.COMMA =>
                     continue
                 case Some(_) =>
-                    errors.add()
+                    errors.add(MacroOptionInvalidFormat)
                     break
                 case None =>
                     break // we are done
@@ -146,7 +146,7 @@ class MacroOptionParser {
                 let res: Bool = try {
                     Bool.parse(val.value)
                 } catch (_: IllegalArgumentException) {
-                    errors.add()
+                    errors.add(MacroOptionEnableReceiverPriorityIllegalArgument)
                     return
                 }
                 addOption(EnableReceiverPriority(res))
@@ -154,11 +154,11 @@ class MacroOptionParser {
                 let res: Int64 = try {
                     Int64.parse(val.value)
                 } catch (_: IllegalArgumentException) {
-                    errors.add()
+                    errors.add(MacroOptionPriorityIllegalArgument)
                     return
                 }
                 if (res < 1 || res > 10) {
-                    errors.add()
+                    errors.add(MacroOptionPriorityIllegalArgument)
                     return
                 }
                 addOption(Priority(res))
@@ -166,18 +166,18 @@ class MacroOptionParser {
                 let res: Bool = try {
                     Bool.parse(val.value)
                 } catch (_: IllegalArgumentException) {
-                    errors.add()
+                    errors.add(MacroOptionDistributedIllegalArgument)
                     return
                 }
                 addOption(Distributed(res)) 
             case _ =>
-                errors.add()
+                errors.add(MacroOptionInvalidOption(key.value))
         }
     }
 
     private func addOption(opt: MacroOption): Unit {
         if (opts.contains(opt)) {
-            errors.add()
+            errors.add(MacroOptionDuplicatedOption(opt))
             return
         }
         opts.add(opt)

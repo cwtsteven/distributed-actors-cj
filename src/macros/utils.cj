@@ -17,6 +17,10 @@ const DISPATCH_HASH_MAP_VAR_NAME = PREFIX + "dispatchMap"
 const METADATA_HASH_MAP_VAR_NAME = PREFIX + "metadataMap"
 const DISTRIBUTABLE_TYPE_NAME = "Distributable"
 
+const ACTOR_MACRO = "@Actor"
+const ACTOR_INTERFACE_MACRO = "@ActorInterface"
+const RECEIVER_MACRO = "@Receiver"
+
 let receiverMarkerToken = Token(IDENTIFIER, RECEIVER_MARKER_NAME)
 
 let dispatcherToken = Token(IDENTIFIER, DISPATCHER_NAME)

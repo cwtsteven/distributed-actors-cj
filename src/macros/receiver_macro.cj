@@ -42,7 +42,7 @@ class ReceiverMacro {
 
         // first check if @Receiver is inside @Actor or @ActorInterface
         if (!insideParentContext(ACTOR_MACRO_NAME) && !insideParentContext(ACTOR_INTERFACE_MACRO_NAME)) {
-            errors.add()
+            errors.add(ReceiverMacroInsideActor)
             return errors.doThrow()
         }
 
@@ -85,22 +85,29 @@ class ReceiverMacro {
     }
 
     private func checkOptions(): Unit {
-        opts.checkOptions([Priority(5)], errors)
+        opts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
         errors.report()
     }
 
     private func findDecl(): Unit {
-        this.fd = findDeclUnderMacro<FuncDecl>(headDecl, errors)
+        this.fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+            case Some(fd) => fd
+            case None =>
+                errors.add(ReceiverMacroInvalidDecl)
+                errors.doThrow()
+        }
     }
 
     private func checkReceiver(): Unit {
-        checkModifiers(fd.modifiers, [STATIC, OPEN, OVERRIDE], errors)
+        if (!checkModifiers(fd.modifiers, [STATIC, OPEN, OVERRIDE])) {
+            errors.add(ReceiverMacroInvalidModifier(fd.identifier.value))
+        }
 
         // check having explicit return type
         try {
             fd.declType
         } catch (_: ASTException) {
-            errors.add()
+            errors.add(ReceiverMacroInvalidReturnType(fd.identifier.value))
         }
 
         errors.report()

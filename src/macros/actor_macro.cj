@@ -60,7 +60,12 @@ class GenerateActorClass {
         errors = MacroErrors()
         aOpts = MacroOptionParser.Run(attrs, errors)
         headDecl = parseDecl(input)
-        decl = findDeclUnderMacro<ClassDecl>(headDecl, errors)
+        decl = match (findDeclUnderMacro<ClassDecl>(headDecl)) {
+            case Some(d) => d
+            case None => 
+                errors.add(ActorMacroInvalidDecl)
+                errors.doThrow()
+        }
     }
 
     private func run(): Tokens {
@@ -78,13 +83,15 @@ class GenerateActorClass {
     }
 
     private func checkOptions(): Unit {
-        aOpts.checkOptions([EnableReceiverPriority(true)], errors)
+        aOpts.checkOptions([EnableReceiverPriority(true)], errors, ACTOR_MACRO)
         errors.report()
     }
 
     private func checkClassDecl(): Unit {
-        checkModifiers(decl.modifiers, [ABSTRACT, OPEN, SEALED], errors)
-        errors.report()
+        if (!checkModifiers(decl.modifiers, [ABSTRACT, OPEN, SEALED])) {
+            errors.add(ActorMacroInvalidClassModifier)
+            errors.doThrow()
+        }
     }
 
     private func addDispatcherVar(): Unit {
@@ -103,7 +110,12 @@ class GenerateActorClass {
         checkReceiverOptions(rOpts)
 
         let headDecl: Decl = parseDecl(mDecl.macroInputs)
-        let fd = findDeclUnderMacro<FuncDecl>(headDecl, errors)
+        let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+            case Some(fd) => fd
+            case None =>
+                errors.add(ReceiverMacroInvalidDecl)
+                errors.doThrow()
+        }
 
         checkReceiverDecl(fd)
         modifyFuncDecl(rOpts, fd)
@@ -112,7 +124,7 @@ class GenerateActorClass {
 
     private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
         if (!aOpts.hasEnabledReceiverPriority()) {
-            rOpts.checkOptions([Priority(5)], errors)
+            rOpts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
         }
         errors.report()
     }
@@ -122,7 +134,7 @@ class GenerateActorClass {
             for (param in fd.funcParams) {
                 // a named parameter named "priority"
                 if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                    errors.add()
+                    errors.add(ReceiverMacroPriorityNameParameter)
                 }
             }
         }

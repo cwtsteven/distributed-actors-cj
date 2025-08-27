@@ -11,35 +11,30 @@ func actorFutureType(t: TypeNode): RefType {
     ))
 }
 
-func findDeclUnderMacro<D>(headDecl: Decl, errors: MacroErrors): D where D <: Decl {
+func findDeclUnderMacro<D>(headDecl: Decl): Option<D> where D <: Decl {
     var decl = headDecl
     while (true) {
         if (let Some(d) <- (decl as D)) {
-            return d 
+            return Some(d) 
         }
         if (let Some(mc) <- (decl as MacroExpandDecl)) {
             decl = mc.macroInputDecl
         } else {
-            errors.add()
-            errors.doThrow()
+            return None
         }
     }
-    errors.doThrow()
+    return None
 }
 
-func checkModifiers(mods: ArrayList<Modifier>, notAllowed: Array<TokenKind>, errors: MacroErrors): Unit {
+func checkModifiers(mods: ArrayList<Modifier>, notAllowed: Array<TokenKind>): Bool {
     for (mod in mods) {
-        var contains = false
         for (a in notAllowed) {
             if (a == mod.keyword.kind) { 
-                contains = true
-                break;
+                return false
             }
         }
-        if (contains) {
-            errors.add()
-        }
     }
+    return true
 }
 
 func processReceivers(
