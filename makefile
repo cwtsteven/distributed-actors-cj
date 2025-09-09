@@ -27,5 +27,8 @@ example:
 build:
 	cjpm build
 
+test:
+	cjpm test
+
 clean:
 	cjpm clean
