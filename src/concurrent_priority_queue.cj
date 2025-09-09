@@ -18,7 +18,7 @@ class ConcurrentPriorityQueue<T> {
     }
 
     func add(item: T, priority: Int64): Unit {
-        if (priority <= 0 || priority < capacity) {
+        if (priority <= 0 || priority > capacity) {
             throw IllegalArgumentException("Priority must be in the range of [1..${capacity}].")
         }
 

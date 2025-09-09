@@ -1,8 +1,8 @@
-macro package actors.macros
+package actors.macros.internal
 
 import std.collection.*
 
-class MacroErrors {
+protected class MacroErrors {
     private let errors = HashSet<String>()
 
     func add(e: MacroError): Unit {

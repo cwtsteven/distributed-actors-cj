@@ -1,4 +1,4 @@
-macro package actors.macros
+package actors.macros.internal
 
 import std.convert.Parsable
 

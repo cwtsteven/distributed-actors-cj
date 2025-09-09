@@ -1,4 +1,4 @@
-macro package actors.macros
+package actors.macros.internal
 
 import std.ast.*
 import std.collection.*
@@ -37,7 +37,7 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     }
 }
 
-class MacroOptionSet {
+protected class MacroOptionSet {
     private let opts = HashSet<MacroOption>()
 
     func add(opt: MacroOption): Unit {
@@ -202,7 +202,7 @@ class MacroOptionParser {
                     errors.add(MacroOptionDistributedIllegalArgument)
                     return
                 }
-                addOption(Distributed(res)) 
+                addOption(Distributed(res))
             case _ =>
                 errors.add(MacroOptionInvalidOption(key.value))
         }
