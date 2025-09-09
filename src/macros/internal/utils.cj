@@ -1,4 +1,4 @@
-macro package actors.macros
+package actors.macros.internal
 
 import std.ast.*
 import std.collection.*
@@ -47,7 +47,7 @@ let distributableTypeToken = Token(IDENTIFIER, DISTRIBUTABLE_TYPE_NAME)
 func deserializeFuncParams(fd: FuncDecl): Tokens {
     if (fd.funcParams.size == 0) {
         return quote([])
-    } 
+    }
 
     var res = Tokens(Token(TokenKind.LPAREN))
     for (i in 0..fd.funcParams.size - 1) {

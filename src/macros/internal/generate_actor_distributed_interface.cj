@@ -1,4 +1,4 @@
-macro package actors.macros
+package actors.macros.internal
 
 import std.ast.*
 import std.collection.*
@@ -6,14 +6,14 @@ import std.collection.*
 /**
  * This macro can be only defined at interfaces.
  *
- * @since 
+ * @since
  *
- * @throws MacroException if 
+ * @throws MacroException if
  *   1. the input is not an InterfaceDecl; or
  *   2. the InterfaceDecl has type parameters; or
  *   3. any @prefixReceiver marked function is not abstract; or
- *   4. any @prefixReceiver marked function has type parameters; or 
- *   5. any two @prefixReceiver marked function having the same identifier. 
+ *   4. any @prefixReceiver marked function has type parameters; or
+ *   5. any two @prefixReceiver marked function having the same identifier.
  *
  * @throws MacroException for invalid options. TODO
  *
@@ -29,7 +29,7 @@ import std.collection.*
  *
  *   interface Service <: Distributable<Service> {
  *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T>
- *      
+ *
  *     static func newProxy(name: String, actorSystem: ActorSystem): Service {
  *       ServiceProxy(ActorProxy(name, actorSystem))
  *     }
@@ -41,20 +41,20 @@ import std.collection.*
  *
  *   private class ServiceProxy {
  *     private let proxy = ActorProxy
- *     
+ *
  *     init(proxy: ActorProxy) { this.proxy = proxy }
- *     
+ *
  *     static let fooReceiverInfo = ReceiverInfo(...)
  *
  *     func foo(arg: T1`, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> {
  *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie() `, priority.serializer()`])
  *     }
  *   }
- * 
- * where the parts inside `...` depends on the options provided by the users. 
- * 
+ *
+ * where the parts inside `...` depends on the options provided by the users.
+ *
  */
-class GenerateDistributedActorInterface {
+protected class GenerateDistributedActorInterface {
 
     let errors: MacroErrors
     let aOpts: MacroOptionSet
@@ -64,7 +64,7 @@ class GenerateDistributedActorInterface {
     let interfaceName: Token
     let proxyClassIdent: Token
 
-    static func Run(aOpts: MacroOptionSet, headDecl: Decl, decl: InterfaceDecl, errors: MacroErrors) {
+    protected static func Run(aOpts: MacroOptionSet, headDecl: Decl, decl: InterfaceDecl, errors: MacroErrors) {
         GenerateDistributedActorInterface(aOpts, headDecl, decl, errors).run()
     }
 
@@ -93,18 +93,18 @@ class GenerateDistributedActorInterface {
 
         let newDecls = ArrayList<Decl>()
 
-        processReceivers(decl.body.decls, { d => newDecls.add(d) }, { mDecl => 
+        processReceivers(decl.body.decls, { d => newDecls.add(d) }, { mDecl =>
             let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
             checkReceiverOptions(rOpts)
 
             let headDecl: Decl = parseDecl(mDecl.macroInputs)
             let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
                 case Some(fd) => fd
-                case None => 
+                case None =>
                     errors.add(ReceiverMacroInvalidDecl)
                     errors.doThrow()
             }
-            let retTy = fd.declType // original T 
+            let retTy = fd.declType // original T
 
             checkReceiverDecl(fd)
             modifyFuncDecl(rOpts, fd)
@@ -208,7 +208,7 @@ class GenerateDistributedActorInterface {
                 priority!: Int64 = $defaultPriority
             )))
         }
-        
+
         let retTy = fd.declType
         fd.declType = actorFutureType(retTy)
     }
@@ -236,7 +236,7 @@ class GenerateDistributedActorInterface {
             }
         }
         args += quote(])
-        
+
         fd.block.lBrace = Token(LCURL)
         fd.block.rBrace = Token(RCURL)
         fd.block.nodes.add(ReturnExpr(quote(

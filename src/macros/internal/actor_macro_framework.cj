@@ -1,4 +1,4 @@
-macro package actors.macros
+package actors.macros.internal
 
 import std.ast.*
 import std.collection.*
@@ -15,7 +15,7 @@ func findDeclUnderMacro<D>(headDecl: Decl): Option<D> where D <: Decl {
     var decl = headDecl
     while (true) {
         if (let Some(d) <- (decl as D)) {
-            return Some(d) 
+            return Some(d)
         }
         if (let Some(mc) <- (decl as MacroExpandDecl)) {
             decl = mc.macroInputDecl
@@ -29,7 +29,7 @@ func findDeclUnderMacro<D>(headDecl: Decl): Option<D> where D <: Decl {
 func checkModifiers(mods: ArrayList<Modifier>, notAllowed: Array<TokenKind>): Bool {
     for (mod in mods) {
         for (a in notAllowed) {
-            if (a == mod.keyword.kind) { 
+            if (a == mod.keyword.kind) {
                 return false
             }
         }
@@ -38,7 +38,7 @@ func checkModifiers(mods: ArrayList<Modifier>, notAllowed: Array<TokenKind>): Bo
 }
 
 func processReceivers(
-    decls: ArrayList<Decl>, 
+    decls: ArrayList<Decl>,
     nonReceiverAction: (Decl) -> Unit,
     receiverAction: (MacroExpandDecl) -> Unit
 ): Unit {
@@ -52,7 +52,7 @@ func processReceivers(
                 }
                 // a receiver
                 receiverAction(mDecl)
-                
+
             case _ => nonReceiverAction(decl)
         }
     }
