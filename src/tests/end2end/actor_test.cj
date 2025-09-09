@@ -1,4 +1,4 @@
-package actors_tests
+package actors.tests.end2end
 
 import std.unittest.*
 import std.unittest.testmacro.*
@@ -14,12 +14,12 @@ class MyActor {
         this.x = x
     }
 
-    @Receiver
+    @Receiver[mode: AskOnly]
     func foo(): Int64 {
         x
     }
 
-    @Receiver
+    @Receiver[mode: AskOnly]
     func bar(y: Int64): Int64 {
         x + y
     }
@@ -38,7 +38,7 @@ class NumberActor {
         return state
     }
 
-    @Receiver
+    @Receiver[mode: TellOnly]
     func increment(): Unit {
         if (!isClosed) { state++ }
     }

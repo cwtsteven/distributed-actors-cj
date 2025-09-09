@@ -1,4 +1,4 @@
-package actors_tests
+package actors.tests.end2end
 
 import std.unittest.*
 import std.unittest.testmacro.*
@@ -17,7 +17,7 @@ class Bag {
         items.size
     }
 
-    @Receiver
+    @Receiver[mode: AskOnly]
     func size(): Int64 { items.size }
 
     @Receiver[mode: TellOnly]
