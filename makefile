@@ -16,6 +16,8 @@ else
     OS_NAME := unknown
 endif
 
+# export LD_LIBRARY_PATH=./target/release/actors:./lib/linux_aarch64_llvm/dynamic/stdx/:$LD_LIBRARY_PATH
+
 example:
 	rm -rf ./target/examples/
 	mkdir ./target/examples
@@ -23,6 +25,7 @@ example:
 	cjc ./examples/dist-actors.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/dist-actor.o
 	cjc ./examples/actor-interface.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/actor-interface.o
 	cjc ./examples/dist-actor-interface.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/dist-actor-interface.o
+	cjc ./examples/gc.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/gc.o
 
 build:
 	cjpm build

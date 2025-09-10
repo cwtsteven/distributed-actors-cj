@@ -14,3 +14,6 @@
     version = "1.0.0"
     name = "actors"
     output-type = "dynamic"
+
+[package.package-configuration."actors.macros.internal"]
+  output-type = "static"
