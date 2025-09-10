@@ -1,12 +1,12 @@
 [target.aarch64-apple-darwin]
   [target.aarch64-apple-darwin.bin-dependencies]
-    path-option = ["./lib/darwin_aarch64_llvm/dynamic/stdx"]
+    path-option = ["./lib/darwin_aarch64_llvm/static/stdx"]
 [target.x86_64-unknown-linux-gnu]
   [target.x86_64-unknown-linux-gnu.bin-dependencies]
-    path-option = ["./lib/linux_x86_64_llvm/dynamic/stdx"]
+    path-option = ["./lib/linux_x86_64_llvm/static/stdx"]
 [target.aarch64-unknown-linux-gnu]
   [target.aarch64-unknown-linux-gnu.bin-dependencies]
-    path-option = ["./lib/linux_aarch64_llvm/dynamic/stdx"]
+    path-option = ["./lib/linux_aarch64_llvm/static/stdx"]
 
 [package]
     cjc-version = "1.0.0"
@@ -16,4 +16,4 @@
     output-type = "dynamic"
 
 [package.package-configuration."actors.macros.internal"]
-  output-type = "static"
+    output-type = "static"

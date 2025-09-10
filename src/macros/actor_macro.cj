@@ -15,7 +15,7 @@ import actors.macros.internal.*
  *   3. the ClassDecl has a ABSTRACT modifier; or
  *   4. the ClassDecl has a SEALED modifier.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options.
  *
  * This macro essentially does the following translation:
  *

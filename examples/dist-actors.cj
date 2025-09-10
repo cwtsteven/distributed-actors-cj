@@ -1,3 +1,4 @@
+import stdx.encoding.json.*
 import stdx.serialization.serialization.*
 
 import actors.*
@@ -18,12 +19,12 @@ public interface Service <: Distributable<Service> {
     }
 
     static func getMetadata(): Metadata {
-        Metadata([ServiceProxy.fooInfo], "", [])
+        Metadata([ServiceProxy.fooReceiverInfo], "", JsonValue.fromStr("{}"))
     }
 
-    static func dispatch(a: Service, info: ReceiverInfo, args: Array<DataModel>): Any {
+    static func dispatch(a: Service, receiverName: String, args: Array<DataModel>): Any {
         // here it should compare info with all other info and chooese the one to call
-        let _ = info
+        let _ = receiverName
         let x = Int64.deserialize(args[0])
         a.foo(x)
     }
@@ -34,11 +35,11 @@ class ServiceProxy <: Service {
     ServiceProxy(private let proxy: ActorProxy) {}
 
     public func foo(x: Int64): ActorFuture<Int64> {
-        proxy.post<Int64>(fooInfo, [x.serialize()])
+        proxy.post<Int64>(fooReceiverInfo, [x.serialize()])
     }
 
     // note: need reflection to generate the schema
-    static let fooInfo = ReceiverInfo("foo", [("x", IntType)], IntType)
+    static let fooReceiverInfo = ReceiverInfo("foo", JsonValue.fromStr("{}"), "foo", [("x", IntType)], IntType)
 }
 
 @Actor

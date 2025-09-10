@@ -4,11 +4,15 @@ import std.ast.*
 import std.collection.*
 import std.convert.*
 
+import stdx.encoding.json.*
+
 enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     EnableReceiverPriority(Bool)
     | Priority(Int64)
     | Distributed(Bool)
     | Mode(ReceiverMode)
+    | Description(String)
+    | CustomInfos(JsonValue)
 
     public override func hashCode(): Int64 {
         match (this) {
@@ -16,6 +20,8 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
             case Priority(_) => 1
             case Distributed(_) => 2
             case Mode(_) => 3
+            case Description(_) => 4
+            case CustomInfos(_) => 5
         }
     }
 
@@ -33,6 +39,19 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
             case Priority(p) => "priority: ${p}"
             case Distributed(b) => "distributed: ${b}"
             case Mode(m) => "mode: ${m}"
+            case Description(d) => "description: ${d}"
+            case CustomInfos(c) => "customInfos: ${c.toString()}"
+        }
+    }
+
+    public func getKeyString(): String {
+        match (this) {
+            case EnableReceiverPriority(_) => "enableReceiverPriority"
+            case Priority(_) => "priority"
+            case Distributed(_) => "distributed"
+            case Mode(_) => "mode"
+            case Description(_) => "description"
+            case CustomInfos(_) => "customInfo"
         }
     }
 }
@@ -105,6 +124,26 @@ protected class MacroOptionSet {
             }
         }
     }
+
+    func getDescription(): String {
+        for (opt in opts) {
+            match (opt) {
+                case Description(d) => return d
+                case _ => continue
+            }
+        }
+        ""
+    }
+
+    func getCustomInfos(): JsonValue {
+        for (opt in opts) {
+            match (opt) {
+                case CustomInfos(c) => return c
+                case _ => continue
+            }
+        }
+        JsonValue.fromStr("[]")
+    }
 }
 
 class MacroOptionParser {
@@ -129,6 +168,9 @@ class MacroOptionParser {
 
     private func parse(): Unit {
         while (let Some(t) <- it.next()) {
+            if (t.kind == TokenKind.NL) {
+                continue
+            }
             if (t.kind != TokenKind.IDENTIFIER) {
                 errors.add(MacroOptionUnexpectedToken(t.value))
                 break
@@ -155,6 +197,8 @@ class MacroOptionParser {
             // next token must be a COMMA or nothing
             match (it.next()) {
                 case Some(n) where n.kind == TokenKind.COMMA =>
+                    continue
+                case Some(n) where n.kind == TokenKind.NL =>
                     continue
                 case Some(_) =>
                     errors.add(MacroOptionInvalidFormat)
@@ -203,6 +247,16 @@ class MacroOptionParser {
                     return
                 }
                 addOption(Distributed(res))
+            case "description" =>
+                addOption(Description(val.value))
+            case "customInfo" =>
+                let jsonValue: JsonValue = try {
+                    JsonValue.fromStr(val.value)
+                } catch (_: JsonException) {
+                    errors.add(MacroOptionCustomInfosInvalidFormat)
+                    return
+                }
+                addOption(CustomInfos(jsonValue))
             case _ =>
                 errors.add(MacroOptionInvalidOption(key.value))
         }

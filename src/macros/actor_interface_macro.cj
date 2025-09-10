@@ -13,7 +13,7 @@ import actors.macros.internal.*
  *   1. the input is not an InterfaceDecl; or
  *   2. any @prefixReceiver marked function is not abstract.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options. TOD
  *
  * This macro essentially does the following translation:
  *
@@ -55,7 +55,7 @@ public macro ActorInterface(input: Tokens): Tokens {
  *   4. any @prefixReceiver marked function has type parameters; or
  *   5. any two @prefixReceiver marked function having the same identifier.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options.
  *
  * This macro essentially does the following translation:
  *

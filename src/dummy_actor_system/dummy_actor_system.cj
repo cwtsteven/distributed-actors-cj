@@ -9,7 +9,6 @@ import stdx.serialization.serialization.*
 import actors.macros.*
 import actors.*
 
-let rInfoTi = TypeInfo.of<ReceiverInfo>()
 let argsTi = TypeInfo.of<Array<DataModel>>()
 let anyTi = TypeInfo.of<Any>()
 
@@ -18,51 +17,45 @@ public class DummyActorSystem <: ActorSystem {
     private let actorMap = ConcurrentHashMap<String, (Any, TypeInfo)>()
     private let futMap = ConcurrentHashMap<UInt64, (Any, TypeInfo)>()
     private let futId = AtomicUInt64(0)
-    
+    private let metadataMap = ConcurrentHashMap<String, Metadata>()
+
     public func register<T>(name: String, a: T): Bool where T <: Distributable<T> {
         let res = actorMap.addIfAbsent(name, (a, TypeInfo.of<T>()))
         match (res) {
             case Some(_) => false
-            case None => true
+            case None =>
+                metadataMap.addIfAbsent(name, T.getMetadata())
+                true
         }
     }
-    
+
     public func deregister(name: String): Bool {
         match (actorMap.remove(name)) {
-            case Some(_) => true 
+            case Some(_) =>
+                metadataMap.remove(name)
+                true
             case None => false
         }
     }
 
-    public func find<T>(name: String): Option<T> where T <: Distributable<T> {
+    public func find(name: String): Option<ActorInfo> {
         match (actorMap.get(name)) {
-            case Some(_) => Some(T.newProxy(name, this)) 
+            case Some(_) => Some((name, metadataMap.get(name).getOrThrow()))
             case None => None
         }
-    }   
-
-    public func findAll<T>(): Array<T> where T <: Distributable<T> {
-        throw Exception()
-    }   
-    
-    public func findGeneric(name: String): Option<ActorProxy> {
-        match (actorMap.get(name)) {
-            case Some(_) => Some(ActorProxy(name, this)) 
-            case None => None
-        }
-    }   
-    
-    public func remoteCall<T>(name: String, info: ReceiverInfo, args: Array<DataModel>, fut: DistributedActorFuture<T>): Unit {
-        let id = futId.fetchAdd(1)
-        futMap.add(id, (fut, TypeInfo.of<DistributedActorFuture<T>>()))
-        this.handleRemoteCall(name, info, args, id)
     }
 
-    public func getAll(): Array<(String, Metadata)> {
-        throw Exception()
-    }   
+    public func remoteCall<T>(name: String, receiverName: String, args: Array<DataModel>, fut: DistributedActorFuture<T>): Unit {
+        let id = futId.fetchAdd(1)
+        futMap.add(id, (fut, TypeInfo.of<DistributedActorFuture<T>>()))
+        this.handleRemoteCall(name, receiverName, args, id, tell: True)
+    }
 
-    @Receiver[mode: AskOnly]
+    public func findAll(): Array<ActorInfo> {
+        metadataMap.toArray()
+    }
+
+    @Receiver[mode: TellOnly]
     func handleResult(id: UInt64, res: Any): Unit {
         match (futMap.remove(id)) {
             case Some((fut, ti)) =>
@@ -72,21 +65,21 @@ public class DummyActorSystem <: ActorSystem {
         }
     }
 
-    @Receiver[mode: AskOnly]
-    func handleRemoteCall(name: String, info: ReceiverInfo, args: Array<DataModel>, id: UInt64): Unit {
+    @Receiver[mode: TellOnly]
+    func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, id: UInt64): Unit {
         let (a, ti) = match (actorMap.get(name)) {
             case Some(p) => p
             case None => throw ActorNotFoundException(name)
         }
 
-        let dispatchFunc = ti.getStaticFunction("dispatch", [ti, rInfoTi, argsTi])
-        let fut = dispatchFunc.apply(ti, [a, info, args])
-        let retTi = TypeInfo.of(a).getInstanceFunctions(info.methodName)[0].returnType // there can only be one
+        let dispatchFunc = ti.getStaticFunction("dispatch", [ti, TypeInfo.of<String>(), argsTi])
+        let fut = dispatchFunc.apply(ti, [a, receiverName, args])
+        let retTi = TypeInfo.of(a).getInstanceFunctions(receiverName)[0].returnType // there can only be one
 
         spawn {
             let getTi = retTi.getInstanceFunction("get", [])
             let res = getTi.apply(fut)
-            this.handleResult(id, res)
+            this.handleResult(id, res, tell: True)
         }
     }
 }

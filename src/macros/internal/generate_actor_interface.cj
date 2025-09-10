@@ -14,6 +14,16 @@ protected class GenerateActorInterface {
     let headDecl: Decl
     let decl: InterfaceDecl
 
+    static let allowedOptions: Array<MacroOption> = [
+        EnableReceiverPriority(true),
+        Distributed(false)
+    ]
+
+    static let allowedReceiverOptions: Array<MacroOption> = [
+        Priority(5),
+        Mode(AskAndTell)
+    ]
+
     private init(attrs: Tokens, input: Tokens) {
         errors = MacroErrors()
         aOpts = MacroOptionParser.Run(attrs, errors)
@@ -33,22 +43,36 @@ protected class GenerateActorInterface {
 
         checkOptions()
         let newDecls = ArrayList<Decl>()
-        processReceivers(decl.body.decls, { d => newDecls.add(d) }, { mDecl => newDecls.add(newReceiver(mDecl)) })
+        processReceivers(
+            decl.body.decls,
+            { d => newDecls.add(d) },
+            { mDecl =>
+                let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
+                checkReceiverOptions(rOpts)
+                if (rOpts.shouldAsk()) {
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
+                }
+                if (rOpts.shouldTell()) {
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Tell))
+                }
+            }
+        )
         decl.body.decls = newDecls
 
         headDecl.toTokens()
     }
 
     private func checkOptions(): Unit {
-        aOpts.checkOptions([EnableReceiverPriority(true), Distributed(true)], errors, ACTOR_INTERFACE_MACRO)
+        aOpts.checkOptions(allowedOptions, errors, ACTOR_INTERFACE_MACRO)
         errors.report()
     }
 
-    private func newReceiver(mDecl: MacroExpandDecl): Decl {
-        let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
+    private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
+        rOpts.checkOptions(allowedReceiverOptions, errors, ACTOR_INTERFACE_MACRO)
+        errors.report()
+    }
 
-        checkReceiverOptions(rOpts)
-
+    private func newReceiver(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, behaviour!: Behaviour): Decl {
         let headDecl: Decl = parseDecl(mDecl.macroInputs)
         let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
             case Some(fd) => fd
@@ -58,15 +82,8 @@ protected class GenerateActorInterface {
         }
 
         checkReceiverDecl(fd)
-        modifyFuncDecl(rOpts, fd)
+        modifyFuncDecl(rOpts, fd, behaviour)
         headDecl
-    }
-
-    private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
-        if (!aOpts.hasEnabledReceiverPriority()) {
-            rOpts.checkOptions([Priority(5)], errors, RECEIVER_MACRO)
-        }
-        errors.report()
     }
 
     private func checkReceiverDecl(fd: FuncDecl): Unit {
@@ -84,7 +101,7 @@ protected class GenerateActorInterface {
         errors.report()
     }
 
-    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl): Unit {
+    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         if (aOpts.hasEnabledReceiverPriority()) {
             let defaultPriority = getPriority(rOpts)
             fd.funcParams.add(FuncParam(quote(
@@ -92,7 +109,17 @@ protected class GenerateActorInterface {
             )))
         }
 
+        if (let Tell <- behaviour) {
+            // Add the `tell` parameter
+            fd.funcParams.add(FuncParam(quote(
+                tell!: $tellTypeToken
+            )))
+        }
+
         let retTy = fd.declType
-        fd.declType = actorFutureType(retTy)
+        fd.declType = match (behaviour) {
+            case Ask => actorFutureType(retTy)
+            case Tell => PrimitiveType(quote(Unit))
+        }
     }
 }

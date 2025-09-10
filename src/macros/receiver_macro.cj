@@ -16,7 +16,7 @@ import actors.macros.internal.*
  *   4. the FuncDecl has a OPEN modifier; or
  *   5. the FuncDecl does not have an explicit return type.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options.
  *
  * This macro essentially does the following translation:
  *

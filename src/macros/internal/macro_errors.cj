@@ -45,7 +45,9 @@ enum MacroError {
     | MacroOptionPriorityIllegalArgument
     | MacroOptionModeIllegalArgument
     | MacroOptionDistributedIllegalArgument
+    | MacroOptionCustomInfosInvalidFormat
     | MacroOptionDuplicatedOption(MacroOption)
+    | MacroReceiverInfoUnsupportedType
 }
 
 extend MacroError <: ToString {
@@ -67,7 +69,7 @@ extend MacroError <: ToString {
 
             case ReceiverMacroInsideActorInterface => "${RECEIVER_MACRO} macro: receivers inside ${ACTOR_INTERFACE_MACRO} must be empty."
 
-            case MacroOptionNotAllowed(opt, name) => "${name} macro: option '${opt}' not allowed."
+            case MacroOptionNotAllowed(opt, name) => "${name} macro: option '${opt.getKeyString()}' not allowed."
             case MacroOptionInvalidOption(name) => "Macro options: invalid option '${name}'."
             case MacroOptionInvalidFormat => "Macro options: an option must be in the form of 'option1: value1, option2: value2'."
             case MacroOptionUnexpectedToken(name) => "Macro options: unexpected token '${name}'."
@@ -75,7 +77,9 @@ extend MacroError <: ToString {
             case MacroOptionPriorityIllegalArgument => "Macro options: priority must be an integer literal inside the range [1..10]."
             case MacroOptionModeIllegalArgument => "Macro options: mode must be either AskOnly, TellOnly, or AskAndTell."
             case MacroOptionDistributedIllegalArgument => "Macro options: distributed must must take a boolean literal."
-            case MacroOptionDuplicatedOption(opt) => "Macro options: duplicated option '${opt}'."
+            case MacroOptionCustomInfosInvalidFormat => "Macro options: customInfo must be a valid JSON array of objects with string key-value pairs."
+            case MacroOptionDuplicatedOption(opt) => "Macro options: duplicated option '${opt.getKeyString()}'."
+            case MacroReceiverInfoUnsupportedType => "Receiver info: unsupported type for parameter schema generation."
         }
     }
 }
