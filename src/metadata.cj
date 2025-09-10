@@ -1,12 +1,12 @@
 package actors
 
-public type CustomInfo = Array<(String, String)>
+public type CustomInfo = (String, String)
 
 public struct Metadata {
     public Metadata(
         public let receivers: Array<ReceiverInfo>,
         public let description: String,
-        public let customInfo: CustomInfo
+        public let customInfo: Array<CustomInfo>
     ) {}
 }
 
