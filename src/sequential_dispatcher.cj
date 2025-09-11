@@ -15,6 +15,13 @@ public class SequentialDispatcher {
         this.threadHandle = startActorLoop(mailbox, numMsg)
     }
 
+    static func nextItem(mailbox: Mailbox): Option<() -> Unit> {
+        match (mailbox.remove()) {
+            case None => None
+            case Some((_, f)) => f
+        }
+    }
+
     static func startActorLoop(mailbox: Mailbox, numMsg: SingleConsumerSemaphore): Future<Unit> {
         spawn {
             while (true) {
@@ -24,8 +31,8 @@ public class SequentialDispatcher {
                     return
                 }
 
-                match (mailbox.remove()) {
-                    case Some((_, f)) => f()
+                match (nextItem(mailbox)) {
+                    case Some(f) => f()
                     case None => ()
                 }
             }

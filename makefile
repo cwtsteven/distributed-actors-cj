@@ -26,6 +26,7 @@ example:
 	cjc ./examples/actor-interface.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/actor-interface.o
 	cjc ./examples/dist-actor-interface.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/dist-actor-interface.o
 	cjc ./examples/gc.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/gc.o
+	cjc ./examples/fjcreate.cj --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/fjcreate.o
 
 build:
 	cjpm build
