@@ -24,10 +24,7 @@ public class ActorProxy {
 public interface ActorSystem {
     func register<T>(name: String, a: T): Bool where T <: Distributable<T>
     func deregister(name: String): Bool
-    func find<T>(name: String): Option<T> where T <: Distributable<T>
-    func findAll<T>(): Array<T> where T <: Distributable<T>
+    func find(name: String): Option<ActorInfo>
+    func findAll(): Array<ActorInfo>
     func remoteCall<T>(name: String, info: ReceiverInfo, args: Array<DataModel>, fut: DistributedActorFuture<T>): Unit
-
-    func getAll(): Array<(String, Metadata)>
-    func findGeneric(name: String): Option<ActorProxy>
 }

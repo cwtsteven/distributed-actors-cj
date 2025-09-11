@@ -1,6 +1,7 @@
 package actors
 
 public type CustomInfo = (String, String)
+public type ActorInfo = (String, Metadata)
 
 public struct Metadata {
     public Metadata(
