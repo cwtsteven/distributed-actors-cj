@@ -26,7 +26,7 @@ import actors.macros.internal.*
  *     == translate into ==>
  *
  *   interface Service {
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T>
+ *     func foo(arg: T1, config!: ReceiverConfig): ActorFuture<T>
  *   }
  *
  * where the parts inside `...` depends on the options provided by the users.
@@ -68,7 +68,7 @@ public macro ActorInterface(input: Tokens): Tokens {
  *     == translate into ==>
  *
  *   interface Service <: Distributable<Service> {
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T>
+ *     func foo(arg: T1, config!: ReceiverConfig): ActorFuture<T>
  *
  *     static func newProxy(name: String, actorSystem: ActorSystem): Service {
  *       ServiceProxy(ActorProxy(name, actorSystem))
@@ -86,8 +86,8 @@ public macro ActorInterface(input: Tokens): Tokens {
  *
  *     static let fooReceiverInfo = ReceiverInfo(...)
  *
- *     func foo(arg: T1`, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> {
- *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie() `, priority.serializer()`])
+ *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
+ *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie()], config)
  *     }
  *   }
  *

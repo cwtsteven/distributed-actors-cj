@@ -32,8 +32,8 @@ enum MacroError {
     | ReceiverMacroInvalidModifier(String)
     | ReceiverMacroInvalidReturnType(String)
     | ReceiverMacroPriorityInsideActor
-    | ReceiverMacroPriorityNameParameter
     | ReceiverMacroTellNameParameter
+    | ReceiverMacroConfigNameParameter
 
     | ReceiverMacroInsideActorInterface
 
@@ -64,9 +64,8 @@ extend MacroError <: ToString {
             case ReceiverMacroInvalidModifier(name) => "${RECEIVER_MACRO} macro: receiver method '${name}' cannot be static nor open nor overriding another function."
             case ReceiverMacroInvalidReturnType(name) => "${RECEIVER_MACRO} macro: receiver method '${name}' must have explicit return type."
             case ReceiverMacroPriorityInsideActor => "${RECEIVER_MACRO} macro: priority option can only be used inside ${ACTOR_MACRO}[enableReceiverPriority: true]."
-            case ReceiverMacroPriorityNameParameter => "${RECEIVER_MACRO} macro: the name priority cannot be used as a named parameter."
             case ReceiverMacroTellNameParameter => "${RECEIVER_MACRO} macro: the name tell cannot be used as a named parameter."
-
+            case ReceiverMacroConfigNameParameter => "${RECEIVER_MACRO} macro: the name config cannot be used as a named parameter."
             case ReceiverMacroInsideActorInterface => "${RECEIVER_MACRO} macro: receivers inside ${ACTOR_INTERFACE_MACRO} must be empty."
 
             case MacroOptionNotAllowed(opt, name) => "${name} macro: option '${opt.getKeyString()}' not allowed."

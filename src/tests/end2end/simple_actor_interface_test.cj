@@ -40,13 +40,13 @@ public class SimpleActorInterfaceTest {
         let service: SimpleService = actor
 
         // Test basic functionality
-        let future1 = service.getValue()
+        let future1 = service.getValue(config: ReceiverConfig.default)
         @Expect(future1.get(), 0)
 
-        let future2 = service.addValue(10)
+        let future2 = service.addValue(10, config: ReceiverConfig.default)
         @Expect(future2.get(), 10)
 
-        let future3 = service.getValue()
+        let future3 = service.getValue(config: ReceiverConfig.default)
         @Expect(future3.get(), 10)
     }
 }

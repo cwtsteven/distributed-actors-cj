@@ -77,6 +77,12 @@ protected class ReceiverMacro {
             errors.add(ReceiverMacroInvalidModifier(fd.identifier.value))
         }
 
+        for (param in fd.funcParams) {
+            if (param.identifier.value == "config") {
+                errors.add(ReceiverMacroConfigNameParameter)
+            }
+        }
+
         // check having explicit return type
         try {
             fd.declType

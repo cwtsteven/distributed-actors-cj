@@ -47,7 +47,7 @@ let distributableTypeToken = Token(IDENTIFIER, DISTRIBUTABLE_TYPE_NAME)
 
 func deserializeFuncParams(fd: FuncDecl): Tokens {
     if (fd.funcParams.size == 0) {
-        return quote(())
+        return quote((config: config))
     }
 
     var res = Tokens(Token(TokenKind.LPAREN))
@@ -57,7 +57,9 @@ func deserializeFuncParams(fd: FuncDecl): Tokens {
     }
 
     let lastTy = fd.funcParams[fd.funcParams.size - 1].paramType
-    res += quote($lastTy.deserialize(args[args.size - 1])) + Token(TokenKind.RPAREN)
+    res += quote($lastTy.deserialize(args[args.size - 1]))
+    res += quote(, config: config)
+    res += Token(TokenKind.RPAREN)
     res
 }
 

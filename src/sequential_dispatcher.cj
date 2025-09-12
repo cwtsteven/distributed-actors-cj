@@ -39,15 +39,15 @@ public class SequentialDispatcher {
         }
     }
 
-    public func post<T>(f: () -> T, priority!: Int64 = 5): LocalActorFuture<T> {
+    public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): LocalActorFuture<T> {
         let fut = LocalActorFuture<T>(f)
-        mailbox.add((this, fut.execute), priority)
+        mailbox.add((this, fut.execute), config.priority)
         numMsg.signal()
         return fut
     }
 
-    public func postMessage(f: () -> Unit, priority!: Int64 = 5): Unit {
-        mailbox.add((this, f), priority)
+    public func postMessage(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default): Unit {
+        mailbox.add((this, f), config.priority)
         numMsg.signal()
     }
 

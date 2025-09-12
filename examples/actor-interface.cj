@@ -16,7 +16,7 @@ public class MyService <: Service {
 }
 
 func test(s: Service) {
-    s.foo().get()
+    s.foo(config: ReceiverConfig.default).get()
 }
 
 main() {

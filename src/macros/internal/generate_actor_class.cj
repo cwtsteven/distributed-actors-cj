@@ -105,10 +105,6 @@ protected class GenerateActorClass {
 
     private func checkReceiverDecl(fd: FuncDecl, rOpts: MacroOptionSet): Unit {
         for (param in fd.funcParams) {
-            if (aOpts.hasEnabledReceiverPriority() && param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                // a named parameter named "priority"
-                errors.add(ReceiverMacroPriorityNameParameter)
-            }
             if (rOpts.shouldTell() && param.not.kind == TokenKind.NOT && param.identifier.value == "tell") {
                 // a named parameter named "tell"
                 errors.add(ReceiverMacroTellNameParameter)
@@ -118,12 +114,10 @@ protected class GenerateActorClass {
     }
 
     private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            let defaultPriority = getPriority(rOpts)
-            fd.funcParams.add(FuncParam(quote(
-                priority!: Int64 = $defaultPriority
-            )))
-        }
+        let defaultPriority = rOpts.getPriority()
+        fd.funcParams.add(FuncParam(quote(
+            config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
+        )))
 
         let declaredType = fd.declType
 
@@ -132,14 +126,9 @@ protected class GenerateActorClass {
             case Tell => PrimitiveType(quote(Unit))
         }
 
-        let priorityArg = Tokens()
-        if (aOpts.hasEnabledReceiverPriority()) {
-            priorityArg.append(Token(COMMA))
-            priorityArg.append(quote(priority: priority))
-        }
-
         let postCall = match (behaviour) {
-            case Ask => quote(post<$declaredType>({ => $(fd.block.nodes)} $priorityArg))
+            case Ask =>
+                quote(post<$declaredType>({ => $(fd.block.nodes)}, config: config))
             case Tell => quote(
                 postMessage(
                     { =>
@@ -148,8 +137,8 @@ protected class GenerateActorClass {
                         } catch (_: Exception) {
                         } catch (_: Error) {}
                         return
-                    }
-                    $priorityArg
+                    },
+                    config: config
                 )
             )
         }

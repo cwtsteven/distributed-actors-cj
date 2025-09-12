@@ -20,7 +20,7 @@ protected class GenerateActorInterface {
     ]
 
     static let allowedReceiverOptions: Array<MacroOption> = [
-        Priority(5),
+        // Priority(5),
         Mode(AskAndTell)
     ]
 
@@ -87,27 +87,16 @@ protected class GenerateActorInterface {
     }
 
     private func checkReceiverDecl(fd: FuncDecl): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            for (param in fd.funcParams) {
-                // a named parameter named "priority"
-                if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                    errors.add(ReceiverMacroPriorityNameParameter)
-                }
-            }
-        }
         if (fd.block.nodes.size != 0) {
             errors.add(ReceiverMacroInsideActorInterface)
         }
         errors.report()
     }
 
-    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            let defaultPriority = getPriority(rOpts)
-            fd.funcParams.add(FuncParam(quote(
-                priority!: Int64 = $defaultPriority
-            )))
-        }
+    private func modifyFuncDecl(_: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
+        fd.funcParams.add(FuncParam(quote(
+            config!: ReceiverConfig
+        )))
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter

@@ -56,7 +56,7 @@ public class SequentialDispatcherTest {
     @TestCase
     func testPostWithPriority() {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
-        let future = dispatcher.post({ => 42 }, priority: 3)
+        let future = dispatcher.post({ => 42 }, config: ReceiverConfig(priority: 3))
         let result = future.get()
         @Expect(result, 42)
     }
@@ -161,11 +161,11 @@ public class SequentialDispatcherTest {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
 
         // Test minimum priority (1)
-        let future1 = dispatcher.post({ => "min_priority" }, priority: 1)
+        let future1 = dispatcher.post({ => "min_priority" }, config: ReceiverConfig(priority: 1))
         @Expect(future1.get(), "min_priority")
 
         // Test maximum priority (10)
-        let future2 = dispatcher.post({ => "max_priority" }, priority: 10)
+        let future2 = dispatcher.post({ => "max_priority" }, config: ReceiverConfig(priority: 10))
         @Expect(future2.get(), "max_priority")
 
         // Test default priority (5)
@@ -179,19 +179,19 @@ public class SequentialDispatcherTest {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
 
         // Test priority 0 (should be invalid - minimum is 1)
-        let exn1 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_priority_0" }, priority: 0))
+        let exn1 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_priority_0" }, config: ReceiverConfig(priority: 0)))
         @Expect(exn1.message.contains("Priority must be in the range of [1..10]"), true)
 
         // Test negative priority (should be invalid)
-        let exn2 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_negative_priority" }, priority: -1))
+        let exn2 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_negative_priority" }, config: ReceiverConfig(priority: -1)))
         @Expect(exn2.message.contains("Priority must be in the range of [1..10]"), true)
 
         // Test priority > 10 (should be invalid - maximum is 10)
-        let exn3 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_priority_11" }, priority: 11))
+        let exn3 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_priority_11" }, config: ReceiverConfig(priority: 11)))
         @Expect(exn3.message.contains("Priority must be in the range of [1..10]"), true)
 
         // Test very large priority value
-        let exn4 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_large_priority" }, priority: 100))
+        let exn4 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_large_priority" }, config: ReceiverConfig(priority: 100)))
         @Expect(exn4.message.contains("Priority must be in the range of [1..10]"), true)
     }
 
@@ -260,13 +260,13 @@ public class SequentialDispatcherTest {
             executionOrder.value++
             orderTracker.value += "H"
             "low_priority"
-        }, priority: 10) // High priority (10)
+        }, config: ReceiverConfig(priority: 10)) // High priority (10)
 
         let futureHigh = dispatcher.post({ =>
             executionOrder.value++
             orderTracker.value += "L"
             "high_priority"
-        }, priority: 1) // Low priority (1)
+        }, config: ReceiverConfig(priority: 1)) // Low priority (1)
 
         // Wait for all tasks to complete
         let resultHigh = futureHigh.get()

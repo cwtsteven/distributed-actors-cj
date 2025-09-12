@@ -67,14 +67,6 @@ protected class MacroOptionSet {
         opts.contains(opt)
     }
 
-    func iterate(f: (MacroOption) -> Bool): Unit {
-        for (opt in opts) {
-            if (!f(opt)) {
-                break
-            }
-        }
-    }
-
     func hasEnabledReceiverPriority(): Bool {
         for (opt in opts) {
             match (opt) {
@@ -143,6 +135,17 @@ protected class MacroOptionSet {
             }
         }
         JsonValue.fromStr("[]")
+    }
+
+    func getPriority(): Int64 {
+        let defaultPriorityBox: Box<Int64> = Box(DEFAULT_PRIORITY)
+        for (opt in opts) {
+            match (opt) {
+                case Priority(p) => defaultPriorityBox.value = Int64(p)
+                case _ => continue
+            }
+        }
+        defaultPriorityBox.value
     }
 }
 

@@ -171,8 +171,8 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface TestInterface),
             [(quote([priority: 5]), quote(func test(): Unit))], [])
         let options = quote(distributed: true, enableReceiverPriority: true)
-        let result = GenerateActorInterface.Run(options, tokens)
-        @Expect(result.size > 0, true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionNotAllowed(Priority(5), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
     }
 
     @TestCase
@@ -181,8 +181,8 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface TestInterface),
             [(quote([priority: 5]), quote(func test(): Unit))], [])
         let options = quote(distributed: true, enableReceiverPriority: false)
-        let result = GenerateActorInterface.Run(options, tokens)
-        @Expect(result.size > 0, true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionNotAllowed(Priority(5), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
     }
 
     @TestCase
@@ -285,303 +285,168 @@ public class DistributedActorInterfaceMacroTest {
     // RECEIVER PRIORITY TESTS
     // ============================================================================
 
-    // @TestCase
-    // func testReceiverWithValidPriority() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: 5]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
-
-    // @TestCase
-    // func testReceiverWithBoundaryPriorityValues() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: 1]
-    //             func minPriority(): Unit {}
-
-    //             @___actors_08275892475824___Receiver[priority: 10]
-    //             func maxPriority(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
-
-
-    // @TestCase
-    // func testReceiverWithInvalidHighPriority() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: 15]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionPriorityIllegalArgument.toString()), true)
-    // }
-
-    // @TestCase
-    // func testReceiverWithInvalidLowPriority() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: 0]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionPriorityIllegalArgument.toString()), true)
-    // }
-
-    // @TestCase
-    // func testReceiverWithNegativePriority() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: -1]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionPriorityIllegalArgument.toString()), true)
-    // }
-
-    // @TestCase
-    // func testReceiverWithNonIntegerPriority() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: "not_a_number"]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionPriorityIllegalArgument.toString()), true)
-    // }
-
-    // @TestCase
-    // func testReceiverWithFloatPriority() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[priority: 5.5]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionPriorityIllegalArgument.toString()), true)
-    // }
+    @TestCase
+    func testReceiverWithValidPriority() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface),
+            [(quote([priority: 5]), quote(func test(): Unit))], [])
+        let options = quote(distributed: true, enableReceiverPriority: true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionNotAllowed(Priority(5), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
+    }
 
 
     // // ============================================================================
     // // RECEIVER CUSTOM INFO TESTS
     // // ============================================================================
 
-    // @TestCase
-    // func testReceiverWithCustomInfo() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[customInfo: """
-    //             { "test": "value", "priority": "high" }
-    //             """]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true)
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
+    @TestCase
+    func testReceiverWithCustomInfo() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface),
+            [(quote([customInfo: """
+                { "test": "value", "priority": "high" }
+                """]), quote(func test(): Unit))], [])
+        let options = quote(distributed: true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
 
-
-    // @TestCase
-    // func testReceiverWithInvalidCustomInfo() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[customInfo: "invalid json"]
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionCustomInfosInvalidFormat.toString()), true)
-    // }
+    @TestCase
+    func testReceiverWithInvalidCustomInfo() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface),
+            [(quote([customInfo: "invalid json"]), quote(func test(): Unit))], [])
+        let options = quote(distributed: true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionCustomInfosInvalidFormat.toString()), true)
+    }
 
     // // ============================================================================
     // // RECEIVER COMBINED OPTIONS TESTS
     // // ============================================================================
 
-    // @TestCase
-    // func testReceiverWithAllOptions() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver[
-    //                 mode: AskAndTell,
-    //                 priority: 7,
-    //                 description: "High priority ask and tell method",
-    //                 customInfo: """
-    //                 { "priority": "high", "mode": "ask_and_tell" }
-    //                 """
-    //             ]
-    //             func test(): String {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, enableReceiverPriority: true)
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
+    @TestCase
+    func testReceiverWithAllOptions() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface),
+            [(quote([description: "High priority ask and tell method", customInfo: """
+                { "priority": "high", "mode": "ask_and_tell" }
+                """]), quote(func test(): String))], [])
+        let options = quote(distributed: true, enableReceiverPriority: true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
 
 
-    // // ============================================================================
-    // // FUNCTION SIGNATURE TESTS
-    // // ============================================================================
+    // ============================================================================
+    // FUNCTION SIGNATURE TESTS
+    // ============================================================================
 
-    // @TestCase
-    // func testFunctionWithNoParameters() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver
-    //             func noParams(): String {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true)
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
+    @TestCase
+    func testFunctionWithNoParameters() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface),
+            [(quote(), quote(func noParams(): String))], [])
+        let options = quote(distributed: true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
 
-    // @TestCase
-    // func testFunctionWithParameters() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             @___actors_08275892475824___Receiver
-    //             func singleParam(input: String): String {}
+    @TestCase
+    func testFunctionWithParameters() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface),
+            [(quote(), quote(func singleParam(input: String): String)),
+            (quote(), quote(func multipleParams(a: Int64, b: String, c: Bool): String))], [])
+        let options = quote(distributed: true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
 
-    //             @___actors_08275892475824___Receiver
-    //             func multipleParams(a: Int64, b: String, c: Bool): String {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true)
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
+    // ============================================================================
+    // OPTION VALIDATION TESTS
+    // ============================================================================
 
-    // // ============================================================================
-    // // OPTION VALIDATION TESTS
-    // // ============================================================================
+    @TestCase
+    func testInvalidOptionFormat() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface), [], [])
+        let options = quote(distributed true) // Missing colon
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionUnexpectedToken("true").toString()), true)
+    }
 
-    // @TestCase
-    // func testInvalidOptionFormat() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed true) // Missing colon
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionUnexpectedToken("true").toString()), true)
-    // }
+    @TestCase
+    func testInvalidOptionName() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface), [], [])
+        let options = quote(invalidOption: true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionInvalidOption("invalidOption").toString()), true)
+    }
 
-    // @TestCase
-    // func testInvalidOptionName() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(invalidOption: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionInvalidOption("invalidOption").toString()), true)
-    // }
+    @TestCase
+    func testUnexpectedTokenInOptions() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface), [], [])
+        let options = quote(distributed: true, unexpected)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionInvalidFormat.toString()), true)
+    }
 
-    // @TestCase
-    // func testUnexpectedTokenInOptions() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, unexpected)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionInvalidFormat.toString()), true)
-    // }
+    @TestCase
+    func testIncompleteOptionFormat() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface), [], [])
+        let options = quote(distributed:)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionInvalidFormat.toString()), true)
+    }
 
-    // @TestCase
-    // func testIncompleteOptionFormat() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed:)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionInvalidFormat.toString()), true)
-    // }
+    @TestCase
+    func testDuplicatedOptions() {
+        let tokens = createDeclWithReceivers(
+            quote(interface ValidDistributedInterface), [], [])
+        let options = quote(distributed: true, distributed: false)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(MacroOptionDuplicatedOption(Distributed(true)).toString()), true)
+    }
 
-    // @TestCase
-    // func testDuplicatedOptions() {
-    //     let tokens = quote(
-    //         interface ValidDistributedInterface {
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true, distributed: false)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(MacroOptionDuplicatedOption(Distributed(true)).toString()), true)
-    // }
+    // ============================================================================
+    // INTERFACE TYPE TESTS
+    // ============================================================================
 
-    // // ============================================================================
-    // // INTERFACE TYPE TESTS
-    // // ============================================================================
-
-    // @TestCase
-    // func testGenericInterface() {
-    //     let tokens = quote(
-    //         interface GenericInterface<T> {
-    //             func test(): Unit {}
-    //         }
-    //     )
-    //     let options = quote(distributed: true)
-    //     let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-    //     @Expect(exn.message.contains(ActorInterfaceMacroInvalidDecl.toString()), true)
-    // }
+    @TestCase
+    func testGenericInterface() {
+        let tokens = createDeclWithReceivers(
+            quote(interface GenericInterface<T>), [], [])
+        let options = quote(distributed: true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(ActorInterfaceMacroInvalidDecl.toString()), true)
+    }
 
 
-    // // ============================================================================
-    // // COMPREHENSIVE SCENARIO TESTS
-    // // ============================================================================
+    // ============================================================================
+    // COMPREHENSIVE SCENARIO TESTS
+    // ============================================================================
 
-
-    // @TestCase
-    // func testDistributedInterfaceWithAllOptions() {
-    //     let tokens = quote(
-    //         interface AllOptionsDistributedInterface {
-    //             @___actors_08275892475824___Receiver[
-    //                 mode: AskAndTell,
-    //                 priority: 5,
-    //                 description: "Test receiver",
-    //                 customInfo: """
-    //                 { "test": "value" }
-    //                 """
-    //             ]
-    //             func test(): String {}
-    //         }
-    //     )
-    //     let options = quote(
-    //         distributed: true,
-    //         enableReceiverPriority: true,
-    //         description: "Service with all options",
-    //         customInfo: """
-    //         { "service": "all_options" }
-    //         """
-    //     )
-    //     let result = GenerateActorInterface.Run(options, tokens)
-    //     @Expect(result.size > 0, true)
-    // }
+    @TestCase
+    func testDistributedInterfaceWithAllOptions() {
+        let tokens = createDeclWithReceivers(
+            quote(interface AllOptionsDistributedInterface),
+            [(quote([description: "Test receiver", customInfo: """
+                { "test": "value" }
+                """]), quote(func test(): String))], [])
+        let options = quote(
+            distributed: true,
+            enableReceiverPriority: true,
+            description: "Service with all options",
+            customInfo: """
+            { "service": "all_options" }
+            """
+        )
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
 }

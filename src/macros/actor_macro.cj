@@ -30,8 +30,8 @@ import actors.macros.internal.*
  *   class MyActor {
  *     private let sequentialDispatch = SequentialDispatcher(enableReceiverPriority: `get from opts1`)
  *
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> {
- *       sequentialDispatch.post<T>( { => body } `, priority: priority` )
+ *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
+ *       sequentialDispatch.post<T>( { => body }, config )
  *     }
  *   }
  *

@@ -45,10 +45,16 @@ public class DummyActorSystem <: ActorSystem {
         }
     }
 
-    public func remoteCall<T>(name: String, receiverName: String, args: Array<DataModel>, fut: DistributedActorFuture<T>): Unit {
+    public func remoteCall<T>(name: String, receiverName: String, args: Array<DataModel>, fut: DistributedActorFuture<T>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
+        let _ = config
         let id = futId.fetchAdd(1)
         futMap.add(id, (fut, TypeInfo.of<DistributedActorFuture<T>>()))
-        this.handleRemoteCall(name, receiverName, args, id, tell: True)
+        this.handleRemoteCall(name, receiverName, args, Some(id), tell: True)
+    }
+
+    public func remoteTell<T>(name: String, receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
+        let _ = config
+        this.handleRemoteCall(name, receiverName, args, None, tell: True)
     }
 
     public func findAll(): Array<ActorInfo> {
@@ -66,7 +72,7 @@ public class DummyActorSystem <: ActorSystem {
     }
 
     @Receiver[mode: TellOnly]
-    func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, id: UInt64): Unit {
+    func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, id: ?UInt64): Unit {
         let (a, ti) = match (actorMap.get(name)) {
             case Some(p) => p
             case None => throw ActorNotFoundException(name)
@@ -74,12 +80,17 @@ public class DummyActorSystem <: ActorSystem {
 
         let dispatchFunc = ti.getStaticFunction("dispatch", [ti, TypeInfo.of<String>(), argsTi])
         let fut = dispatchFunc.apply(ti, [a, receiverName, args])
+
+        if (id == None) {
+            return
+        }
+
         let retTi = TypeInfo.of(a).getInstanceFunctions(receiverName)[0].returnType // there can only be one
 
         spawn {
             let getTi = retTi.getInstanceFunction("get", [])
             let res = getTi.apply(fut)
-            this.handleResult(id, res, tell: True)
+            this.handleResult(id.getOrThrow(), res, tell: True)
         }
     }
 }

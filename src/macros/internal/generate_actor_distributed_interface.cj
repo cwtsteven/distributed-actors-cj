@@ -30,7 +30,7 @@ import stdx.encoding.json.*
  *     == translate into ==>
  *
  *   interface Service <: Distributable<Service> {
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T>
+ *     func foo(arg: T1, config!: ReceiverConfig): ActorFuture<T>
  *
  *     static func newProxy(name: String, actorSystem: ActorSystem): Service {
  *       ServiceProxy(ActorProxy(name, actorSystem))
@@ -38,7 +38,7 @@ import stdx.encoding.json.*
  *
  *     static func getMetadata(): Metadata { TODO }
  *
- *     static func dispatch(a: Service, info: ReceiverInfo, args: Array<DataModel>): Any { TODO }
+ *     static func dispatch(a: Service, info: ReceiverInfo, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Any { TODO }
  *   }
  *
  *   private class ServiceProxy {
@@ -48,8 +48,8 @@ import stdx.encoding.json.*
  *
  *     static let fooReceiverInfo = ReceiverInfo(...)
  *
- *     func foo(arg: T1`, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> {
- *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie() `, priority.serializer()`])
+ *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
+ *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie()], config: config)
  *     }
  *   }
  *
@@ -74,7 +74,7 @@ protected class GenerateDistributedActorInterface {
     ]
 
     static let allowedReceiverOptions: Array<MacroOption> = [
-        Priority(5),
+        // Priority(5),
         // Mode(AskAndTell),
         Description(""),
         CustomInfos(JsonValue.fromStr("{}"))
@@ -163,21 +163,19 @@ protected class GenerateDistributedActorInterface {
                 errors.add(ReceiverMacroInvalidDecl)
                 errors.doThrow()
         }
-        let retTy = fd.declType // original T
 
         checkReceiverDecl(fd)
-        modifyFuncDecl(rOpts, fd, behaviour)
 
         let receiverInfoVarIdent = Token(IDENTIFIER, fd.identifier.value + RECEIVER_INFO_NAME)
-        match (newReceiverInfo(receiverInfoVarIdent, rOpts, fd, retTy, errors)) {
+        match (newReceiverInfo(receiverInfoVarIdent, rOpts, fd, fd.declType, errors)) {
             case Some(varDecl) => proxyClassDecl.body.decls.add(varDecl)
             case None => ()
         }
-        proxyClassDecl.body.decls.add(newProxyReceiver(receiverInfoVarIdent, FuncDecl(fd.toTokens()), retTy))
+        proxyClassDecl.body.decls.add(newProxyReceiver(FuncDecl(fd.toTokens()), fd.declType))
 
         let callExpr = deserializeFuncParams(fd)
         staticInit.block.nodes.add(CallExpr(quote(
-            $dispatchHashMapVarToken.add($(fd.identifier.value), { a, args =>
+            $dispatchHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
                 a.$(fd.identifier)$(callExpr)
             })
         )))
@@ -186,6 +184,8 @@ protected class GenerateDistributedActorInterface {
         staticInit.block.nodes.add(CallExpr(quote(
             $receiverInfosArrayVarToken.add($receiverInfoVarIdent)
         )))
+
+        modifyFuncDecl(rOpts, fd, behaviour)
         headDecl
     }
     private func newProxyFunc(): FuncDecl {
@@ -208,8 +208,8 @@ protected class GenerateDistributedActorInterface {
 
     private func newDispatchFunc(): FuncDecl {
         FuncDecl(quote(
-            static func dispatch(a: $interfaceName, receiverName: String, args: Array<DataModel>): Any {
-                $proxyClassIdent.$dispatchHashMapVarToken[receiverName](a, args)
+            static func dispatch(a: $interfaceName, receiverName: String, args: Array<DataModel>, config!: ReceiverConfig): Any {
+                $proxyClassIdent.$dispatchHashMapVarToken[receiverName](a, args, config)
             }
         ))
     }
@@ -217,7 +217,7 @@ protected class GenerateDistributedActorInterface {
     private func generateProxyClassDecl(): ClassDecl {
         ClassDecl(quote(
             private class $proxyClassIdent <: $interfaceName {
-                static let $dispatchHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>) -> Any>()
+                static let $dispatchHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Any>()
                 private let $proxyVarToken: $actorProxyToken
                 init($proxyVarToken: $actorProxyToken) {
                     this.$proxyVarToken = $proxyVarToken
@@ -227,14 +227,6 @@ protected class GenerateDistributedActorInterface {
     }
 
     private func checkReceiverDecl(fd: FuncDecl): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            for (param in fd.funcParams) {
-                // a named parameter named "priority"
-                if (param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                    errors.add(ReceiverMacroPriorityNameParameter)
-                }
-            }
-        }
         if (fd.block.nodes.size != 0) {
             errors.add(ReceiverMacroInsideActorInterface)
         }
@@ -246,13 +238,10 @@ protected class GenerateDistributedActorInterface {
         errors.report()
     }
 
-    private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            let defaultPriority = getPriority(rOpts)
-            fd.funcParams.add(FuncParam(quote(
-                priority!: Int64 = $defaultPriority
-            )))
-        }
+    private func modifyFuncDecl(_: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
+        fd.funcParams.add(FuncParam(quote(
+            config!: ReceiverConfig
+        )))
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
@@ -293,7 +282,7 @@ protected class GenerateDistributedActorInterface {
         )))
     }
 
-    private func newProxyReceiver(receiverInfoVarIdent: Token, fd: FuncDecl, oriTy: TypeNode): FuncDecl {
+    private func newProxyReceiver(fd: FuncDecl, oriTy: TypeNode): FuncDecl {
         fd.modifiers.add(Modifier(Token(PUBLIC)))
 
         var args = quote([)
@@ -310,8 +299,15 @@ protected class GenerateDistributedActorInterface {
         fd.block.lBrace = Token(LCURL)
         fd.block.rBrace = Token(RCURL)
         fd.block.nodes.add(ReturnExpr(quote(
-            return $proxyVarToken.post<$oriTy>($receiverInfoVarIdent, $args)
+            return $proxyVarToken.post<$oriTy>($(fd.identifier.value), $args, config: config)
         )))
+
+        fd.funcParams.add(FuncParam(quote(
+            config!: ReceiverConfig = ReceiverConfig.default
+        )))
+
+        fd.declType = actorFutureType(oriTy)
+
         fd
     }
 }
