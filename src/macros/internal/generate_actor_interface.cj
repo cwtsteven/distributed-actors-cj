@@ -20,7 +20,6 @@ protected class GenerateActorInterface {
     ]
 
     static let allowedReceiverOptions: Array<MacroOption> = [
-        // Priority(5),
         Mode(AskAndTell)
     ]
 
@@ -49,6 +48,7 @@ protected class GenerateActorInterface {
             { mDecl =>
                 let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
                 checkReceiverOptions(rOpts)
+
                 if (rOpts.shouldAsk()) {
                     newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
                 }

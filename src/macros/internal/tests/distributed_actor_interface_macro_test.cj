@@ -245,9 +245,8 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface TestInterface),
             [(quote([mode: AskOnly]), quote(func askOnly(): String))], [])
         let options = quote(distributed: true)
-        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-        println(exn.message)
-        @Expect(exn.message.contains(MacroOptionNotAllowed(Mode(AskOnly), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
     }
 
     @TestCase
@@ -256,8 +255,8 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface TestInterface),
             [(quote([mode: TellOnly]), quote(func tellOnly(message: String): Unit))], [])
         let options = quote(distributed: true)
-        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-        @Expect(exn.message.contains(MacroOptionNotAllowed(Mode(TellOnly), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
     }
 
     @TestCase
@@ -266,8 +265,8 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface TestInterface),
             [(quote([mode: AskAndTell]), quote(func askAndTell(input: String): String))], [])
         let options = quote(distributed: true)
-        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-        @Expect(exn.message.contains(MacroOptionNotAllowed(Mode(AskAndTell), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
     }
 
 

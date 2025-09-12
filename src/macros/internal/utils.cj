@@ -45,7 +45,7 @@ let enableReceiverPriorityToken = Token(IDENTIFIER, ENABLE_RECEIVER_PRIORITY_NAM
 
 let distributableTypeToken = Token(IDENTIFIER, DISTRIBUTABLE_TYPE_NAME)
 
-func deserializeFuncParams(fd: FuncDecl): Tokens {
+func deserializeFuncParams(fd: FuncDecl, isTell: Bool): Tokens {
     if (fd.funcParams.size == 0) {
         return quote((config: config))
     }
@@ -59,6 +59,9 @@ func deserializeFuncParams(fd: FuncDecl): Tokens {
     let lastTy = fd.funcParams[fd.funcParams.size - 1].paramType
     res += quote($lastTy.deserialize(args[args.size - 1]))
     res += quote(, config: config)
+    if (isTell) {
+        res += quote(, tell: True)
+    }
     res += Token(TokenKind.RPAREN)
     res
 }

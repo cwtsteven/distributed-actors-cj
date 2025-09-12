@@ -45,16 +45,16 @@ public class DummyActorSystem <: ActorSystem {
         }
     }
 
-    public func remoteCall<T>(name: String, receiverName: String, args: Array<DataModel>, fut: DistributedActorFuture<T>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
+    public func remoteCall<T>(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: DistributedActorFuture<T>): Unit {
         let _ = config
         let id = futId.fetchAdd(1)
         futMap.add(id, (fut, TypeInfo.of<DistributedActorFuture<T>>()))
-        this.handleRemoteCall(name, receiverName, args, Some(id), tell: True)
+        this.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
     }
 
-    public func remoteTell<T>(name: String, receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
+    public func remoteTell<T>(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
         let _ = config
-        this.handleRemoteCall(name, receiverName, args, None, tell: True)
+        this.handleRemoteCall(name, receiverName, args, config, None, tell: True)
     }
 
     public func findAll(): Array<ActorInfo> {
@@ -72,14 +72,15 @@ public class DummyActorSystem <: ActorSystem {
     }
 
     @Receiver[mode: TellOnly]
-    func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, id: ?UInt64): Unit {
+    func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, remoteConfig: ReceiverConfig, id: ?UInt64): Unit {
         let (a, ti) = match (actorMap.get(name)) {
             case Some(p) => p
             case None => throw ActorNotFoundException(name)
         }
 
-        let dispatchFunc = ti.getStaticFunction("dispatch", [ti, TypeInfo.of<String>(), argsTi])
-        let fut = dispatchFunc.apply(ti, [a, receiverName, args])
+        let dispatchFunc = ti.getStaticFunction("dispatch", [ti, TypeInfo.of<String>(), argsTi, TypeInfo.of<ReceiverConfig>(), TypeInfo.of<Bool>()])
+        let isTell = id == None
+        let fut = dispatchFunc.apply(ti, [a, receiverName, args, remoteConfig, isTell])
 
         if (id == None) {
             return

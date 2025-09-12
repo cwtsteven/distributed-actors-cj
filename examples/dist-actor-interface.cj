@@ -40,6 +40,7 @@ main() {
     let myService = MyService()
     let system = DummyActorSystem()
     system.register<Service>("myService", myService)
+
     let proxy = ActorProxy("myService", system)
     let fut = proxy.post<Int64>("foo", [0.serialize()])
     println(fut.get())
