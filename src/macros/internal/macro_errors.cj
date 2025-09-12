@@ -34,8 +34,10 @@ enum MacroError {
     | ReceiverMacroPriorityInsideActor
     | ReceiverMacroTellNameParameter
     | ReceiverMacroConfigNameParameter
-
     | ReceiverMacroInsideActorInterface
+
+    | ReceiverMacroDuplicateIdentifier(String)
+    | MacroReceiverInfoUnsupportedType
 
     | MacroOptionNotAllowed(MacroOption, String)
     | MacroOptionInvalidOption(String)
@@ -47,7 +49,6 @@ enum MacroError {
     | MacroOptionDistributedIllegalArgument
     | MacroOptionCustomInfosInvalidFormat
     | MacroOptionDuplicatedOption(MacroOption)
-    | MacroReceiverInfoUnsupportedType
 }
 
 extend MacroError <: ToString {
@@ -67,6 +68,7 @@ extend MacroError <: ToString {
             case ReceiverMacroTellNameParameter => "${RECEIVER_MACRO} macro: the name tell cannot be used as a named parameter."
             case ReceiverMacroConfigNameParameter => "${RECEIVER_MACRO} macro: the name config cannot be used as a named parameter."
             case ReceiverMacroInsideActorInterface => "${RECEIVER_MACRO} macro: receivers inside ${ACTOR_INTERFACE_MACRO} must be empty."
+            case ReceiverMacroDuplicateIdentifier(name) => "${ACTOR_DISTRIBUTED_INTERFACE_MACRO} macro: duplicate identifier '${name}'."
 
             case MacroOptionNotAllowed(opt, name) => "${name} macro: option '${opt.getKeyString()}' not allowed."
             case MacroOptionInvalidOption(name) => "Macro options: invalid option '${name}'."
@@ -78,7 +80,7 @@ extend MacroError <: ToString {
             case MacroOptionDistributedIllegalArgument => "Macro options: distributed must must take a boolean literal."
             case MacroOptionCustomInfosInvalidFormat => "Macro options: customInfo must be a valid JSON array of objects with string key-value pairs."
             case MacroOptionDuplicatedOption(opt) => "Macro options: duplicated option '${opt.getKeyString()}'."
-            case MacroReceiverInfoUnsupportedType => "Receiver info: unsupported type for parameter schema generation."
+            case MacroReceiverInfoUnsupportedType => "${ACTOR_DISTRIBUTED_INTERFACE_MACRO} macro: unsupported type for parameter schema generation."
         }
     }
 }

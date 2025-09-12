@@ -8,10 +8,8 @@ const ACTOR_MACRO_NAME = "Actor"
 const ACTOR_INTERFACE_MACRO_NAME = "ActorInterface"
 const RECEIVER_MARKER_NAME = PREFIX + "Receiver"
 const DISPATCHER_NAME = PREFIX + "dispatcher"
-const ACTOR_PROXY_NAME = "ActorProxy"
 const RECEIVER_INFO_NAME = "ReceiverInfo"
 const TELL_TYPE_NAME = "Tell"
-const PROXY_NAME = "proxy"
 const SEQ_DISPATCHER_NAME = "SequentialDispatcher"
 const ENABLE_RECEIVER_PRIORITY_NAME = "enableReceiverPriority"
 const DISPATCH_HASH_MAP_VAR_NAME = "dispatchMap"
@@ -27,15 +25,12 @@ let receiverMarkerToken = Token(IDENTIFIER, RECEIVER_MARKER_NAME)
 
 let dispatcherToken = Token(IDENTIFIER, DISPATCHER_NAME)
 
-let actorProxyToken = Token(IDENTIFIER, ACTOR_PROXY_NAME)
-
 let receiverInfoToken = Token(IDENTIFIER, RECEIVER_INFO_NAME)
 
 let tellTypeToken = Token(IDENTIFIER, TELL_TYPE_NAME)
 
-let proxyVarToken = Token(IDENTIFIER, PROXY_NAME)
-
-let dispatchHashMapVarToken = Token(IDENTIFIER, DISPATCH_HASH_MAP_VAR_NAME)
+let dispatchTellHashMapVarToken = Token(IDENTIFIER, DISPATCH_HASH_MAP_VAR_NAME + "Tell")
+let dispatchAskHashMapVarToken = Token(IDENTIFIER, DISPATCH_HASH_MAP_VAR_NAME + "Ask")
 
 let receiverInfosArrayVarToken = Token (IDENTIFIER, RECEIVER_INFOS_ARRAY_VAR_NAME)
 

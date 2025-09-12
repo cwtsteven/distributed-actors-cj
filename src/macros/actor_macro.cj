@@ -33,6 +33,11 @@ import actors.macros.internal.*
  *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
  *       sequentialDispatch.post<T>( { => body }, config )
  *     }
+ *
+ *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default, tell!: Tell): Unit {
+ *       let _ = tell
+ *       sequentialDispatch.postMessage( { => body }, config )
+ *     }
  *   }
  *
  * where the parts inside `...` depends on the options provided by the users.

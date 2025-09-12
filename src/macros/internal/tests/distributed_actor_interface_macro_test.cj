@@ -280,6 +280,17 @@ public class DistributedActorInterfaceMacroTest {
         @Expect(exn.message.contains(MacroOptionModeIllegalArgument.toString()), true)
     }
 
+    @TestCase
+    func testDuplciateReceiver() {
+        let tokens = createDeclWithReceivers(
+            quote(interface TestInterface),
+            [(quote(), quote(func test(): Unit)),
+            (quote(), quote(func test(): Unit))], [])
+        let options = quote(distributed: true)
+        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
+        @Expect(exn.message.contains(ReceiverMacroDuplicateIdentifier("test").toString()), true)
+    }
+
     // ============================================================================
     // RECEIVER PRIORITY TESTS
     // ============================================================================

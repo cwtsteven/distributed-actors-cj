@@ -15,6 +15,7 @@ import actors.macros.internal.*
  *   3. the FuncDecl has a OVERRIDE modifier; or
  *   4. the FuncDecl has a OPEN modifier; or
  *   5. the FuncDecl does not have an explicit return type.
+ *   6. the FuncDecl cannot have a parameter named config or tell.
  *
  * @throws MacroException for invalid options.
  *

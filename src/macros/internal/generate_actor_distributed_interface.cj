@@ -5,57 +5,6 @@ import std.collection.*
 
 import stdx.encoding.json.*
 
-/**
- * This macro can be only defined at interfaces.
- *
- * @since
- *
- * @throws MacroException if
- *   1. the input is not an InterfaceDecl; or
- *   2. the InterfaceDecl has type parameters; or
- *   3. any @prefixReceiver marked function is not abstract; or
- *   4. any @prefixReceiver marked function has type parameters; or
- *   5. any two @prefixReceiver marked function having the same identifier.
- *
- * @throws MacroException for invalid options.
- *
- * This macro essentially does the following translation:
- *
- *   @ActorInterface[distributed: true, opts1]
- *   interface Service {
- *     @prefixReceiver[opts2]
- *     func foo(arg: T1): T
- *   }
- *
- *     == translate into ==>
- *
- *   interface Service <: Distributable<Service> {
- *     func foo(arg: T1, config!: ReceiverConfig): ActorFuture<T>
- *
- *     static func newProxy(name: String, actorSystem: ActorSystem): Service {
- *       ServiceProxy(ActorProxy(name, actorSystem))
- *     }
- *
- *     static func getMetadata(): Metadata { TODO }
- *
- *     static func dispatch(a: Service, info: ReceiverInfo, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Any { TODO }
- *   }
- *
- *   private class ServiceProxy {
- *     private let proxy = ActorProxy
- *
- *     init(proxy: ActorProxy) { this.proxy = proxy }
- *
- *     static let fooReceiverInfo = ReceiverInfo(...)
- *
- *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
- *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie()], config: config)
- *     }
- *   }
- *
- * where the parts inside `...` depends on the options provided by the users.
- *
- */
 protected class GenerateDistributedActorInterface {
 
     let errors: MacroErrors
@@ -97,7 +46,7 @@ protected class GenerateDistributedActorInterface {
         checkInterfaceDecl()
 
         decl.superTypes.add(RefType(quote(
-            $distributableTypeToken<$interfaceName>
+            $distributableTypeToken
         )))
 
         let proxyClassDecl = generateProxyClassDecl()
@@ -106,20 +55,16 @@ protected class GenerateDistributedActorInterface {
         ))
         proxyClassDecl.body.decls.add(staticInit)
 
-        // Add static receivers array field
-        let receiversField = VarDecl(quote(
-            static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
-        ))
-        proxyClassDecl.body.decls.add(receiversField)
-
         let newDecls = ArrayList<Decl>()
+
+        let receiverNames = HashSet<String>()
 
         processReceivers(decl.body.decls, { d => newDecls.add(d) },
             { mDecl =>
                 let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
                 checkReceiverOptions(rOpts)
 
-                createReceiverInfo(mDecl, rOpts, proxyClassDecl, staticInit)
+                createReceiverInfo(mDecl, rOpts, proxyClassDecl, staticInit, receiverNames)
 
                 if (rOpts.shouldAsk()) {
                     newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
@@ -131,9 +76,9 @@ protected class GenerateDistributedActorInterface {
 
         decl.body.decls = newDecls
 
-        // decl.body.decls.add(newProxyFunc())
         decl.body.decls.add(newGetMetadataFunc())
-        decl.body.decls.add(newDispatchFunc())
+        decl.body.decls.add(newDispatchTellFunc())
+        decl.body.decls.add(newDispatchAskFunc())
 
         headDecl.toTokens() + proxyClassDecl.toTokens()
     }
@@ -156,7 +101,7 @@ protected class GenerateDistributedActorInterface {
         errors.report()
     }
 
-    private func createReceiverInfo(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, proxyClassDecl: ClassDecl, staticInit: FuncDecl): Unit {
+    private func createReceiverInfo(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, proxyClassDecl: ClassDecl, staticInit: FuncDecl, receiverNames: HashSet<String>): Unit {
         let headDecl: Decl = parseDecl(mDecl.macroInputs)
         let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
             case Some(fd) => fd
@@ -164,6 +109,13 @@ protected class GenerateDistributedActorInterface {
                 errors.add(ReceiverMacroInvalidDecl)
                 errors.doThrow()
         }
+
+        if (receiverNames.contains(fd.identifier.value)) {
+            errors.add(ReceiverMacroDuplicateIdentifier(fd.identifier.value))
+            errors.doThrow()
+        }
+        receiverNames.add(fd.identifier.value)
+
         checkReceiverDecl(fd)
 
         let receiverInfoVarIdent = Token(IDENTIFIER, fd.identifier.value + RECEIVER_INFO_NAME)
@@ -172,42 +124,23 @@ protected class GenerateDistributedActorInterface {
             case None => ()
         }
 
-        if (rOpts.shouldTell() && rOpts.shouldAsk()) {
+        if (rOpts.shouldTell()) {
             let callExpr = deserializeFuncParams(fd, true)
-            let callExprAsk = deserializeFuncParams(fd, false)
             staticInit.block.nodes.add(CallExpr(quote(
-                $dispatchHashMapVarToken.add($(fd.identifier.value), { a, args, config, isTell =>
-                    if (isTell) {
-                        a.$(fd.identifier)$(callExpr)
-                    } else {
-                        a.$(fd.identifier)$(callExprAsk)
-                    }
-                })
-            )))
-        } else if (rOpts.shouldAsk() && !rOpts.shouldTell()) {
-            let callExprAsk = deserializeFuncParams(fd, false)
-            staticInit.block.nodes.add(CallExpr(quote(
-                $dispatchHashMapVarToken.add($(fd.identifier.value), { a, args, config, isTell =>
-                    if (isTell) {
-                        throw Exception("Tell mode is not allowed")
-                    } else {
-                        a.$(fd.identifier)$(callExprAsk)
-                    }
-                })
-            )))
-        } else {
-            let callExprTell = deserializeFuncParams(fd, true)
-            staticInit.block.nodes.add(CallExpr(quote(
-                $dispatchHashMapVarToken.add($(fd.identifier.value), { a, args, config, isTell =>
-                    if (!isTell) {
-                        throw Exception("Tell mode is not allowed")
-                    } else {
-                        a.$(fd.identifier)$(callExprTell)
-                    }
+                $dispatchTellHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
+                    a.$(fd.identifier)$(callExpr)
                 })
             )))
         }
 
+        if (rOpts.shouldAsk()) {
+            let callExpr = deserializeFuncParams(fd, false)
+            staticInit.block.nodes.add(CallExpr(quote(
+                $dispatchAskHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
+                    a.$(fd.identifier)$(callExpr)
+                })
+            )))
+        }
         // Add receiver info to the static receivers array
         staticInit.block.nodes.add(CallExpr(quote(
             $receiverInfosArrayVarToken.add($receiverInfoVarIdent)
@@ -222,18 +155,10 @@ protected class GenerateDistributedActorInterface {
                 errors.add(ReceiverMacroInvalidDecl)
                 errors.doThrow()
         }
-        checkReceiverDecl(fd)
+
         modifyFuncDecl(rOpts, fd, behaviour)
         headDecl
     }
-
-    // private func newProxyFunc(): FuncDecl {
-    //     FuncDecl(quote(
-    //         static func newProxy(name: String, actorSystem: ActorSystem): $interfaceName {
-    //             $proxyClassIdent($actorProxyToken(name, actorSystem))
-    //         }
-    //     ))
-    // }
 
     private func newGetMetadataFunc(): FuncDecl {
         let desc = aOpts.getDescription()
@@ -245,10 +170,18 @@ protected class GenerateDistributedActorInterface {
         ))
     }
 
-    private func newDispatchFunc(): FuncDecl {
+    private func newDispatchTellFunc(): FuncDecl {
         FuncDecl(quote(
-            static func dispatch(a: $interfaceName, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, isTell: Bool): Any {
-                $proxyClassIdent.$dispatchHashMapVarToken[receiverName](a, args, config, isTell)
+            func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+                $proxyClassIdent.$dispatchTellHashMapVarToken[receiverName](this, args, config)
+            }
+        ))
+    }
+
+    private func newDispatchAskFunc(): FuncDecl {
+        FuncDecl(quote(
+            func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Waitable {
+                $proxyClassIdent.$dispatchAskHashMapVarToken[receiverName](this, args, config)
             }
         ))
     }
@@ -256,11 +189,9 @@ protected class GenerateDistributedActorInterface {
     private func generateProxyClassDecl(): ClassDecl {
         ClassDecl(quote(
             private class $proxyClassIdent {
-                static let $dispatchHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig, Bool) -> Any>()
-                private let $proxyVarToken: $actorProxyToken
-                init($proxyVarToken: $actorProxyToken) {
-                    this.$proxyVarToken = $proxyVarToken
-                }
+                static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
+                static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Waitable>()
+                static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
             }
         ))
     }
@@ -320,35 +251,6 @@ protected class GenerateDistributedActorInterface {
             )
         )))
     }
-
-    // private func newProxyReceiver(fd: FuncDecl, oriTy: TypeNode): FuncDecl {
-    //     fd.modifiers.add(Modifier(Token(PUBLIC)))
-
-    //     var args = quote([)
-    //     var i = 0
-    //     for (fp in fd.funcParams) {
-    //         args += quote($(fp.identifier).serialize())
-    //         if (i < fd.funcParams.size - 1) {
-    //             args += quote(, )
-    //         }
-    //         i += 1
-    //     }
-    //     args += quote(])
-
-    //     fd.block.lBrace = Token(LCURL)
-    //     fd.block.rBrace = Token(RCURL)
-    //     fd.block.nodes.add(ReturnExpr(quote(
-    //         return $proxyVarToken.post<$oriTy>($(fd.identifier.value), $args, config: config)
-    //     )))
-
-    //     fd.funcParams.add(FuncParam(quote(
-    //         config!: ReceiverConfig = ReceiverConfig.default
-    //     )))
-
-    //     fd.declType = actorFutureType(oriTy)
-
-    //     fd
-    // }
 }
 
 private func buildParamSchema(fd: FuncDecl): Tokens {
@@ -380,10 +282,10 @@ private func getTypeModel(typeNode: TypeNode): Tokens {
 private func getTypeModelByName(typeName: String): Tokens {
     match (typeName) {
         case "Int64" => quote(IntType)
-        case "String" => quote(StringType)
+        case "Float64" => quote(FloatType)
         case "Bool" => quote(BoolType)
+        case "String" => quote(StringType)
         case "Unit" => quote(UnitType)
-        case "Tell" => quote(UnitType)
         case _ => throw Exception("Unsupported type: ${typeName}")
     }
 }

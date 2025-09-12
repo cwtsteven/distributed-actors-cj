@@ -81,6 +81,9 @@ protected class ReceiverMacro {
             if (param.identifier.value == "config") {
                 errors.add(ReceiverMacroConfigNameParameter)
             }
+            if (param.identifier.value == "tell") {
+                errors.add(ReceiverMacroTellNameParameter)
+            }
         }
 
         // check having explicit return type

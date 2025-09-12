@@ -66,40 +66,19 @@ public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
 }
 
 public enum TypeModel <: ToString {
-    AnyType
-    | IntType // more primitive types
+    | IntType
+    | FloatType
     | BoolType
     | StringType
     | UnitType
-    | SeqType
-    | StructType(String, Array<FieldModel>)
 
     public override func toString(): String {
         match (this) {
-            case AnyType => "Any"
             case IntType => "Int"
+            case FloatType => "Float"
             case BoolType => "Bool"
             case StringType => "String"
             case UnitType => "Unit"
-            case SeqType => "Seq"
-            case StructType(name, fields) =>
-                var res = "Struct ${name} { "
-                for (field in fields) {
-                    res += "${field}, "
-                }
-                res += "}"
-                res
         }
-    }
-}
-
-public struct FieldModel <: ToString {
-    public FieldModel(
-        public let name: String,
-        public let typeModel: TypeModel
-    ) {}
-
-    public override func toString(): String {
-        "${name}: typeModel"
     }
 }

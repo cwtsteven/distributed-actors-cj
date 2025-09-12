@@ -1,7 +1,6 @@
 package actors.dummy_actor_system
 
 import std.collection.concurrent.*
-import std.reflect.*
 import std.sync.*
 
 import stdx.serialization.serialization.*
@@ -9,18 +8,15 @@ import stdx.serialization.serialization.*
 import actors.macros.*
 import actors.*
 
-let argsTi = TypeInfo.of<Array<DataModel>>()
-let anyTi = TypeInfo.of<Any>()
-
 @Actor
 public class DummyActorSystem <: ActorSystem {
-    private let actorMap = ConcurrentHashMap<String, (Any, TypeInfo)>()
-    private let futMap = ConcurrentHashMap<UInt64, (Any, TypeInfo)>()
+    private let actorMap = ConcurrentHashMap<String, Distributable>()
+    private let futMap = ConcurrentHashMap<UInt64, Fullfillable>()
     private let futId = AtomicUInt64(0)
     private let metadataMap = ConcurrentHashMap<String, Metadata>()
 
-    public func register<T>(name: String, a: T): Bool where T <: Distributable<T> {
-        let res = actorMap.addIfAbsent(name, (a, TypeInfo.of<T>()))
+    public func register<T>(name: String, a: T): Bool where T <: Distributable {
+        let res = actorMap.addIfAbsent(name, a)
         match (res) {
             case Some(_) => false
             case None =>
@@ -45,14 +41,14 @@ public class DummyActorSystem <: ActorSystem {
         }
     }
 
-    public func remoteCall<T>(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: DistributedActorFuture<T>): Unit {
+    public func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
         let _ = config
         let id = futId.fetchAdd(1)
-        futMap.add(id, (fut, TypeInfo.of<DistributedActorFuture<T>>()))
+        futMap.add(id, fut)
         this.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
     }
 
-    public func remoteTell<T>(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
         let _ = config
         this.handleRemoteCall(name, receiverName, args, config, None, tell: True)
     }
@@ -64,34 +60,28 @@ public class DummyActorSystem <: ActorSystem {
     @Receiver[mode: TellOnly]
     func handleResult(id: UInt64, res: Any): Unit {
         match (futMap.remove(id)) {
-            case Some((fut, ti)) =>
-                let fulfillTi = ti.getInstanceFunction("fulfill", [anyTi])
-                fulfillTi.apply(fut, [res])
-            case None => ()
+            case Some(fut) => fut.fulfill(res); return
+            case None => return
         }
     }
 
     @Receiver[mode: TellOnly]
     func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, remoteConfig: ReceiverConfig, id: ?UInt64): Unit {
-        let (a, ti) = match (actorMap.get(name)) {
+        let a = match (actorMap.get(name)) {
             case Some(p) => p
             case None => throw ActorNotFoundException(name)
         }
 
-        let dispatchFunc = ti.getStaticFunction("dispatch", [ti, TypeInfo.of<String>(), argsTi, TypeInfo.of<ReceiverConfig>(), TypeInfo.of<Bool>()])
         let isTell = id == None
-        let fut = dispatchFunc.apply(ti, [a, receiverName, args, remoteConfig, isTell])
+        if (isTell) {
+            a.dispatchTell(receiverName, args, remoteConfig)
+        } else {
+            let fut = a.dispatchAsk(receiverName, args, remoteConfig)
 
-        if (id == None) {
-            return
-        }
-
-        let retTi = TypeInfo.of(a).getInstanceFunctions(receiverName)[0].returnType // there can only be one
-
-        spawn {
-            let getTi = retTi.getInstanceFunction("get", [])
-            let res = getTi.apply(fut)
-            this.handleResult(id.getOrThrow(), res, tell: True)
+            spawn {
+                let res = fut.wait()
+                this.handleResult(id.getOrThrow(), res, tell: True)
+            }
         }
     }
 }
