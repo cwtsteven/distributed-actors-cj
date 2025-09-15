@@ -3,7 +3,11 @@ package actors
 import std.sync.*
 import std.time.*
 
-sealed abstract class ActorFuture<T> {
+public interface Waitable {
+    func wait(): Any
+}
+
+sealed abstract class ActorFuture<T> <: Waitable {
     protected var result: FutureResult<T> = unsafe { zeroValue<FutureResult<T>>() }
     protected let isReady = AtomicBool(false)
     protected let mtx = Mutex()
@@ -58,6 +62,10 @@ sealed abstract class ActorFuture<T> {
         }
         return None
     }
+
+    public open func wait(): Any {
+        this.get()
+    }
 }
 
 public class LocalActorFuture<T> <: ActorFuture<T> {
@@ -83,48 +91,6 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
 
             isReady.store(true)
             cond.notifyAll()
-        }
-    }
-}
-
-public class DistributedActorFuture<T> <: ActorFuture<T> {
-    init() {}
-
-    public func fulfill(value: Any): Bool {
-        if (isReady.load()) {
-            return false
-        }
-
-        let res: FutureResult<T> = match (value) {
-            case v: T => Okay(v)
-            case e: Exception => Exc(e)
-            case e: Error => Err(e)
-            case _ =>
-                throw IllegalArgumentException("TODO")
-        }
-
-        synchronized(mtx) {
-            if (isReady.load()) {
-                return false
-            }
-            this.result = res
-            isReady.store(true)
-            cond.notifyAll()
-            true
-        }
-    }
-}
-
-protected enum FutureResult<T> {
-    Okay(T)
-    | Exc(Exception)
-    | Err(Error)
-
-    func getOrThrow(): T {
-        match (this) {
-            case Okay(res) => return res
-            case Exc(e) => throw e
-            case Err(e) => throw e
         }
     }
 }

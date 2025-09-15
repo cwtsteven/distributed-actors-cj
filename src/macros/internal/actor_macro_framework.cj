@@ -57,14 +57,3 @@ func processReceivers(
         }
     }
 }
-
-func getPriority(rOpts: MacroOptionSet): Int64 {
-    let defaultPriorityBox: Box<Int64> = Box(DEFAULT_PRIORITY)
-    rOpts.iterate { opt =>
-        match (opt) {
-            case Priority(p) => defaultPriorityBox.value = Int64(p); false
-            case _ => true
-        }
-    }
-    defaultPriorityBox.value
-}

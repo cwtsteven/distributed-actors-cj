@@ -13,7 +13,7 @@ import actors.macros.internal.*
  *   1. the input is not an InterfaceDecl; or
  *   2. any @prefixReceiver marked function is not abstract.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options. TOD
  *
  * This macro essentially does the following translation:
  *
@@ -26,36 +26,23 @@ import actors.macros.internal.*
  *     == translate into ==>
  *
  *   interface Service {
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T>
+ *     func foo(arg: T1, config!: ReceiverConfig): ActorFuture<T>
+ *     func foo(arg: T1, config!: ReceiverConfig, tell!: Tell): Unit
  *   }
  *
  * where the parts inside `...` depends on the options provided by the users.
  *
  * When it is set as a distributed actor interface, i.e. with [distributed: true],
- * the translation is more complex. Please refers to actor_interface_macro_distributed.cj for details.
+ * the translation is more complex.
  *
- */
-public macro ActorInterface(attrs: Tokens, input: Tokens): Tokens {
-    GenerateActorInterface.Run(attrs, input)
-}
-
-public macro ActorInterface(input: Tokens): Tokens {
-    GenerateActorInterface.Run(Tokens(), input)
-}
-
-/**
- * This macro can be only defined at interfaces.
- *
- * @since
- *
- * @throws MacroException if
+* @throws MacroException if
  *   1. the input is not an InterfaceDecl; or
  *   2. the InterfaceDecl has type parameters; or
  *   3. any @prefixReceiver marked function is not abstract; or
  *   4. any @prefixReceiver marked function has type parameters; or
  *   5. any two @prefixReceiver marked function having the same identifier.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options.
  *
  * This macro essentially does the following translation:
  *
@@ -67,30 +54,41 @@ public macro ActorInterface(input: Tokens): Tokens {
  *
  *     == translate into ==>
  *
- *   interface Service <: Distributable<Service> {
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T>
+ *   interface Service <: Distributable {
+ *     func foo(arg: T1, config!: ReceiverConfig): ActorFuture<T>
  *
- *     static func newProxy(name: String, actorSystem: ActorSystem): Service {
- *       ServiceProxy(ActorProxy(name, actorSystem))
- *     }
+ *     static func getMetadata(): Metadata
  *
- *     static func getMetadata(): Metadata { TODO }
- *
- *     static func dispatch(a: Service, info: ReceiverInfo, args: Array<DataModel>): Any { TODO }
+ *     func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
+ *     func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Waitable
  *   }
  *
  *   private class ServiceProxy {
- *     private let proxy = ActorProxy
+ *     static let dispatchTellMap = HashMap<String, (Service, Array<DataModel>, ReceiverConfig) -> Unit>()
+ *     static let dispatchAskMap = HashMap<String, (Service, Array<DataModel>, ReceiverConfig) -> Waitable>()
+ *     static let receiverInfosArray = ArrayList<ReceiverInfo>()
  *
- *     init(proxy: ActorProxy) { this.proxy = proxy }
- *
- *     static let fooReceiverInfo = ReceiverInfo(...)
- *
- *     func foo(arg: T1`, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> {
- *       proxy.post<T>(fooReceiverInfo, [arg1.serialzie() `, priority.serializer()`])
+ *     static init() {
+ *       dispatchTellMap.add("foo", { a, args, config =>
+ *         a.foo(Int64.deserialize(args[0]), config: config, tell: True)
+ *       })
+ *       dispatchAskMap.add("foo", { a, args, config =>
+ *           a.foo(Int64.deserialize(args[0]), config: config)
+ *       })
+ *       receiverInfosArray.add(
+ *         ReceiverInfo("foo", description, customInfo,
+ *         [("x", TypeModel.of<Int64>())], TypeModel.of<Int64>())
+ *       )
  *     }
  *   }
  *
  * where the parts inside `...` depends on the options provided by the users.
  *
  */
+public macro ActorInterface(attrs: Tokens, input: Tokens): Tokens {
+    GenerateActorInterface.Run(attrs, input)
+}
+
+public macro ActorInterface(input: Tokens): Tokens {
+    GenerateActorInterface.Run(Tokens(), input)
+}

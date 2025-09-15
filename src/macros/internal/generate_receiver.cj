@@ -1,6 +1,7 @@
 package actors.macros.internal
 
 import std.ast.*
+import stdx.encoding.json.*
 
 protected class ReceiverMacro {
     protected static func Run(attrs: Tokens, input: Tokens, bypassParentContextCheck!: Bool = false): Tokens {
@@ -36,6 +37,13 @@ protected class ReceiverMacro {
     private let opts: MacroOptionSet
     private let errors: MacroErrors
 
+    static let allowedOptions: Array<MacroOption> = [
+        Priority(5),
+        Mode(AskAndTell),
+        Description(""),
+        CustomInfos(JsonValue.fromStr("{}"))
+    ]
+
     private init(attrs: Tokens, input: Tokens, opts: MacroOptionSet, errors: MacroErrors) {
         this.attrs = attrs
         this.opts = opts
@@ -51,7 +59,7 @@ protected class ReceiverMacro {
     }
 
     private func checkOptions(): Unit {
-        opts.checkOptions([Priority(5), Mode(AskAndTell)], errors, RECEIVER_MACRO)
+        opts.checkOptions(allowedOptions, errors, RECEIVER_MACRO)
         errors.report()
     }
 
@@ -67,6 +75,15 @@ protected class ReceiverMacro {
     private func checkReceiver(): Unit {
         if (!checkModifiers(fd.modifiers, [STATIC, OPEN, OVERRIDE])) {
             errors.add(ReceiverMacroInvalidModifier(fd.identifier.value))
+        }
+
+        for (param in fd.funcParams) {
+            if (param.identifier.value == "config") {
+                errors.add(ReceiverMacroConfigNameParameter)
+            }
+            if (param.identifier.value == "tell") {
+                errors.add(ReceiverMacroTellNameParameter)
+            }
         }
 
         // check having explicit return type

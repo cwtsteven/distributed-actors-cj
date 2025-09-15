@@ -15,7 +15,7 @@ import actors.macros.internal.*
  *   3. the ClassDecl has a ABSTRACT modifier; or
  *   4. the ClassDecl has a SEALED modifier.
  *
- * @throws MacroException for invalid options. TODO
+ * @throws MacroException for invalid options.
  *
  * This macro essentially does the following translation:
  *
@@ -30,8 +30,13 @@ import actors.macros.internal.*
  *   class MyActor {
  *     private let sequentialDispatch = SequentialDispatcher(enableReceiverPriority: `get from opts1`)
  *
- *     func foo(arg: T1 `, priority!: Int64 = default priority defined in opts2`): ActorFuture<T> {
- *       sequentialDispatch.post<T>( { => body } `, priority: priority` )
+ *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
+ *       sequentialDispatch.post<T>( { => body }, config )
+ *     }
+ *
+ *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default, tell!: Tell): Unit {
+ *       let _ = tell
+ *       sequentialDispatch.postMessage( { => body }, config )
  *     }
  *   }
  *

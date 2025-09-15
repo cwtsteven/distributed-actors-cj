@@ -128,14 +128,10 @@ public class ActorMacroTest {
 
     @TestCase
     func testValidClassWithReceiver() {
-        let tokens = quote(
-            class ValidActor {
-                @Receiver
-                func test(): Int64 {
-                    42
-                }
-            }
-        )
+        let tokens = createDeclWithReceivers(
+            quote(class ValidActor),
+            [(quote(), quote(func test(): Int64 { 42 }))],
+            [])
         // This should not throw an exception
         let result = GenerateActorClass.Run(Tokens(), tokens)
         @Expect(result.size > 0, true)
@@ -143,24 +139,12 @@ public class ActorMacroTest {
 
     @TestCase
     func testValidClassWithMultipleReceivers() {
-        let tokens = quote(
-            class ValidActor {
-                @Receiver
-                func test1(): Int64 {
-                    1
-                }
-
-                @Receiver[mode: AskOnly]
-                func test2(): Int64 {
-                    2
-                }
-
-                @Receiver[mode: TellOnly]
-                func test3(): Unit {
-                    // empty
-                }
-            }
-        )
+        let tokens = createDeclWithReceivers(
+            quote(class ValidActor),
+            [(quote(), quote(func test1(): Int64 { 1 })),
+            (quote([mode: AskOnly]), quote(func test2(): Int64 { 2 })),
+            (quote([mode: TellOnly]), quote(func test3(): Unit { () }))
+            ], [])
         // This should not throw an exception
         let result = GenerateActorClass.Run(Tokens(), tokens)
         @Expect(result.size > 0, true)
@@ -169,14 +153,10 @@ public class ActorMacroTest {
     @TestCase
     func testValidClassWithPriorityEnabled() {
         let attrs = quote(enableReceiverPriority: true)
-        let tokens = quote(
-            class ValidActor {
-                @Receiver[priority: 5]
-                func test(): Int64 {
-                    42
-                }
-            }
-        )
+        let tokens = createDeclWithReceivers(
+            quote(class ValidActor),
+            [(quote([priority: 5]),
+            quote(func test(): Int64 { 42 }))], [])
         // This should not throw an exception
         let result = GenerateActorClass.Run(attrs, tokens)
         @Expect(result.size > 0, true)

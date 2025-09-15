@@ -14,6 +14,15 @@ protected class GenerateActorClass {
     let headDecl: Decl
     let decl: ClassDecl
 
+    static let allowedOptions: Array<MacroOption> = [
+        EnableReceiverPriority(true)
+    ]
+
+    static let allowedReceiverOptions: Array<MacroOption> = [
+        Priority(5),
+        Mode(AskAndTell)
+    ]
+
     private init(attrs: Tokens, input: Tokens) {
         errors = MacroErrors()
         aOpts = MacroOptionParser.Run(attrs, errors)
@@ -36,8 +45,14 @@ protected class GenerateActorClass {
             decl.body.decls,
             { d => newDecls.add(d) },
             { mDecl =>
-                newReceiver(mDecl, behaviour: Ask).map { decl => newDecls.add(decl) }
-                newReceiver(mDecl, behaviour: Tell).map { decl => newDecls.add(decl)}
+                let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
+                checkReceiverOptions(rOpts)
+                if (rOpts.shouldAsk()) {
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
+                }
+                if (rOpts.shouldTell()) {
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Tell))
+                }
             }
         )
         decl.body.decls = newDecls
@@ -48,7 +63,7 @@ protected class GenerateActorClass {
     }
 
     private func checkOptions(): Unit {
-        aOpts.checkOptions([EnableReceiverPriority(true)], errors, ACTOR_MACRO)
+        aOpts.checkOptions(allowedOptions, errors, ACTOR_MACRO)
         errors.report()
     }
 
@@ -69,11 +84,12 @@ protected class GenerateActorClass {
         )))
     }
 
-    private func newReceiver(mDecl: MacroExpandDecl, behaviour!: Behaviour): Option<Decl> {
-        let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
+    private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
+        rOpts.checkOptions(allowedReceiverOptions, errors, ACTOR_MACRO)
+        errors.report()
+    }
 
-        checkReceiverOptions(rOpts)
-
+    private func newReceiver(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, behaviour!: Behaviour): Decl {
         let headDecl: Decl = parseDecl(mDecl.macroInputs)
         let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
             case Some(fd) => fd
@@ -84,27 +100,11 @@ protected class GenerateActorClass {
 
         checkReceiverDecl(fd, rOpts)
         modifyFuncDecl(rOpts, fd, behaviour)
-
-        if (behaviour.isAllowed(rOpts)) {
-            headDecl
-        } else {
-            None
-        }
-    }
-
-    private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
-        if (!aOpts.hasEnabledReceiverPriority()) {
-            rOpts.checkOptions([Priority(5), Mode(AskAndTell)], errors, RECEIVER_MACRO)
-        }
-        errors.report()
+        headDecl
     }
 
     private func checkReceiverDecl(fd: FuncDecl, rOpts: MacroOptionSet): Unit {
         for (param in fd.funcParams) {
-            if (aOpts.hasEnabledReceiverPriority() && param.not.kind == TokenKind.NOT && param.identifier.value == "priority") {
-                // a named parameter named "priority"
-                errors.add(ReceiverMacroPriorityNameParameter)
-            }
             if (rOpts.shouldTell() && param.not.kind == TokenKind.NOT && param.identifier.value == "tell") {
                 // a named parameter named "tell"
                 errors.add(ReceiverMacroTellNameParameter)
@@ -114,12 +114,10 @@ protected class GenerateActorClass {
     }
 
     private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        if (aOpts.hasEnabledReceiverPriority()) {
-            let defaultPriority = getPriority(rOpts)
-            fd.funcParams.add(FuncParam(quote(
-                priority!: Int64 = $defaultPriority
-            )))
-        }
+        let defaultPriority = rOpts.getPriority()
+        fd.funcParams.add(FuncParam(quote(
+            config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
+        )))
 
         let declaredType = fd.declType
 
@@ -128,24 +126,19 @@ protected class GenerateActorClass {
             case Tell => PrimitiveType(quote(Unit))
         }
 
-        let priorityArg = Tokens()
-        if (aOpts.hasEnabledReceiverPriority()) {
-            priorityArg.append(Token(COMMA))
-            priorityArg.append(quote(priority: priority))
-        }
-
         let postCall = match (behaviour) {
-            case Ask => quote(post<$declaredType>({ => $(fd.block.nodes)} $priorityArg))
+            case Ask =>
+                quote(post<$declaredType>({ => $(fd.block.nodes)}, config: config))
             case Tell => quote(
                 postMessage(
                     { =>
                         try {
                             { => $(fd.block.nodes) }()
-                        } catch (e: Exception) {
-                        } catch (e: Error) {}
+                        } catch (_: Exception) {
+                        } catch (_: Error) {}
                         return
-                    }
-                    $priorityArg
+                    },
+                    config: config
                 )
             )
         }
@@ -167,16 +160,5 @@ protected class GenerateActorClass {
         }
 
         fd.block.nodes.add(retExpr)
-    }
-}
-
-private enum Behaviour {
-    | Ask | Tell
-
-    func isAllowed(rOpts: MacroOptionSet): Bool {
-        match (this) {
-            case Ask => rOpts.shouldAsk()
-            case Tell => rOpts.shouldTell()
-        }
     }
 }
