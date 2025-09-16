@@ -8,7 +8,7 @@ public struct Metadata <: ToString {
     public Metadata(
         public let receivers: Array<ReceiverInfo>,
         public let description: String,
-        public let customInfo: JsonValue
+        public let customInfo: JsonObject
     ) {}
 
     public override func toString(): String {
@@ -34,7 +34,7 @@ public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
 
     public ReceiverInfo(
         public let description: String,
-        public let customInfo: JsonValue,
+        public let customInfo: JsonObject,
         public let methodName: String,
         public let paramSchema: Array<(String, TypeModel)>,
         public let retTypeModel: TypeModel

@@ -41,7 +41,7 @@ protected class ReceiverMacro {
         Priority(5),
         Mode(AskAndTell),
         Description(""),
-        CustomInfos(JsonValue.fromStr("{}"))
+        CustomInfos((JsonValue.fromStr("{}") as JsonObject).getOrThrow())
     ]
 
     private init(attrs: Tokens, input: Tokens, opts: MacroOptionSet, errors: MacroErrors) {

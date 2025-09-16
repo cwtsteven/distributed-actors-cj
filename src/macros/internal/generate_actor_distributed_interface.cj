@@ -19,13 +19,13 @@ protected class GenerateDistributedActorInterface {
         EnableReceiverPriority(true),
         Distributed(true),
         Description(""),
-        CustomInfos(JsonValue.fromStr("{}"))
+        CustomInfos((JsonValue.fromStr("{}") as JsonObject).getOrThrow())
     ]
 
     static let allowedReceiverOptions: Array<MacroOption> = [
         Mode(AskAndTell),
         Description(""),
-        CustomInfos(JsonValue.fromStr("{}"))
+        CustomInfos((JsonValue.fromStr("{}") as JsonObject).getOrThrow())
     ]
 
     protected static func Run(aOpts: MacroOptionSet, headDecl: Decl, decl: InterfaceDecl, errors: MacroErrors) {
@@ -165,7 +165,7 @@ protected class GenerateDistributedActorInterface {
         let customInfo = aOpts.getCustomInfos()
         FuncDecl(quote(
             static func getMetadata(): Metadata {
-                Metadata($proxyClassIdent.$receiverInfosArrayVarToken.toArray(), $desc, JsonValue.fromStr($(customInfo.toString())))
+                Metadata($proxyClassIdent.$receiverInfosArrayVarToken.toArray(), $desc, (JsonValue.fromStr($(customInfo.toString())) as JsonObject).getOrThrow())
             }
         ))
     }
@@ -247,7 +247,7 @@ protected class GenerateDistributedActorInterface {
 
         Some(VarDecl(quote(
             static let $receiverInfoVarIdent: $receiverInfoToken = $receiverInfoToken(
-                $(description), JsonValue.fromStr($(customInfo.toString())), $(fd.identifier.value), $paramSchema, $retTypeModel
+                $(description), (JsonValue.fromStr($(customInfo.toString())) as JsonObject).getOrThrow(), $(fd.identifier.value), $paramSchema, $retTypeModel
             )
         )))
     }

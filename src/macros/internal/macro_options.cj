@@ -12,7 +12,7 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     | Distributed(Bool)
     | Mode(ReceiverMode)
     | Description(String)
-    | CustomInfos(JsonValue)
+    | CustomInfos(JsonObject)
 
     public override func hashCode(): Int64 {
         match (this) {
@@ -127,14 +127,14 @@ protected class MacroOptionSet {
         ""
     }
 
-    func getCustomInfos(): JsonValue {
+    func getCustomInfos(): JsonObject {
         for (opt in opts) {
             match (opt) {
                 case CustomInfos(c) => return c
                 case _ => continue
             }
         }
-        JsonValue.fromStr("[]")
+        (JsonValue.fromStr("{}") as JsonObject).getOrThrow()
     }
 
     func getPriority(): Int64 {
@@ -253,13 +253,13 @@ class MacroOptionParser {
             case "description" =>
                 addOption(Description(val.value))
             case "customInfo" =>
-                let jsonValue: JsonValue = try {
-                    JsonValue.fromStr(val.value)
+                let jsonObject: JsonObject = try {
+                    (JsonValue.fromStr(val.value) as JsonObject).getOrThrow()
                 } catch (_: JsonException) {
                     errors.add(MacroOptionCustomInfosInvalidFormat)
                     return
                 }
-                addOption(CustomInfos(jsonValue))
+                addOption(CustomInfos(jsonObject))
             case _ =>
                 errors.add(MacroOptionInvalidOption(key.value))
         }
