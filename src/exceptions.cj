@@ -2,7 +2,7 @@ package actors
 
 import std.collection.*
 
-import stdx.serialization.serialization.*
+import serialization.serialization.*
 
 public class ActorNotFoundException <: Exception {
     public init(name: String) {

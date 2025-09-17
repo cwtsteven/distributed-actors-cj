@@ -44,16 +44,16 @@ protected class GenerateActorInterface {
         let newDecls = ArrayList<Decl>()
         processReceivers(
             decl.body.decls,
-            { d => newDecls.add(d) },
+            { d => newDecls.append(d) },
             { mDecl =>
                 let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
                 checkReceiverOptions(rOpts)
 
                 if (rOpts.shouldAsk()) {
-                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
+                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Ask))
                 }
                 if (rOpts.shouldTell()) {
-                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Tell))
+                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Tell))
                 }
             }
         )
@@ -94,13 +94,13 @@ protected class GenerateActorInterface {
     }
 
     private func modifyFuncDecl(_: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        fd.funcParams.add(FuncParam(quote(
+        fd.funcParams.append(FuncParam(quote(
             config!: ReceiverConfig
         )))
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
-            fd.funcParams.add(FuncParam(quote(
+            fd.funcParams.append(FuncParam(quote(
                 tell!: $tellTypeToken
             )))
         }

@@ -3,7 +3,7 @@ package actors.macros.internal
 import std.ast.*
 import std.collection.*
 
-import stdx.encoding.json.*
+import encoding.json.*
 
 protected class GenerateDistributedActorInterface {
 
@@ -45,7 +45,7 @@ protected class GenerateDistributedActorInterface {
         checkOptions()
         checkInterfaceDecl()
 
-        decl.superTypes.add(RefType(quote(
+        decl.superTypes.append(RefType(quote(
             $distributableTypeToken
         )))
 
@@ -53,13 +53,13 @@ protected class GenerateDistributedActorInterface {
         let staticInit = FuncDecl(quote(
             static init() {}
         ))
-        proxyClassDecl.body.decls.add(staticInit)
+        proxyClassDecl.body.decls.append(staticInit)
 
         let newDecls = ArrayList<Decl>()
 
         let receiverNames = HashSet<String>()
 
-        processReceivers(decl.body.decls, { d => newDecls.add(d) },
+        processReceivers(decl.body.decls, { d => newDecls.append(d) },
             { mDecl =>
                 let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
                 checkReceiverOptions(rOpts)
@@ -67,18 +67,18 @@ protected class GenerateDistributedActorInterface {
                 createReceiverInfo(mDecl, rOpts, proxyClassDecl, staticInit, receiverNames)
 
                 if (rOpts.shouldAsk()) {
-                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
+                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Ask))
                 }
                 if (rOpts.shouldTell()) {
-                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Tell))
+                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Tell))
                 }
             })
 
         decl.body.decls = newDecls
 
-        decl.body.decls.add(newGetMetadataFunc())
-        decl.body.decls.add(newDispatchTellFunc())
-        decl.body.decls.add(newDispatchAskFunc())
+        decl.body.decls.append(newGetMetadataFunc())
+        decl.body.decls.append(newDispatchTellFunc())
+        decl.body.decls.append(newDispatchAskFunc())
 
         headDecl.toTokens() + proxyClassDecl.toTokens()
     }
@@ -114,20 +114,20 @@ protected class GenerateDistributedActorInterface {
             errors.add(ReceiverMacroDuplicateIdentifier(fd.identifier.value))
             errors.doThrow()
         }
-        receiverNames.add(fd.identifier.value)
+        receiverNames.put(fd.identifier.value)
 
         checkReceiverDecl(fd)
 
         let receiverInfoVarIdent = Token(IDENTIFIER, fd.identifier.value + RECEIVER_INFO_NAME)
         match (newReceiverInfo(receiverInfoVarIdent, rOpts, fd, fd.declType, errors)) {
-            case Some(varDecl) => proxyClassDecl.body.decls.add(varDecl)
+            case Some(varDecl) => proxyClassDecl.body.decls.append(varDecl)
             case None => ()
         }
 
         if (rOpts.shouldTell()) {
             let callExpr = deserializeFuncParams(fd, true)
-            staticInit.block.nodes.add(CallExpr(quote(
-                $dispatchTellHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
+            staticInit.block.nodes.append(CallExpr(quote(
+                $dispatchTellHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
                     a.$(fd.identifier)$(callExpr)
                 })
             )))
@@ -135,15 +135,15 @@ protected class GenerateDistributedActorInterface {
 
         if (rOpts.shouldAsk()) {
             let callExpr = deserializeFuncParams(fd, false)
-            staticInit.block.nodes.add(CallExpr(quote(
-                $dispatchAskHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
+            staticInit.block.nodes.append(CallExpr(quote(
+                $dispatchAskHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
                     a.$(fd.identifier)$(callExpr)
                 })
             )))
         }
         // Add receiver info to the static receivers array
-        staticInit.block.nodes.add(CallExpr(quote(
-            $receiverInfosArrayVarToken.add($receiverInfoVarIdent)
+        staticInit.block.nodes.append(CallExpr(quote(
+            $receiverInfosArrayVarToken.append($receiverInfoVarIdent)
         )))
     }
 
@@ -164,7 +164,7 @@ protected class GenerateDistributedActorInterface {
         let desc = aOpts.getDescription()
         let customInfo = aOpts.getCustomInfos()
         FuncDecl(quote(
-            static func getMetadata(): Metadata {
+            func getMetadata(): Metadata {
                 Metadata($proxyClassIdent.$receiverInfosArrayVarToken.toArray(), $desc, JsonValue.fromStr($(customInfo.toString())))
             }
         ))
@@ -209,13 +209,13 @@ protected class GenerateDistributedActorInterface {
     }
 
     private func modifyFuncDecl(_: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        fd.funcParams.add(FuncParam(quote(
+        fd.funcParams.append(FuncParam(quote(
             config!: ReceiverConfig
         )))
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
-            fd.funcParams.add(FuncParam(quote(
+            fd.funcParams.append(FuncParam(quote(
                 tell!: $tellTypeToken
             )))
         }

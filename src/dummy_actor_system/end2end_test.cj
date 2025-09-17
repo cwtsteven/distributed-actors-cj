@@ -4,8 +4,8 @@ import std.collection.*
 import std.unittest.*
 import std.unittest.testmacro.*
 
-import stdx.encoding.json.*
-import stdx.serialization.serialization.*
+import encoding.json.*
+import serialization.serialization.*
 
 import actors.*
 import actors.macros.*

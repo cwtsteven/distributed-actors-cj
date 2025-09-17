@@ -4,7 +4,7 @@ import std.ast.*
 import std.collection.*
 import std.convert.*
 
-import stdx.encoding.json.*
+import encoding.json.*
 
 enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     EnableReceiverPriority(Bool)
@@ -60,7 +60,7 @@ protected class MacroOptionSet {
     private let opts = HashSet<MacroOption>()
 
     func add(opt: MacroOption): Unit {
-        opts.add(opt)
+        opts.put(opt)
     }
 
     func contains(opt: MacroOption): Bool {

@@ -3,7 +3,7 @@ package actors.dummy_actor_system
 import std.collection.concurrent.*
 import std.sync.*
 
-import stdx.serialization.serialization.*
+import serialization.serialization.*
 
 import actors.macros.*
 import actors.*
@@ -15,12 +15,12 @@ public class DummyActorSystem <: ActorSystem {
     private let futId = AtomicUInt64(0)
     private let metadataMap = ConcurrentHashMap<String, Metadata>()
 
-    public func register<T>(name: String, a: T): Bool where T <: Distributable {
-        let res = actorMap.addIfAbsent(name, a)
+    public func register(name: String, a: Distributable): Bool {
+        let res = actorMap.putIfAbsent(name, a)
         match (res) {
             case Some(_) => false
             case None =>
-                metadataMap.addIfAbsent(name, T.getMetadata())
+                metadataMap.putIfAbsent(name, a.getMetadata())
                 true
         }
     }
@@ -44,7 +44,7 @@ public class DummyActorSystem <: ActorSystem {
     public func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
         let _ = config
         let id = futId.fetchAdd(1)
-        futMap.add(id, fut)
+        futMap.put(id, fut)
         this.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
     }
 

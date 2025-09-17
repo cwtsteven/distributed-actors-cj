@@ -1,6 +1,6 @@
 package actors
 
-import stdx.encoding.json.*
+import encoding.json.*
 
 public type ActorInfo = (String, Metadata)
 

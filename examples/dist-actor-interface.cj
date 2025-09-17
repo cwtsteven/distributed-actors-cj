@@ -1,7 +1,7 @@
 import std.collection.*
 
-import stdx.serialization.serialization.*
-import stdx.encoding.json.*
+import serialization.serialization.*
+import encoding.json.*
 
 import actors.*
 import actors.macros.*

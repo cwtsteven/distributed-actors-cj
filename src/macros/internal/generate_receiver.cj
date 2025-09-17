@@ -1,7 +1,7 @@
 package actors.macros.internal
 
 import std.ast.*
-import stdx.encoding.json.*
+import encoding.json.*
 
 protected class ReceiverMacro {
     protected static func Run(attrs: Tokens, input: Tokens, bypassParentContextCheck!: Bool = false): Tokens {

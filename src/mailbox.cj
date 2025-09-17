@@ -13,11 +13,11 @@ class UnboundedMailbox <: Mailbox {
     private let queue = ConcurrentLinkedQueue<Item>()
 
     public func add(item: Item, _: Int64): Unit {
-        queue.add(item)
+        queue.enqueue(item)
     }
 
     public func remove(): Option<Item> {
-        queue.remove()
+        queue.dequeue()
     }
 }
 

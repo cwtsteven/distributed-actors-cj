@@ -10,13 +10,9 @@ public interface Waitable {
 sealed abstract class ActorFuture<T> <: Waitable {
     protected var result: FutureResult<T> = unsafe { zeroValue<FutureResult<T>>() }
     protected let isReady = AtomicBool(false)
-    protected let mtx = Mutex()
-    protected let cond: Condition
+    protected let mtx = Monitor()
 
     protected init() {
-        synchronized(mtx) {
-            cond = mtx.condition()
-        }
     }
 
     public open func get(): T {
@@ -26,7 +22,7 @@ sealed abstract class ActorFuture<T> <: Waitable {
 
         synchronized(mtx) {
             while (!isReady.load()) {
-                cond.wait()
+                mtx.wait()
             }
             return result.getOrThrow()
         }
@@ -50,7 +46,7 @@ sealed abstract class ActorFuture<T> <: Waitable {
                     break
                 }
                 let d = timeout - timeElapsed
-                cond.wait(timeout: d)
+                mtx.wait(timeout: d)
             }
         }
         return tryGet()
@@ -90,7 +86,7 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
             }
 
             isReady.store(true)
-            cond.notifyAll()
+            mtx.notifyAll()
         }
     }
 }

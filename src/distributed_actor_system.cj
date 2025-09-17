@@ -1,13 +1,13 @@
 package actors
 
-import stdx.serialization.serialization.*
+import serialization.serialization.*
 
 public interface Fullfillable {
     func fulfill(value: Any): Bool
 }
 
 public interface Distributable {
-    static func getMetadata(): Metadata
+    func getMetadata(): Metadata
 
     func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
     func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Waitable
@@ -31,7 +31,7 @@ public class ActorProxy {
 }
 
 public interface ActorSystem {
-    func register<T>(name: String, a: T): Bool where T <: Distributable
+    func register(name: String, a: Distributable): Bool
     func deregister(name: String): Bool
     func find(name: String): Option<ActorInfo>
     func findAll(): Array<ActorInfo>
@@ -61,7 +61,7 @@ public class DistributedActorFuture<T> <: ActorFuture<T> & Fullfillable where T 
             }
             this.result = res
             isReady.store(true)
-            cond.notifyAll()
+            mtx.notifyAll()
             true
         }
     }
