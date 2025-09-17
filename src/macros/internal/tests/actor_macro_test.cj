@@ -91,13 +91,34 @@ public class ActorMacroTest {
     @TestCase
     func testInvalidMissingSupervisableSupertype() {
         let attrs = quote()
-        let tokens = quote(
+        let tokens1 = quote(
             class ValidActor {
                 func test(): Unit {}
             }
         )
-        let exn = @AssertThrows[MacroException](GenerateActorClass.Run(attrs, tokens))
-        @Expect(exn.message.contains(ActorMacroMissingSuperType.toString()))
+        let exn1 = @AssertThrows[MacroException](GenerateActorClass.Run(attrs, tokens1))
+        @Expect(exn1.message.contains(ActorMacroMissingSuperType.toString()))
+
+        let tokens2 = quote(
+            class ValidActor <: _S1 & _S2 & _S3 {
+                func test(): Unit {}
+            }
+        )
+        let exn2 = @AssertThrows[MacroException](GenerateActorClass.Run(attrs, tokens2))
+        @Expect(exn2.message.contains(ActorMacroMissingSuperType.toString()))
+    }
+
+    @TestCase
+    func testValidMultipleSuperTypes() {
+        let attrs = quote()
+        let tokens = quote(
+            class ValidActor <: S1 & Supervisable & S2 & S3 {
+                func test(): Unit {}
+            }
+        )
+        // This should not throw an exception
+        let result = GenerateActorClass.Run(attrs, tokens)
+        @Expect(result.size > 0, true)
     }
 
     @TestCase

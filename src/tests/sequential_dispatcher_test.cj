@@ -5,6 +5,22 @@ import std.unittest.testmacro.*
 
 import actors.*
 
+// Helper exceptions to test exception handling
+class ContinueException <: Exception {}
+class PoisonException <: Exception {
+    PoisonException(let priority!: Int64) {}
+}
+class StopException <: Exception {}
+
+func toAction(e: Exception): ControlAction {
+    match (e) {
+        case _: ContinueException => Continue
+        case p: PoisonException => Poison(p.priority)
+        case _: StopException => Stop
+        case _ => throw e
+    }
+}
+
 @Test
 public class SequentialDispatcherTest {
 
@@ -258,15 +274,15 @@ public class SequentialDispatcherTest {
         // Submit a low priority task first, then a high priority task
         let futureLow = dispatcher.postAsk({ =>
             executionOrder.value++
-            orderTracker.value += "H"
+            orderTracker.value += "L"
             "low_priority"
-        }, config: ReceiverConfig(priority: 10)) // High priority (10)
+        }, config: ReceiverConfig(priority: 1)) // Low priority (1)
 
         let futureHigh = dispatcher.postAsk({ =>
             executionOrder.value++
-            orderTracker.value += "L"
+            orderTracker.value += "H"
             "high_priority"
-        }, config: ReceiverConfig(priority: 1)) // Low priority (1)
+        }, config: ReceiverConfig(priority: 10)) // High priority (10)
 
         // Wait for all tasks to complete
         let resultHigh = futureHigh.get()
@@ -279,5 +295,74 @@ public class SequentialDispatcherTest {
         // Verify that high priority task executed first despite being submitted second
         @Expect(executionOrder.value, 2) // Both tasks executed
         @Expect(orderTracker.value, "HL") // High priority (H) executed before low priority (L)
+    }
+
+    @TestCase
+    func testMailboxPoisoning() {
+        let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
+
+        func loopAndPoison() {
+            let limit = 100
+            let count = 1_000
+            var res = 0
+            for (i in 0..count) {
+                res = (res + i % limit) % limit
+            }
+            if (res <= limit) {
+                throw PoisonException(priority: 5)
+            }
+        }
+
+        dispatcher.postTell(loopAndPoison, config: ReceiverConfig(onException: toAction))
+        let futLow = dispatcher.postAsk({ => "low_priority"}, config: ReceiverConfig(priority: 1))
+        let futMiddle = dispatcher.postAsk({ => "middle_priority"}, config: ReceiverConfig(priority: 5))
+        let futHigh = dispatcher.postAsk({ => "high_priority"}, config: ReceiverConfig(priority: 10))
+
+        // High priority should get past the poison
+        let resHigh = futHigh.get()
+        @Expect(resHigh, "high_priority")
+
+        // Middle priority should have gotten past the poison
+        let resMiddle = futMiddle.get()
+        @Expect(resMiddle, "middle_priority")
+
+        // Low priority should not have gotten past the poison
+        @AssertThrows[FutureCancelledException](futLow.get())
+
+        // Mailbox should be closed now
+        let fut = dispatcher.postAsk({ => "closed?"})
+        @AssertThrows[FutureCancelledException](fut.get())
+    }
+
+    @TestCase
+    func testContinueOnException() {
+        let count = 100
+        let dispatcher = SequentialDispatcher()
+        let futures = Array(count) { i =>
+            dispatcher.postAsk({ => throw Exception("${i}")}, config: ReceiverConfig(onException: { _ => Continue }))
+        }
+
+        for (i in 0..count) {
+            @AssertThrows[Exception](futures[i].get())
+            try {
+                futures[i].get()
+            } catch (e: Exception) {
+                @Expect(e.message, "${i}")
+            }
+        }
+    }
+
+    @TestCase
+    func testStopOnException() {
+        let dispatcher = SequentialDispatcher()
+
+        let futBefore = dispatcher.postAsk({ => "before"})
+        dispatcher.postTell({ => throw StopException() }, config: ReceiverConfig(onException: toAction))
+        let futAfter = dispatcher.postAsk({ => "after" })
+
+        let resBefore = futBefore.get()
+        @Expect(resBefore, "before")
+
+        @AssertThrows[FutureCancelledException](futAfter.get())
     }
 }
