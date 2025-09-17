@@ -36,7 +36,7 @@ public class SequentialDispatcher {
 
                     match (action) {
                         case Continue => continue
-                        case Poison(priority) => mailbox.add(PoisonPill, priority)
+                        case Poison(priority) => mailbox.poison(priority)
                         case Stop => break
                     }
                 }

@@ -17,14 +17,14 @@ class Mailbox {
     private let numItems = SingleConsumerSemaphore()
     private let isOpen = AtomicBool(true)
 
-    public func add(item: Item, priority: Int64): Bool {
+    func add(item: Item, priority: Int64): Bool {
         if (!isOpen.load()) { return false }
         itemQueue.add(item, priority)
         numItems.signal()
         true
     }
 
-    public func waitNext(): Item {
+    func waitNext(): Item {
         numItems.wait()
         if (!isOpen.load()) { return PoisonPill }
         itemQueue.remove().getOrThrow {
@@ -32,11 +32,18 @@ class Mailbox {
         }
     }
 
-    public func close(): Unit {
+    func close(): Unit {
         if (!isOpen.load()) { return }
         while (isOpen.load() && !isOpen.compareAndSwap(true, false)) {}
         numItems.signal()
         itemQueue.clear()
+    }
+
+    func poison(priority: Int64): Unit {
+        if (priority <= 0 || priority > 10) {
+            throw IllegalArgumentException("Poison must have a priority in the range [1..10].")
+        }
+        add(PoisonPill, priority)
     }
 }
 
