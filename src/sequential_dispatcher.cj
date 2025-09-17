@@ -1,60 +1,65 @@
 package actors
 
 public class SequentialDispatcher {
-    let mailbox: Mailbox
-    let numMsg: SingleConsumerSemaphore
-    let threadHandle: Future<Unit>
+    private let mailbox: Mailbox
 
     public init(enableReceiverPriority!: Bool = false) {
-        this.mailbox = if (enableReceiverPriority) {
-            UnboundedPriorityMailbox()
-        } else {
-            UnboundedMailbox()
-        }
-        this.numMsg = SingleConsumerSemaphore()
-        this.threadHandle = startActorLoop(mailbox, numMsg)
+        mailbox = Mailbox(enableReceiverPriority)
+        startActorLoop(mailbox)
     }
 
-    static func nextItem(mailbox: Mailbox): Option<() -> Unit> {
-        match (mailbox.remove()) {
-            case None => None
-            case Some((_, f)) => f
-        }
-    }
-
-    static func startActorLoop(mailbox: Mailbox, numMsg: SingleConsumerSemaphore): Future<Unit> {
+    static func startActorLoop(mailbox: Mailbox) {
         spawn {
-            while (true) {
-                numMsg.wait()
+            try {
+                while (true) {
+                    let (task, handler) = match (mailbox.waitNext()) {
+                        case PoisonPill => break
+                        case TellMessage(_, f, handler) => (f, handler)
+                        case AskMessage(_, f, handler, _) => (f, handler)
+                    }
 
-                if (Thread.currentThread.hasPendingCancellation) {
-                    return
-                }
+                    let action: ControlAction = try {
+                        try {
+                            task()
+                            Continue
+                        } catch (eff: ControlEffect) {
+                            eff.action
+                        } catch (e: Exception) {
+                            handler.handleException(e)
+                        } catch (e: Error) {
+                            handler.handleError(e)
+                        }
+                    } catch (eff: ControlEffect) {
+                        // Necessary in case handlers throw effects
+                        eff.action
+                    }
 
-                match (nextItem(mailbox)) {
-                    case Some(f) => f()
-                    case None => ()
+                    match (action) {
+                        case Continue => continue
+                        case Poison(priority) => mailbox.add(PoisonPill, priority)
+                        case Stop => break
+                    }
                 }
+            } finally {
+                mailbox.close()
             }
         }
     }
 
-    public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): LocalActorFuture<T> {
+    public func postAsk<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default, onException!: (Exception) -> ControlAction, onError!: (Error) -> ControlAction): LocalActorFuture<T> {
         let fut = LocalActorFuture<T>(f)
-        mailbox.add((this, fut.execute), config.priority)
-        numMsg.signal()
+        let success = mailbox.add(AskMessage(this, fut.execute, Handler(onException, onError), fut.cancel), config.priority)
+        if (!success) {
+            fut.cancel()
+        }
         return fut
     }
 
-    public func postMessage(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default): Unit {
-        mailbox.add((this, f), config.priority)
-        numMsg.signal()
+    public func postTell(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default, onException!: (Exception) -> ControlAction, onError!: (Error) -> ControlAction): Unit {
+        mailbox.add(TellMessage(this, f, Handler(onException, onError)), config.priority)
     }
 
     ~init() {
-        while (!threadHandle.thread.hasPendingCancellation) {
-            threadHandle.cancel()
-        }
-        numMsg.signal()
+        mailbox.close()
     }
 }

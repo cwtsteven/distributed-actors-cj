@@ -22,7 +22,7 @@ public class ActorMacroTest {
     @TestCase
     func testAbstractClass() {
         let tokens = quote(
-            abstract class AbstractActor {
+            abstract class AbstractActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -33,7 +33,7 @@ public class ActorMacroTest {
     @TestCase
     func testOpenClass() {
         let tokens = quote(
-            open class OpenActor {
+            open class OpenActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -44,7 +44,7 @@ public class ActorMacroTest {
     @TestCase
     func testSealedClass() {
         let tokens = quote(
-            sealed class SealedActor {
+            sealed class SealedActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -56,7 +56,7 @@ public class ActorMacroTest {
     func testInvalidOptionFormat() {
         let attrs = quote(invalidFormat)
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -68,7 +68,7 @@ public class ActorMacroTest {
     func testInvalidOptionName() {
         let attrs = quote(invalidOption: true)
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -80,7 +80,7 @@ public class ActorMacroTest {
     func testInvalidEnableReceiverPriorityValue() {
         let attrs = quote(enableReceiverPriority: invalid)
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -89,10 +89,22 @@ public class ActorMacroTest {
     }
 
     @TestCase
+    func testInvalidMissingSupervisableSupertype() {
+        let attrs = quote()
+        let tokens = quote(
+            class ValidActor {
+                func test(): Unit {}
+            }
+        )
+        let exn = @AssertThrows[MacroException](GenerateActorClass.Run(attrs, tokens))
+        @Expect(exn.message.contains(ActorMacroMissingSuperType.toString()))
+    }
+
+    @TestCase
     func testValidEnableReceiverPriorityTrue() {
         let attrs = quote(enableReceiverPriority: true)
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -105,7 +117,7 @@ public class ActorMacroTest {
     func testValidEnableReceiverPriorityFalse() {
         let attrs = quote(enableReceiverPriority: false)
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -117,7 +129,7 @@ public class ActorMacroTest {
     @TestCase
     func testValidClassWithoutOptions() {
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -129,7 +141,7 @@ public class ActorMacroTest {
     @TestCase
     func testValidClassWithReceiver() {
         let tokens = createDeclWithReceivers(
-            quote(class ValidActor),
+            quote(class ValidActor <: Supervisable),
             [(quote(), quote(func test(): Int64 { 42 }))],
             [])
         // This should not throw an exception
@@ -140,7 +152,7 @@ public class ActorMacroTest {
     @TestCase
     func testValidClassWithMultipleReceivers() {
         let tokens = createDeclWithReceivers(
-            quote(class ValidActor),
+            quote(class ValidActor <: Supervisable),
             [(quote(), quote(func test1(): Int64 { 1 })),
             (quote([mode: AskOnly]), quote(func test2(): Int64 { 2 })),
             (quote([mode: TellOnly]), quote(func test3(): Unit { () }))
@@ -154,7 +166,7 @@ public class ActorMacroTest {
     func testValidClassWithPriorityEnabled() {
         let attrs = quote(enableReceiverPriority: true)
         let tokens = createDeclWithReceivers(
-            quote(class ValidActor),
+            quote(class ValidActor <: Supervisable),
             [(quote([priority: 5]),
             quote(func test(): Int64 { 42 }))], [])
         // This should not throw an exception
@@ -166,7 +178,7 @@ public class ActorMacroTest {
     func testUnexpectedTokenInOptions() {
         let attrs = quote(enableReceiverPriority true) // Missing colon
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )
@@ -178,7 +190,7 @@ public class ActorMacroTest {
     func testIncompleteOptionFormat() {
         let attrs = quote(enableReceiverPriority:) // Missing value
         let tokens = quote(
-            class ValidActor {
+            class ValidActor <: Supervisable {
                 func test(): Unit {}
             }
         )

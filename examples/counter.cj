@@ -2,7 +2,7 @@ import actors.*
 import actors.macros.*
 
 @Actor
-public class Counter {
+public class Counter <: Supervisable {
     private var count = 0
 
     @Receiver[mode: AskAndTell]

@@ -24,6 +24,7 @@ enum MacroError {
     ActorMacroInvalidDecl
     | ActorMacroInvalidClassModifier
     | ActorMacroInternalError
+    | ActorMacroMissingSuperType
 
     | ActorInterfaceMacroInvalidDecl
 
@@ -57,6 +58,7 @@ extend MacroError <: ToString {
             case ActorMacroInvalidDecl => "${ACTOR_MACRO} macro: must be a class declaration."
             case ActorMacroInvalidClassModifier => "${ACTOR_MACRO} macro: class declaration cannot be abstract nor open nor sealed."
             case ActorMacroInternalError => "${ACTOR_MACRO} macro: actor macro framework internal error."
+            case ActorMacroMissingSuperType => "${ACTOR_MACRO} macro: class must extend the Supervisable interface"
 
             case ActorInterfaceMacroInvalidDecl => "${ACTOR_INTERFACE_MACRO} macro: must be an interface declaration."
 

@@ -1,34 +1,78 @@
 package actors
 
 import std.collection.concurrent.*
+import std.sync.AtomicBool
 
-private type Item = (SequentialDispatcher, () -> Unit)
+class Mailbox {
+    private let itemQueue: ItemQueue
 
-interface Mailbox {
-    func add(item: Item, priority: Int64): Unit
+    Mailbox(enablePriority: Bool) {
+        itemQueue = if (enablePriority) {
+            ConcurrentPriorityQueue<Item>()
+        } else {
+            ConcurrentLinkedQueue<Item>()
+        }
+    } 
+
+    private let numItems = SingleConsumerSemaphore()
+    private let isOpen = AtomicBool(true)
+
+    public func add(item: Item, priority: Int64): Bool {
+        if (!isOpen.load()) { return false }
+        itemQueue.add(item, priority)
+        numItems.signal()
+        true
+    }
+
+    public func waitNext(): Item {
+        numItems.wait()
+        if (!isOpen.load()) { return PoisonPill }
+        itemQueue.remove().getOrThrow {
+            IllegalStateException("Expected to find an item in this mailbox, found none")
+        }
+    }
+
+    public func close(): Unit {
+        if (!isOpen.load()) { return }
+        while (isOpen.load() && !isOpen.compareAndSwap(true, false)) {}
+        numItems.signal()
+        itemQueue.clear()
+    }
+}
+
+type Task = () -> Unit
+type Cancellation = () -> Unit
+
+enum Item {
+    | PoisonPill
+    | TellMessage(SequentialDispatcher, Task, Handler)
+    | AskMessage(SequentialDispatcher, Task, Handler, Cancellation)
+}
+
+interface ItemQueue {
+    func add(item: Item, priority: Int64): Unit 
     func remove(): Option<Item>
+    func clear(): Unit
 }
 
-class UnboundedMailbox <: Mailbox {
-    private let queue = ConcurrentLinkedQueue<Item>()
-
+extend ConcurrentLinkedQueue<Item> <: ItemQueue {
     public func add(item: Item, _: Int64): Unit {
-        queue.add(item)
+        add(item)
     }
 
-    public func remove(): Option<Item> {
-        queue.remove()
+    public func clear(): Unit {
+        while (let Some(item) <- remove()) {
+            if (let AskMessage(_, _, _, cancel) <- item) {
+                cancel()
+            }
+        }
     }
 }
 
-class UnboundedPriorityMailbox <: Mailbox {
-    private let queue = ConcurrentPriorityQueue<Item>()
-
-    public func add(item: Item, priority: Int64): Unit {
-        queue.add(item, priority)
-    }
-
-    public func remove(): Option<Item> {
-        queue.remove()
+extend ConcurrentPriorityQueue<Item> <: ItemQueue {
+    public func clear(): Unit {
+        for (queue in queuePool) {
+            queue.clear()
+        }
     }
 }

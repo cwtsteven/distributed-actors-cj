@@ -8,7 +8,7 @@ import actors.*
 import actors.macros.*
 
 @Actor
-class Bag {
+class Bag <: Supervisable {
     private let items = ArrayList<Int64>()
 
     @Receiver[mode: AskAndTell]

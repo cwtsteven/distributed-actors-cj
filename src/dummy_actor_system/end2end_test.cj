@@ -20,7 +20,7 @@ public interface TestService {
 }
 
 @Actor
-public class TestServiceImpl <: TestService {
+public class TestServiceImpl <: TestService & Supervisable {
     @Receiver
     public func addTen(x: Int64): Int64 {
         x + 10

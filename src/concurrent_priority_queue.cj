@@ -5,8 +5,8 @@ import std.collection.concurrent.*
 const DEFAULT_CAPACITY = 10
 
 class ConcurrentPriorityQueue<T> {
-    private let capacity: Int64
-    private let queuePool: Array<ConcurrentLinkedQueue<T>>
+    let capacity: Int64
+    let queuePool: Array<ConcurrentLinkedQueue<T>>
 
     init() {
         this(DEFAULT_CAPACITY)
@@ -17,7 +17,7 @@ class ConcurrentPriorityQueue<T> {
         this.queuePool = Array<ConcurrentLinkedQueue<T>>(capacity, { _ => ConcurrentLinkedQueue<T>() })
     }
 
-    func add(item: T, priority: Int64): Unit {
+    public func add(item: T, priority: Int64): Unit {
         if (priority <= 0 || priority > capacity) {
             throw IllegalArgumentException("Priority must be in the range of [1..${capacity}].")
         }
@@ -26,7 +26,7 @@ class ConcurrentPriorityQueue<T> {
         queuePool[priority - 1].add(item)
     }
 
-    func remove(): Option<T> {
+    public func remove(): Option<T> {
         var index: Int64 = -1
         for (i in 0..capacity) {
             if (!queuePool[i].isEmpty()) {

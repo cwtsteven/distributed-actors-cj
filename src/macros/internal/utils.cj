@@ -40,6 +40,8 @@ let enableReceiverPriorityToken = Token(IDENTIFIER, ENABLE_RECEIVER_PRIORITY_NAM
 
 let distributableTypeToken = Token(IDENTIFIER, DISTRIBUTABLE_TYPE_NAME)
 
+let supervisableTypeNode = parseType(quote(Supervisable))
+
 func deserializeFuncParams(fd: FuncDecl, isTell: Bool): Tokens {
     if (fd.funcParams.size == 0) {
         return quote((config: config))
@@ -59,6 +61,15 @@ func deserializeFuncParams(fd: FuncDecl, isTell: Bool): Tokens {
     }
     res += Token(TokenKind.RPAREN)
     res
+}
+
+func commaSeparated(params: Collection<Tokens>): Tokens {
+    let tokens = Tokens()
+    for ((i, param) in params.iterator().enumerate()) {
+        if (i > 0) { tokens.append(Token(TokenKind.COMMA)) }
+        tokens.append(param)
+    }
+    tokens
 }
 
 enum Behaviour {

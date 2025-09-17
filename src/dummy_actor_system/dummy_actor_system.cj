@@ -9,7 +9,7 @@ import actors.macros.*
 import actors.*
 
 @Actor
-public class DummyActorSystem <: ActorSystem {
+public class DummyActorSystem <: ActorSystem & Supervisable {
     private let actorMap = ConcurrentHashMap<String, Distributable>()
     private let futMap = ConcurrentHashMap<UInt64, Fullfillable>()
     private let futId = AtomicUInt64(0)

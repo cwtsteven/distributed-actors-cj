@@ -72,6 +72,12 @@ protected class GenerateActorClass {
             errors.add(ActorMacroInvalidClassModifier)
             errors.doThrow()
         }
+        // Check if the 'Supervisable' interface is extended
+        let superTypeIds = decl.superTypes.toArray().map { t => t.toTokens().toString() }
+        if (!superTypeIds.contains(supervisableTypeNode.toTokens().toString())) {
+            errors.add(ActorMacroMissingSuperType)
+            errors.doThrow()
+        }
     }
 
     private func addDispatcherVar(): Unit {
@@ -126,24 +132,34 @@ protected class GenerateActorClass {
             case Tell => PrimitiveType(quote(Unit))
         }
 
-        let postCall = match (behaviour) {
-            case Ask =>
-                quote(post<$declaredType>({ => $(fd.block.nodes)}, config: config))
-            case Tell => quote(
-                postMessage(
-                    { =>
-                        try {
-                            { => $(fd.block.nodes) }()
-                        } catch (_: Exception) {
-                        } catch (_: Error) {}
-                        return
-                    },
-                    config: config
-                )
-            )
+        let arguments = ArrayList<Tokens>()
+
+        // closure
+        arguments.add(
+            match (behaviour) {
+                case Ask => quote({ => $(fd.block.nodes) })
+                case Tell => quote({ => { => $(fd.block.nodes) }(); return })
+            }
+        )
+
+        // exception/error handling
+        arguments.add(all:[
+            quote(onException: onException),
+            quote(onError: onError)
+        ])
+
+        // receiver config
+        arguments.add(quote(config: config)) 
+
+        // post function
+        let post = match (behaviour) {
+            case Ask => quote(postAsk<$declaredType>)
+            case Tell => quote(postTell)
         }
 
-        let retExpr = ReturnExpr(quote(return $dispatcherToken.$postCall))
+        let retExpr = ReturnExpr(quote(
+            return $dispatcherToken.$post($(commaSeparated(arguments)))
+        ))
 
         fd.block.nodes.clear()
 

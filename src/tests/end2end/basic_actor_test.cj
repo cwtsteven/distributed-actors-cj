@@ -8,7 +8,7 @@ import actors.macros.*
 
 // Simple counter actor
 @Actor
-class CounterActor {
+class CounterActor <: Supervisable {
     private var count: Int64 = 0
 
     @Receiver[mode: AskOnly]
@@ -30,7 +30,7 @@ class CounterActor {
 
 // Simple calculator actor
 @Actor
-class CalculatorActor {
+class CalculatorActor <: Supervisable {
     @Receiver[mode: AskOnly]
     func add(a: Int64, b: Int64): Int64 {
         a + b

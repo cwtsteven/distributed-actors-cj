@@ -17,7 +17,7 @@ interface SimpleService {
 }
 
 @Actor
-class SimpleServiceImpl <: SimpleService {
+class SimpleServiceImpl <: SimpleService & Supervisable {
     private var value: Int64 = 0
 
     @Receiver

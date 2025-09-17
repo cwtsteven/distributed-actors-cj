@@ -6,7 +6,7 @@ import std.collection.ArrayList
 import std.runtime.*
 
 @Actor
-class ForkJoinActor {
+class ForkJoinActor <: Supervisable {
     var state = 0.0
     @Receiver[mode: AskOnly]
     func ping(): Unit {

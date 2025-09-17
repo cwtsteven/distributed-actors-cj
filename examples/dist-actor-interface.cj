@@ -27,7 +27,7 @@ public interface Service {
 }
 
 @Actor
-public class MyService <: Service {
+public class MyService <: Service & Supervisable {
 
     @Receiver
     public func foo(x: Int64): Int64 {

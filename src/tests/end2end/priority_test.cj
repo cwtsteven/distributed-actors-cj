@@ -8,7 +8,7 @@ import actors.macros.*
 
 // Simple priority actor
 @Actor[enableReceiverPriority: true]
-class PriorityActor {
+class PriorityActor <: Supervisable {
     private var counter: Int64 = 0
 
     @Receiver[priority: 10, mode: AskOnly]

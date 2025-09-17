@@ -46,9 +46,10 @@ public class ActorFutureTest {
         let future = LocalActorFuture<Int64>({ =>
             throw Exception("Test exception")
         })
-        future.execute()
-        let exn = @AssertThrows[Exception](future.get())
-        @Expect(exn.message, "Test exception")
+        let exn1 = @AssertThrows[Exception](future.execute())
+        let exn2 = @AssertThrows[Exception](future.get())
+        @Expect(exn1.message, "Test exception")
+        @Expect(exn2.message, "Test exception")
     }
 
     @TestCase
@@ -56,7 +57,8 @@ public class ActorFutureTest {
         let future = LocalActorFuture<Int64>({ =>
             throw Exception("Test exception")
         })
-        future.execute()
+        let exn = @AssertThrows[Exception](future.execute())
+        @Expect(exn.message, "Test exception")
         // tryGet() should throw the exception directly, not return Some
         let thrownExn = @AssertThrows[Exception](future.tryGet())
         @Expect(thrownExn.message, "Test exception")
@@ -172,11 +174,12 @@ public class ActorFutureTest {
         })
 
         successFuture.execute()
-        failureFuture.execute()
+        let exn1 = @AssertThrows[Exception](failureFuture.execute())
+        @Expect(exn1.message, "Task failed")
 
         @Expect(successFuture.get(), 42)
-        let exn = @AssertThrows[Exception](failureFuture.get())
-        @Expect(exn.message, "Task failed")
+        let exn2 = @AssertThrows[Exception](failureFuture.get())
+        @Expect(exn2.message, "Task failed")
     }
 
     @TestCase

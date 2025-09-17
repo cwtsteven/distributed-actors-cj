@@ -13,7 +13,7 @@ var isFinalized1 = AtomicBool(false)
 var isFinalized2 = AtomicBool(false)
 
 @Actor
-class FinalizerActor {
+class FinalizerActor <: Supervisable {
 
     @Receiver[mode: AskAndTell]
     func foo(): Unit {
@@ -25,7 +25,7 @@ class FinalizerActor {
     }
 }
 
-class FinalizerClass {
+class FinalizerClass <: Supervisable {
     func foo(): Unit {
         // Empty function body
     }
@@ -36,7 +36,7 @@ class FinalizerClass {
 }
 
 @Actor
-class ForkJoinActor {
+class ForkJoinActor <: Supervisable {
     static let numFinalized = AtomicInt64(0)
     var state = 0.0
     @Receiver[mode: AskOnly]

@@ -2,7 +2,7 @@ import actors.*
 import actors.macros.*
 
 @Actor
-public class Ping {
+public class Ping <: Supervisable {
     @Receiver
     func ping(other: Pong): Unit {
         println("ping")
@@ -11,7 +11,7 @@ public class Ping {
 }
 
 @Actor
-public class Pong {
+public class Pong <: Supervisable {
     @Receiver
     func pong(other: Ping): Unit {
         println("pong")

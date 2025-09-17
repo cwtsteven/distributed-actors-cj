@@ -7,7 +7,7 @@ import actors.*
 import actors.macros.*
 
 @Actor
-class MyActor {
+class MyActor <: Supervisable {
     let x: Int64
 
     init(x: Int64) {
@@ -26,7 +26,7 @@ class MyActor {
 }
 
 @Actor
-class NumberActor {
+class NumberActor <: Supervisable {
     private var isClosed = false
     public NumberActor(private var state: Int64) {}
 

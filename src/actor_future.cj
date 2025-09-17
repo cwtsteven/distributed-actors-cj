@@ -79,18 +79,32 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
         super.get()
     }
 
-    func execute(): Unit {
+    public func cancel(): Unit {
         synchronized(mtx) {
-            try {
-                this.result = Okay(closure())
-            } catch (e: Exception) {
-                this.result = Exc(e)
-            } catch (e: Error) {
-                this.result = Err(e)
-            }
-
+            this.result = Exc(FutureCancelledException())
             isReady.store(true)
             cond.notifyAll()
+        }
+    }
+
+    func execute(): Unit {
+        synchronized(mtx) {
+            if (isReady.load()) { return }
+            try {
+                this.result = Okay(closure())
+            } catch (eff: ControlEffect) {
+                this.result = Exc(InterruptedReceiverException(eff.action))
+                throw eff
+            } catch (e: Exception) {
+                this.result = Exc(e)
+                throw e
+            } catch (e: Error) {
+                this.result = Err(e)
+                throw e
+            } finally {
+                isReady.store(true)
+                cond.notifyAll()
+            }
         }
     }
 }

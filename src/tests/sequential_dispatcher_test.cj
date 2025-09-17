@@ -13,7 +13,7 @@ public class SequentialDispatcherTest {
     func testSequentialDispatcherCreation() {
         let dispatcher = SequentialDispatcher()
         // Test that dispatcher is created successfully by using it
-        let future = dispatcher.post({ => 42 })
+        let future = dispatcher.postAsk({ => 42 }, onException: { _ => Continue }, onError: { _ => Continue })
         @Expect(future.get(), 42)
     }
 
@@ -21,7 +21,7 @@ public class SequentialDispatcherTest {
     func testSequentialDispatcherCreationWithPriority() {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
         // Test that dispatcher with priority is created successfully by using it
-        let future = dispatcher.post({ => 42 })
+        let future = dispatcher.postAsk({ => 42 }, onException: { _ => Continue }, onError: { _ => Continue })
         @Expect(future.get(), 42)
     }
 
@@ -29,7 +29,7 @@ public class SequentialDispatcherTest {
     @TestCase
     func testPostBasicTask() {
         let dispatcher = SequentialDispatcher()
-        let future = dispatcher.post({ => 42 })
+        let future = dispatcher.postAsk({ => 42 }, onException: { _ => Continue }, onError: { _ => Continue })
         let result = future.get()
         @Expect(result, 42)
     }
@@ -37,7 +37,7 @@ public class SequentialDispatcherTest {
     @TestCase
     func testPostStringTask() {
         let dispatcher = SequentialDispatcher()
-        let future = dispatcher.post({ => "hello world" })
+        let future = dispatcher.postAsk({ => "hello world" }, onException: { _ => Continue }, onError: { _ => Continue })
         let result = future.get()
         @Expect(result, "hello world")
     }
@@ -45,9 +45,9 @@ public class SequentialDispatcherTest {
     @TestCase
     func testPostTaskWithException() {
         let dispatcher = SequentialDispatcher()
-        let future = dispatcher.post({ =>
+        let future = dispatcher.postAsk({ =>
             throw Exception("Test exception")
-        })
+        }, onException: { _ => Continue }, onError: { _ => Continue })
         let exn = @AssertThrows[Exception](future.get())
         @Expect(exn.message, "Test exception")
     }
@@ -56,7 +56,7 @@ public class SequentialDispatcherTest {
     @TestCase
     func testPostWithPriority() {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
-        let future = dispatcher.post({ => 42 }, config: ReceiverConfig(priority: 3))
+        let future = dispatcher.postAsk({ => 42 }, config: ReceiverConfig(priority: 3), onException: { _ => Continue }, onError: { _ => Continue })
         let result = future.get()
         @Expect(result, 42)
     }
@@ -64,7 +64,7 @@ public class SequentialDispatcherTest {
     @TestCase
     func testPostWithDefaultPriority() {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
-        let future = dispatcher.post({ => 42 })
+        let future = dispatcher.postAsk({ => 42 }, onException: { _ => Continue }, onError: { _ => Continue })
         let result = future.get()
         @Expect(result, 42)
     }
@@ -73,9 +73,9 @@ public class SequentialDispatcherTest {
     @TestCase
     func testMultipleTasks() {
         let dispatcher = SequentialDispatcher()
-        let future1 = dispatcher.post({ => 1 })
-        let future2 = dispatcher.post({ => 2 })
-        let future3 = dispatcher.post({ => 3 })
+        let future1 = dispatcher.postAsk({ => 1 }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future2 = dispatcher.postAsk({ => 2 }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future3 = dispatcher.postAsk({ => 3 }, onException: { _ => Continue }, onError: { _ => Continue })
 
         @Expect(future1.get(), 1)
         @Expect(future2.get(), 2)
@@ -85,11 +85,11 @@ public class SequentialDispatcherTest {
     @TestCase
     func testMultipleTasksWithMixedResults() {
         let dispatcher = SequentialDispatcher()
-        let future1 = dispatcher.post({ => "success" })
-        let future2 = dispatcher.post({ =>
+        let future1 = dispatcher.postAsk({ => "success" }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future2 = dispatcher.postAsk({ =>
             throw Exception("Task failed")
-        })
-        let future3 = dispatcher.post({ => 42 })
+        }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future3 = dispatcher.postAsk({ => 42 }, onException: { _ => Continue }, onError: { _ => Continue })
 
         @Expect(future1.get(), "success")
         let exn = @AssertThrows[Exception](future2.get())
@@ -101,13 +101,13 @@ public class SequentialDispatcherTest {
     @TestCase
     func testComplexTaskExecution() {
         let dispatcher = SequentialDispatcher()
-        let future = dispatcher.post({ =>
+        let future = dispatcher.postAsk({ =>
             var sum = 0
             for (i in 1..100) {
                 sum += i
             }
             sum
-        })
+        }, onException: { _ => Continue }, onError: { _ => Continue })
         let result = future.get()
         @Expect(result, 4950) // Sum of 1 to 99
     }
@@ -122,7 +122,7 @@ public class SequentialDispatcherTest {
         let executionOrder = Box(0)
 
         // Submit tasks that modify shared state
-        let future1 = dispatcher.post({ =>
+        let future1 = dispatcher.postAsk({ =>
             // Simulate some work and modify shared state
             var sum = 0
             for (i in 1..10) {
@@ -131,8 +131,8 @@ public class SequentialDispatcherTest {
             sharedCounter.value += 10
             executionOrder.value++
             "task1_${executionOrder}"
-        })
-        let future2 = dispatcher.post({ =>
+        }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future2 = dispatcher.postAsk({ =>
             // Simulate some work and modify shared state
             var sum = 0
             for (i in 1..20) {
@@ -141,7 +141,7 @@ public class SequentialDispatcherTest {
             sharedCounter.value += 20
             executionOrder.value++
             "task2_${executionOrder}"
-        })
+        }, onException: { _ => Continue }, onError: { _ => Continue })
 
         let result1 = future1.get()
         let result2 = future2.get()
@@ -161,15 +161,15 @@ public class SequentialDispatcherTest {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
 
         // Test minimum priority (1)
-        let future1 = dispatcher.post({ => "min_priority" }, config: ReceiverConfig(priority: 1))
+        let future1 = dispatcher.postAsk({ => "min_priority" }, config: ReceiverConfig(priority: 1), onException: { _ => Continue }, onError: { _ => Continue })
         @Expect(future1.get(), "min_priority")
 
         // Test maximum priority (10)
-        let future2 = dispatcher.post({ => "max_priority" }, config: ReceiverConfig(priority: 10))
+        let future2 = dispatcher.postAsk({ => "max_priority" }, config: ReceiverConfig(priority: 10), onException: { _ => Continue }, onError: { _ => Continue })
         @Expect(future2.get(), "max_priority")
 
         // Test default priority (5)
-        let future3 = dispatcher.post({ => "default_priority" })
+        let future3 = dispatcher.postAsk({ => "default_priority" }, onException: { _ => Continue }, onError: { _ => Continue })
         @Expect(future3.get(), "default_priority")
     }
 
@@ -179,19 +179,19 @@ public class SequentialDispatcherTest {
         let dispatcher = SequentialDispatcher(enableReceiverPriority: true)
 
         // Test priority 0 (should be invalid - minimum is 1)
-        let exn1 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_priority_0" }, config: ReceiverConfig(priority: 0)))
+        let exn1 = @AssertThrows[IllegalArgumentException](dispatcher.postAsk({ => "invalid_priority_0" }, config: ReceiverConfig(priority: 0), onException: { _ => Continue }, onError: { _ => Continue }))
         @Expect(exn1.message.contains("Priority must be in the range of [1..10]"), true)
 
         // Test negative priority (should be invalid)
-        let exn2 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_negative_priority" }, config: ReceiverConfig(priority: -1)))
+        let exn2 = @AssertThrows[IllegalArgumentException](dispatcher.postAsk({ => "invalid_negative_priority" }, config: ReceiverConfig(priority: -1), onException: { _ => Continue }, onError: { _ => Continue }))
         @Expect(exn2.message.contains("Priority must be in the range of [1..10]"), true)
 
         // Test priority > 10 (should be invalid - maximum is 10)
-        let exn3 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_priority_11" }, config: ReceiverConfig(priority: 11)))
+        let exn3 = @AssertThrows[IllegalArgumentException](dispatcher.postAsk({ => "invalid_priority_11" }, config: ReceiverConfig(priority: 11), onException: { _ => Continue }, onError: { _ => Continue }))
         @Expect(exn3.message.contains("Priority must be in the range of [1..10]"), true)
 
         // Test very large priority value
-        let exn4 = @AssertThrows[IllegalArgumentException](dispatcher.post({ => "invalid_large_priority" }, config: ReceiverConfig(priority: 100)))
+        let exn4 = @AssertThrows[IllegalArgumentException](dispatcher.postAsk({ => "invalid_large_priority" }, config: ReceiverConfig(priority: 100), onException: { _ => Continue }, onError: { _ => Continue }))
         @Expect(exn4.message.contains("Priority must be in the range of [1..10]"), true)
     }
 
@@ -205,7 +205,7 @@ public class SequentialDispatcherTest {
         let orderTracker = Box("")
 
         // Submit tasks that will take different amounts of time
-        let future1 = dispatcher.post({ =>
+        let future1 = dispatcher.postAsk({ =>
             // Simulate work and track execution order
             var sum = 0
             for (i in 1..1000) {
@@ -214,8 +214,8 @@ public class SequentialDispatcherTest {
             executionOrder.value++
             orderTracker.value += "1"
             1
-        })
-        let future2 = dispatcher.post({ =>
+        }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future2 = dispatcher.postAsk({ =>
             // Simulate work and track execution order
             var sum = 0
             for (i in 1..500) {
@@ -224,12 +224,12 @@ public class SequentialDispatcherTest {
             executionOrder.value++
             orderTracker.value += "2"
             2
-        })
-        let future3 = dispatcher.post({ =>
+        }, onException: { _ => Continue }, onError: { _ => Continue })
+        let future3 = dispatcher.postAsk({ =>
             executionOrder.value++
             orderTracker.value += "3"
             3
-        })
+        }, onException: { _ => Continue }, onError: { _ => Continue })
 
         // Wait for all tasks to complete
         let result1 = future1.get()
@@ -256,17 +256,17 @@ public class SequentialDispatcherTest {
         let orderTracker = Box("")
 
         // Submit a low priority task first, then a high priority task
-        let futureLow = dispatcher.post({ =>
+        let futureLow = dispatcher.postAsk({ =>
             executionOrder.value++
             orderTracker.value += "H"
             "low_priority"
-        }, config: ReceiverConfig(priority: 10)) // High priority (10)
+        }, config: ReceiverConfig(priority: 10), onException: { _ => Continue }, onError: { _ => Continue }) // High priority (10)
 
-        let futureHigh = dispatcher.post({ =>
+        let futureHigh = dispatcher.postAsk({ =>
             executionOrder.value++
             orderTracker.value += "L"
             "high_priority"
-        }, config: ReceiverConfig(priority: 1)) // Low priority (1)
+        }, config: ReceiverConfig(priority: 1), onException: { _ => Continue }, onError: { _ => Continue }) // Low priority (1)
 
         // Wait for all tasks to complete
         let resultHigh = futureHigh.get()
