@@ -22,6 +22,10 @@ class Bag <: Supervisable {
 
     @Receiver[mode: TellOnly]
     func failing(): Unit { throw Exception("boom") }
+
+    override public func onException(_: Exception): ControlAction {
+        Continue
+    }
 }
 
 @Test

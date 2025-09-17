@@ -1,9 +1,9 @@
 package actors
 
 struct Handler {
-    public Handler(
-        public let handleException: (Exception) -> ControlAction,
-        public let handleError: (Error) -> ControlAction
+    Handler(
+        let handleException: (Exception) -> ControlAction,
+        let handleError: (Error) -> ControlAction
     ) {}
 }
 

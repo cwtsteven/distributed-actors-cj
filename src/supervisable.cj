@@ -1,7 +1,7 @@
 package actors
 
 public interface Supervisable {
-    func onException(_: Exception): ControlAction { Continue }
+    func onException(e: Exception): ControlAction { throw e }
 
-    func onError(_: Error): ControlAction { Continue }
+    func onError(e: Error): ControlAction { throw e }
 }

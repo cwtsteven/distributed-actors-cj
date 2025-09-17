@@ -122,7 +122,11 @@ protected class GenerateActorClass {
     private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         let defaultPriority = rOpts.getPriority()
         fd.funcParams.add(FuncParam(quote(
-            config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
+            config!: ReceiverConfig = ReceiverConfig(
+                priority: $defaultPriority,
+                onException: onException,
+                onError: onError
+            )
         )))
 
         let declaredType = fd.declType
@@ -132,24 +136,14 @@ protected class GenerateActorClass {
             case Tell => PrimitiveType(quote(Unit))
         }
 
-        let arguments = ArrayList<Tokens>()
-
-        // closure
-        arguments.add(
+        let arguments = [
+            // closure
             match (behaviour) {
                 case Ask => quote({ => $(fd.block.nodes) })
                 case Tell => quote({ => { => $(fd.block.nodes) }(); return })
-            }
-        )
-
-        // exception/error handling
-        arguments.add(all:[
-            quote(onException: onException),
-            quote(onError: onError)
-        ])
-
-        // receiver config
-        arguments.add(quote(config: config)) 
+            },
+            quote(config: config)
+        ]
 
         // post function
         let post = match (behaviour) {
