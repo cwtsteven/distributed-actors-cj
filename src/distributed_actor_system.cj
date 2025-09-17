@@ -1,9 +1,10 @@
 package actors
 
+import std.collection.*
 import serialization.serialization.*
 
 public interface Fullfillable {
-    func fulfill(value: Any): Bool
+    func fulfill(dataModel: DataModel): Bool
 }
 
 public interface Distributable {
@@ -42,18 +43,12 @@ public interface ActorSystem {
 public class DistributedActorFuture<T> <: ActorFuture<T> & Fullfillable where T <: Serializable<T> {
     init() {}
 
-    public func fulfill(value: Any): Bool {
+    public func fulfill(dataModel: DataModel): Bool {
         if (isReady.load()) {
             return false
         }
 
-        let res: FutureResult<T> = match (value) {
-            case v: T => Okay(v)
-            case e: Exception => Exc(e)
-            case e: Error => Err(e)
-            case _ =>
-                throw IllegalArgumentException("TODO")
-        }
+        let res: FutureResult<T> = FutureResult<T>.deserialize(dataModel)
 
         synchronized(mtx) {
             if (isReady.load()) {
@@ -65,18 +60,77 @@ public class DistributedActorFuture<T> <: ActorFuture<T> & Fullfillable where T 
             true
         }
     }
+
+    public func wait(): DataModel {
+        try {
+            this.get()
+        } catch (_: Exception) {
+        } catch (_: Error) {}
+
+        this.result.serialize()
+    }
 }
 
-protected enum FutureResult<T> {
-    Okay(T)
-    | Exc(Exception)
-    | Err(Error)
-
-    func getOrThrow(): T {
+extend<T> FutureResult<T> <: Serializable<FutureResult<T>> where T <: Serializable<T> {
+    public func serialize(): DataModel {
         match (this) {
-            case Okay(res) => return res
-            case Exc(e) => throw e
-            case Err(e) => throw e
+            case Okay(value) =>
+                let fields = ArrayList<Field>()
+                fields.append(Field("type", DataModelString("Okay")))
+                fields.append(Field("value", value.serialize()))
+                DataModelStruct(fields)
+            case Exc(exception) =>
+                let fields = ArrayList<Field>()
+                fields.append(Field("type", DataModelString("Exc")))
+                fields.append(Field("message", DataModelString(exception.message)))
+                DataModelStruct(fields)
+            case Err(error) =>
+                let fields = ArrayList<Field>()
+                fields.append(Field("type", DataModelString("Err")))
+                fields.append(Field("message", DataModelString(error.message)))
+                DataModelStruct(fields)
+        }
+    }
+
+    public static func deserialize(dataModel: DataModel): FutureResult<T> {
+        match (dataModel) {
+            case dm: DataModelStruct =>
+                let fields = dm.getFields()
+                var resultType: String = ""
+                var valueData: DataModel = DataModelNull()
+                var message: String = ""
+
+                for (field in fields) {
+                    match (field.getName()) {
+                        case "type" =>
+                            match (field.getData()) {
+                                case str: DataModelString => resultType = str.getValue()
+                                case _ => throw Exception("Invalid type field in FutureResult deserialization")
+                            }
+                        case "value" =>
+                            valueData = field.getData()
+                        case "message" =>
+                            match (field.getData()) {
+                                case str: DataModelString => message = str.getValue()
+                                case _ => throw Exception("Invalid message field in FutureResult deserialization")
+                            }
+                        case _ => () // ignore unknown fields for forward compatibility
+                    }
+                }
+
+                match (resultType) {
+                    case "Okay" =>
+                        let value = T.deserialize(valueData)
+                        Okay(value)
+                    case "Exc" =>
+                        Exc(RemoteReceiverException(message))
+                    case "Err" =>
+                        Exc(RemoteReceiverException(message))
+                    case _ =>
+                        throw Exception("Invalid FutureResult type: " + resultType)
+                }
+            case _ =>
+                throw Exception("Expected DataModelStruct for FutureResult deserialization")
         }
     }
 }

@@ -2,9 +2,11 @@ package actors
 
 import std.sync.*
 import std.time.*
+import serialization.serialization.DataModel
+import serialization.serialization.Serializable
 
 public interface Waitable {
-    func wait(): Any
+    func wait(): DataModel
 }
 
 sealed abstract class ActorFuture<T> <: Waitable {
@@ -58,10 +60,6 @@ sealed abstract class ActorFuture<T> <: Waitable {
         }
         return None
     }
-
-    public open func wait(): Any {
-        this.get()
-    }
 }
 
 public class LocalActorFuture<T> <: ActorFuture<T> {
@@ -87,6 +85,32 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
 
             isReady.store(true)
             mtx.notifyAll()
+        }
+    }
+
+    public func wait(): DataModel {
+        try {
+            this.get()
+        } catch (_: Exception) {
+        } catch (_: Error) {}
+
+        match (this.result as Serializable<FutureResult<T>>) {
+            case Some(res) => res.serialize()
+            case None => throw Exception()
+        }
+    }
+}
+
+protected enum FutureResult<T> {
+    Okay(T)
+    | Exc(Exception)
+    | Err(Error)
+
+    func getOrThrow(): T {
+        match (this) {
+            case Okay(res) => return res
+            case Exc(e) => throw e
+            case Err(e) => throw e
         }
     }
 }

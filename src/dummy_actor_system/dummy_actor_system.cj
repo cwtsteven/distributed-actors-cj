@@ -58,7 +58,7 @@ public class DummyActorSystem <: ActorSystem {
     }
 
     @Receiver[mode: TellOnly]
-    func handleResult(id: UInt64, res: Any): Unit {
+    func handleResult(id: UInt64, res: DataModel): Unit {
         match (futMap.remove(id)) {
             case Some(fut) => fut.fulfill(res); return
             case None => return
