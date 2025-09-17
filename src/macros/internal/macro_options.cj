@@ -124,7 +124,7 @@ protected class MacroOptionSet {
                 case _ => continue
             }
         }
-        ""
+        "_"
     }
 
     func getCustomInfos(): JsonValue {
@@ -134,7 +134,7 @@ protected class MacroOptionSet {
                 case _ => continue
             }
         }
-        JsonValue.fromStr("[]")
+        JsonValue.fromStr("{ \"dummy\" : \"dummy\" }")
     }
 
     func getPriority(): Int64 {
