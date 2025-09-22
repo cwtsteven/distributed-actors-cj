@@ -1,5 +1,26 @@
 # Enums
 
+## enum ControlAction
+
+```Cangjie
+public enum ControlAction {
+    | Continue
+    | Poison(Int64)
+    | Stop
+}
+```
+
+Function: Represents an action to be taken by the actor thread when one of its receivers throws an exception or an error.
+
+### Values
+
+- `Continue` - The actor should keep processing receivers.
+- `Poison(Int64)` - A poison pill should be added to the actor's mailbox at the provided priority. 
+When a poison pill is removed from the mailbox, the actor stops.
+The value must be a valid priority, otherwise an `IllegalArgumentException` will be thrown and the actor
+will stop immediately.
+- `Stop` - The actor should stop immediately.
+
 ## enum Tell
 
 ```Cangjie

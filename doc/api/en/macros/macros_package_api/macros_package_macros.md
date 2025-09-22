@@ -53,6 +53,7 @@ Function: Transform a class into an actor.
 >
 > - It can only be applied to classes.
 > - The class being annotated cannot be `abstract`, `open`, or `sealed`.
+> - The class being annotated must implement the [`Supervisable`](../../actors_package_api/actors_package_interfaces.md#interface-supervisable) interface.
 
 Violating these limitations will result in a compilation error during macro expansion.
 

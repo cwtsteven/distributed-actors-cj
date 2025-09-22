@@ -16,7 +16,8 @@ public enum ControlAction { Continue | Poison(Int64) | Stop }
 - `Poison(Int64)` means a `PoisonPill` should be added to the actor's mailbox
 at the provided priority. 
 When a `PoisonPill` is removed from the mailbox, the actor stops.
-The value must be a valid priority, and will be ignored if receiver priority is disabled.
+The value must be a valid priority, otherwise an exception will be thrown and the actor
+will stop immediately.
 - `Stop` means the actor should stop immediately.
 
 Example:

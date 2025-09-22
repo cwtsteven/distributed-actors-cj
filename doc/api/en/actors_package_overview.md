@@ -36,6 +36,7 @@ Provides actor programming model in Cangjie with support for both local and dist
 | [ActorSystem](./actors_package_api/actors_package_interfaces.md#interface-actorsystem) | Interface for actor system implementations that manage actor registration and remote communication. |
 | [Distributable](./actors_package_api/actors_package_interfaces.md#interface-distributable) | Interface that distributed actor interfaces must implement to support remote communication. |
 | [Fullfillable](./actors_package_api/actors_package_interfaces.md#interface-fullfillable) | Interface for objects that can be fulfilled with a result value. |
+| [Supervisable](./actors_package_api/actors_package_interfaces.md#interface-supervisable) | This interface must be implemented by [`@Actor`](../macros/macros_package_api/macros_package_macros.md#actor-macro)-annotated classes. It provides functions for exception and error handling. |
 | [Waitable](./actors_package_api/actors_package_interfaces.md#interface-waitable) | Interface for objects that can be waited upon for completion. |
 
 ### Enumerations
@@ -44,3 +45,4 @@ Provides actor programming model in Cangjie with support for both local and dist
 | ---------------- | ------------------- |
 | [Tell](./actors_package_api/actors_package_enums.md#enum-tell) | Single valued enumeration to call a `@Receiver` while bypassing the `ActorFuture` mechanism.|
 | [TypeModel](./actors_package_api/actors_package_enums.md#enum-typemodel) | Represents type information for serialization and metadata generation. |
+| [ControlAction](./actors_package_api/actors_package_enums.md#enum-controlaction) | Represents an action to be taken by the actor thread when one of its receivers throws an exception or an error. |

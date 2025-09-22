@@ -176,6 +176,51 @@ Return Value:
 
 - Bool - Returns `true` if the object was successfully fulfilled, `false` if it was already fulfilled.
 
+## interface Supervisable
+
+```cangjie
+public interface Supervisable
+```
+
+Function: This interface must be implemented by [`@Actor`](../macros/macros_package_api/macros_package_macros.md#actor-macro)-annotated classes.
+It provides functions for exception and error handling.
+
+### func onException(Exception)
+
+```cangjie
+public func onException(e: Exception): ControlAction
+```
+
+Function: This function will be called by the actor thread whenever a receiver throws an exception.
+
+Parameters:
+
+- e: Exception - the exception thrown by the receiver.
+
+Return value:
+
+- [`ControlAction](./actors_package_enums.md#enum-controlaction) - Returns the action to be taken by the actor thread.
+By default, this function throws the input exception, which is functionally equivalent to printing the exception's
+stack trace and returning `Stop`.
+
+### func onError(Error)
+
+```cangjie
+public func onError(e: Error): ControlAction
+```
+
+Function: This function will be called by the actor thread whenever a receiver throws an error.
+
+Parameters:
+
+- e: Error - the error thrown by the receiver.
+
+Return value:
+
+- [`ControlAction](./actors_package_enums.md#enum-controlaction) - Returns the action to be taken by the actor thread.
+By default, this function throws the input error, which is functionally equivalent to printing the error's
+stack trace and returning `Stop`.
+
 ## interface Waitable
 
 ```cangjie
