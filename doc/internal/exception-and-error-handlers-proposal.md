@@ -103,3 +103,7 @@ Futures associated with cleared receivers will also throw a `FutureCancelledExce
 is called.
 - Any `LocalActoreFuture`s associated with receivers interrupted by control effects will
 throw an `InterruptedReceiverException` when `get` is called.
+
+## 2 Implementation
+
+![actor thread logic](./actor-thread-logic.svg)
