@@ -122,11 +122,7 @@ protected class GenerateActorClass {
     private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         let defaultPriority = rOpts.getPriority()
         fd.funcParams.add(FuncParam(quote(
-            config!: ReceiverConfig = ReceiverConfig(
-                priority: $defaultPriority,
-                onException: onException,
-                onError: onError
-            )
+            config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
         )))
 
         let declaredType = fd.declType
@@ -142,7 +138,9 @@ protected class GenerateActorClass {
                 case Ask => quote({ => $(fd.block.nodes) })
                 case Tell => quote({ => { => $(fd.block.nodes) }(); return })
             },
-            quote(config: config)
+            quote(config: config),
+            quote(onException: onException),
+            quote(onError: onError)
         ]
 
         // post function

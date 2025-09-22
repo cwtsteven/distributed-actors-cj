@@ -12,7 +12,7 @@ public class SequentialDispatcher {
         spawn {
             try {
                 while (true) {
-                    let (task, handler) = match (mailbox.waitNext()) {
+                    let (task, handler): (Task, Handler) = match (mailbox.waitNext()) {
                         case PoisonPill => break
                         case TellMessage(_, f, handler) => (f, handler)
                         case AskMessage(_, f, handler, _) => (f, handler)
@@ -46,17 +46,27 @@ public class SequentialDispatcher {
         }
     }
 
-    public func postAsk<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): LocalActorFuture<T> {
+    public func postAsk<T>(
+        f: () -> T,
+        config!: ReceiverConfig = ReceiverConfig.default,
+        onException!: (Exception) -> ControlAction = { e => throw e },
+        onError!: (Error) -> ControlAction = { e => throw e }
+    ): LocalActorFuture<T> {
         let fut = LocalActorFuture<T>(f)
-        let success = mailbox.add(AskMessage(this, fut.execute, Handler(config.onException, config.onError), fut.cancel), config.priority)
+        let success = mailbox.add(AskMessage(this, fut.execute, Handler(onException, onError), fut.cancel), config.priority)
         if (!success) {
             fut.cancel()
         }
         return fut
     }
 
-    public func postTell(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default): Unit {
-        mailbox.add(TellMessage(this, f, Handler(config.onException, config.onError)), config.priority)
+    public func postTell(
+        f: () -> Unit,
+        config!: ReceiverConfig = ReceiverConfig.default,
+        onException!: (Exception) -> ControlAction = { e => throw e },
+        onError!: (Error) -> ControlAction = { e => throw e }
+    ): Unit {
+        mailbox.add(TellMessage(this, f, Handler(onException, onError)), config.priority)
     }
 
     ~init() {

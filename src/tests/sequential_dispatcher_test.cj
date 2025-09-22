@@ -104,7 +104,7 @@ public class SequentialDispatcherTest {
         let future1 = dispatcher.postAsk({ => "success" })
         let future2 = dispatcher.postAsk({ =>
             throw Exception("Task failed")
-        }, config: ReceiverConfig(onException: { _ => Continue }))
+        }, onException: { _ => Continue})
         let future3 = dispatcher.postAsk({ => 42 })
 
         @Expect(future1.get(), "success")
@@ -313,7 +313,7 @@ public class SequentialDispatcherTest {
             }
         }
 
-        dispatcher.postTell(loopAndPoison, config: ReceiverConfig(onException: toAction))
+        dispatcher.postTell(loopAndPoison, onException: toAction)
         let futLow = dispatcher.postAsk({ => "low_priority"}, config: ReceiverConfig(priority: 1))
         let futMiddle = dispatcher.postAsk({ => "middle_priority"}, config: ReceiverConfig(priority: 5))
         let futHigh = dispatcher.postAsk({ => "high_priority"}, config: ReceiverConfig(priority: 10))
@@ -339,7 +339,7 @@ public class SequentialDispatcherTest {
         let count = 100
         let dispatcher = SequentialDispatcher()
         let futures = Array(count) { i =>
-            dispatcher.postAsk({ => throw Exception("${i}")}, config: ReceiverConfig(onException: { _ => Continue }))
+            dispatcher.postAsk({ => throw Exception("${i}")}, onException: { _ => Continue})
         }
 
         for (i in 0..count) {
@@ -357,7 +357,7 @@ public class SequentialDispatcherTest {
         let dispatcher = SequentialDispatcher()
 
         let futBefore = dispatcher.postAsk({ => "before"})
-        dispatcher.postTell({ => throw StopException() }, config: ReceiverConfig(onException: toAction))
+        dispatcher.postTell({ => throw StopException() }, onException: toAction)
         let futAfter = dispatcher.postAsk({ => "after" })
 
         let resBefore = futBefore.get()
