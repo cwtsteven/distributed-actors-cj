@@ -18,7 +18,7 @@ public func run(numActors: Int64) {
     let futures = ArrayList<LocalActorFuture<Unit>>(numActors)
     for (_ in 0..numActors) {
         let actor = ForkJoinActor()
-        futures.add(actor.ping())
+        futures.append(actor.ping())
     }
 
     for (future in futures) {
@@ -30,7 +30,7 @@ public func run(numActors: Int64) {
 main(): Unit {
     for (_ in 0..1000) {
         run(100)
-        println("Num cangjie threads: ${getThreadCount()}")
-        println("Garbage collector has been called ${getGCCount()} times")
+        // println("Num cangjie threads: ${getThreadCount()}")
+        // println("Garbage collector has been called ${getGCCount()} times")
     }
 }

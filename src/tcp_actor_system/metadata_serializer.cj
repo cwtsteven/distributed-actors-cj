@@ -60,7 +60,7 @@ func deserializeMetadata(bytes: Array<Byte>): Metadata {
         let receiverCount = Int32.readLittleEndian(receiverCountBytes)
 
         let receivers = ArrayList<ReceiverInfo>()
-        for (i in 0..receiverCount) {
+        for (_ in 0..receiverCount) {
             let receiver = deserializeReceiverInfo(buffer)
             receivers.append(receiver)
         }
@@ -124,7 +124,7 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
     let paramCount = Int32.readLittleEndian(paramCountBytes)
 
     let paramSchema = ArrayList<(String, TypeModel)>()
-    for (i in 0..paramCount) {
+    for (_ in 0..paramCount) {
         let paramName = deserializeString(buffer)
         let typeModel = deserializeTypeModel(buffer)
         paramSchema.append((paramName, typeModel))

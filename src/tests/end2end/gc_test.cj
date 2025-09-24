@@ -4,6 +4,7 @@ import std.unittest.*
 import std.unittest.testmacro.*
 import std.runtime.*
 import std.sync.*
+import std.time.*
 import std.collection.*
 
 import actors.*
@@ -70,7 +71,7 @@ public class GCTest {
 
         // Give more time for GC to occur and force GC if possible
         for (_ in 0..100) {
-            gc(heavy: true)
+            GC(heavy: true)
             sleep(Duration.millisecond * 100)
             if (isFinalized1.load() || isFinalized2.load()) {
                 break
@@ -89,16 +90,16 @@ public class GCTest {
         let futures = ArrayList<LocalActorFuture<Unit>>(numActors)
         for (_ in 0..numActors) {
             let actor = ForkJoinActor()
-            futures.add(actor.ping())
+            futures.append(actor.ping())
         }
 
         for (future in futures) {
             future.get()
         }
 
-        // Give more time for GC to occur and force GC if possible
+        // Give more time for GC to occur
         for (_ in 0..100) {
-            gc(heavy: true)
+            GC(heavy: true)
             sleep(Duration.millisecond * 100)
             if (ForkJoinActor.numFinalized.load() == numActors) {
                 break

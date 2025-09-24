@@ -4,6 +4,7 @@ import std.unittest.*
 import std.unittest.testmacro.*
 
 import actors.*
+import serialization.serialization.*
 
 @Test
 public class ActorFutureTest {
@@ -66,7 +67,7 @@ public class ActorFutureTest {
     @TestCase
     func testDistributedActorFutureBasicFulfill() {
         let future = DistributedActorFuture<Int64>()
-        let success = future.fulfill(42)
+        let success = future.fulfill(Okay(42).serialize())
         @Expect(success, true)
         let result = future.get()
         @Expect(result, 42)
@@ -75,7 +76,7 @@ public class ActorFutureTest {
     @TestCase
     func testDistributedActorFutureFulfillWithString() {
         let future = DistributedActorFuture<String>()
-        let success = future.fulfill("hello world")
+        let success = future.fulfill(Okay("hello world").serialize())
         @Expect(success, true)
         let result = future.get()
         @Expect(result, "hello world")
@@ -85,7 +86,7 @@ public class ActorFutureTest {
     func testDistributedActorFutureFulfillWithException() {
         let future = DistributedActorFuture<Int64>()
         let err = Exception("Test error")
-        let success = future.fulfill(err)
+        let success = future.fulfill(Exc<Int64>(err).serialize())
         @Expect(success, true)
         let thrownErr = @AssertThrows[Exception](future.get())
         @Expect(thrownErr.message, "Test error")
@@ -101,7 +102,7 @@ public class ActorFutureTest {
     @TestCase
     func testDistributedActorFutureTryGetAfterFulfill() {
         let future = DistributedActorFuture<Int64>()
-        future.fulfill(42)
+        future.fulfill(Okay(42).serialize())
         let result = future.tryGet()
         @Expect(result.isSome(), true)
         @Expect(result.getOrThrow(), 42)
@@ -110,8 +111,8 @@ public class ActorFutureTest {
     @TestCase
     func testDistributedActorFutureDoubleFulfill() {
         let future = DistributedActorFuture<Int64>()
-        let success1 = future.fulfill(42)
-        let success2 = future.fulfill(100)
+        let success1 = future.fulfill(Okay(42).serialize())
+        let success2 = future.fulfill(Okay(100).serialize())
         @Expect(success1, true)
         @Expect(success2, false) // Second fulfill should fail
         let result = future.get()
@@ -155,9 +156,9 @@ public class ActorFutureTest {
         let future2 = DistributedActorFuture<Int64>()
         let future3 = DistributedActorFuture<Int64>()
 
-        future1.fulfill(10)
-        future2.fulfill(20)
-        future3.fulfill(30)
+        future1.fulfill(Okay(10).serialize())
+        future2.fulfill(Okay(20).serialize())
+        future3.fulfill(Okay(30).serialize())
 
         @Expect(future1.get(), 10)
         @Expect(future2.get(), 20)
@@ -183,8 +184,8 @@ public class ActorFutureTest {
     func testMixedDistributedActorFutures() {
         let successFuture = DistributedActorFuture<Int64>()
         let failureFuture = DistributedActorFuture<Int64>()
-        successFuture.fulfill(42)
-        failureFuture.fulfill(Exception("Fulfill failed"))
+        successFuture.fulfill(Okay(42).serialize())
+        failureFuture.fulfill(Exc<Int64>(Exception("Fulfill failed")).serialize())
 
         @Expect(successFuture.get(), 42)
         let exn = @AssertThrows[Exception](failureFuture.get())

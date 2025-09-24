@@ -35,7 +35,7 @@ public class TCPActorHost <: ActorHost {
         }
     }
 
-    func serve(): Unit {
+    public func serve(): Unit {
         TCPActorSystem.logger.debug("[TCPActorHost]: server starts.")
         serverSocket.bind()
         TCPActorSystem.logger.debug("[TCPActorHost]: server bound.")
@@ -122,7 +122,7 @@ public class TCPActorHost <: ActorHost {
     }
 
 
-    func close(): Unit {
+    public func close(): Unit {
         for ((_, c) in connMap) {
             c.close()
         }

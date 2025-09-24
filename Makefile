@@ -21,12 +21,12 @@ endif
 example:
 	rm -rf ./target/examples/
 	mkdir ./target/examples
-	cjc ./examples/ping-pong.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/ping-pong.o
-	cjc ./examples/actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/actor-interface.o
-	cjc ./examples/dist-actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.dummy_actor_system --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/dist-actor-interface.o
-	cjc ./examples/gc.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/gc.o
-	cjc ./examples/fjcreate.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/fjcreate.o
-	cjc ./examples/counter.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors --import-path ./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -L./lib/${OS_NAME}_${ARCH}_llvm/dynamic/stdx -lstdx.serialization.serialization -o ./target/examples/counter.o
+	cjc ./examples/ping-pong.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/ping-pong.o
+	cjc ./examples/actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/actor-interface.o
+	cjc ./examples/dist-actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.dummy_actor_system  -o ./target/examples/dist-actor-interface.o
+	cjc ./examples/gc.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/gc.o
+	cjc ./examples/fjcreate.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/fjcreate.o
+	cjc ./examples/counter.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/counter.o
 
 build:
 	cjpm build

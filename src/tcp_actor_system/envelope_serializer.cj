@@ -181,7 +181,7 @@ func deserializeActorInfoArray(buffer: ByteArrayStream): Array<ActorInfo> {
     let count = Int32.readLittleEndian(countBytes)
 
     let list = ArrayList<ActorInfo>()
-    for (i in 0..count) {
+    for (_ in 0..count) {
         let name = deserializeString(buffer)
         let lenBytes = Array<Byte>(4, item: 0)
         buffer.read(lenBytes)
@@ -217,7 +217,7 @@ func deserializeDataModelArray(buffer: ByteArrayStream): Array<DataModel> {
     let count = Int32.readLittleEndian(countBytes)
 
     let dataModels = ArrayList<DataModel>()
-    for (i in 0..count) {
+    for (_ in 0..count) {
         let dataModel = deserializeDataModel(buffer)
         dataModels.append(dataModel)
     }
@@ -420,7 +420,7 @@ func deserializeDataModelFromBytes(dataModelBytes: Array<Byte>): DataModel {
             let count = Int32.readLittleEndian(countBytes)
 
             let items = ArrayList<DataModel>()
-            for (i in 0..count) {
+            for (_ in 0..count) {
                 let itemLengthBytes = Array<Byte>(4, item: 0)
                 buffer.read(itemLengthBytes)
                 let itemLength = Int32.readLittleEndian(itemLengthBytes)
@@ -438,7 +438,7 @@ func deserializeDataModelFromBytes(dataModelBytes: Array<Byte>): DataModel {
             let count = Int32.readLittleEndian(countBytes)
 
             let fields = ArrayList<Field>()
-            for (i in 0..count) {
+            for (_ in 0..count) {
                 // Read field name
                 let nameLengthBytes = Array<Byte>(4, item: 0)
                 buffer.read(nameLengthBytes)

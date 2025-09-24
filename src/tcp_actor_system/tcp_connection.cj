@@ -55,7 +55,7 @@ class TCPConnection <: Hashable {
 
         let id = nextId.fetchAdd(1)
         let envelope = Envelope(id, msg)
-        writer.send(envelope)
+        writer.send(envelope, tell: True)
 
         // TODO: is this the best way?
         while (messageBoard.get(id).isNone()) {
@@ -70,13 +70,13 @@ class TCPConnection <: Hashable {
     }
 
     func send(e: Envelope): Unit {
-        writer.send(e)
+        writer.send(e, tell: True)
     }
 
     func startListening(handleEnvelope: (Envelope, TCPConnection) -> Unit): Unit {
         TCPActorSystem.logger.debug("[TCPConnection]: start listening.")
 
-        reader.startListening({ e => handleEnvelope(e, this) })
+        reader.startListening({ e => handleEnvelope(e, this) }, tell: True)
     }
 
     func close(): Unit {
@@ -92,7 +92,7 @@ class TCPConnection <: Hashable {
 private class TCPWriter {
     TCPWriter(private let conn: TcpSocket) {}
 
-    @Receiver
+    @Receiver[mode: TellOnly]
     func send(e: Envelope): Unit {
         try {
             TCPActorSystem.logger.debug("[TCPWriter]: start sending an envelope.")
@@ -114,7 +114,7 @@ private class TCPReader {
         private let conn: TcpSocket
     ) {}
 
-    @Receiver
+    @Receiver[mode: TellOnly]
     func startListening(handleEnvelope: (Envelope) -> Unit): Unit {
         if (conn.isClosed()) {
             return
@@ -128,10 +128,10 @@ private class TCPReader {
             let e = deserializeEnvelope(buf)
             TCPActorSystem.logger.debug("[TCPReader]: Message ${e} read.")
             handleEnvelope(e)
-            this.startListening(handleEnvelope)
+            this.startListening(handleEnvelope, tell: True)
 
         } catch (e: SocketTimeoutException) {
-            this.startListening(handleEnvelope)
+            this.startListening(handleEnvelope, tell: True)
         } catch (e: Exception) {
             e.printStackTrace()
             throw e

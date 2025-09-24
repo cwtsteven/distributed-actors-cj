@@ -38,18 +38,19 @@ public class MyService <: Service {
 
 main() {
     let myService = MyService()
-    let system = DummyActorSystem()
-    system.register<Service>("myService", myService)
+    let host = DummyActorHost()
+    let client = DummyActorClient(host)
+    host.register("myService", myService)
 
-    let proxy = ActorProxy("myService", system)
+    let proxy = ActorProxy("myService", client)
     let fut = proxy.post<Int64>("foo", [0.serialize()])
     println(fut.get())
 
-    let infos = system.findAll()
+    let infos = client.findAll()
     println("Metadata count: ${infos.size}")
-    for ((name, metadata) in infos) {
-        println("Service: ${name}")
-        println("Metadata: ${metadata.toString()}")
+    for (info in infos) {
+        println("Service: ${info.name}")
+        println("Metadata: ${info.metadata.toString()}")
         println()
     }
 }

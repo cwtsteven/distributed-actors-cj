@@ -90,7 +90,7 @@ public class TCPActorClient <: ActorClient {
         }
     }
 
-    func close(): Unit {
+    public func close(): Unit {
         conn.close()
     }
 }
