@@ -20,7 +20,7 @@ public class TCPActorClient <: ActorClient {
     private let nextFutId = AtomicUInt64(0)
     private let futMap = FutMap()
 
-    init(addr: String, port: UInt16) {
+    public init(addr: String, port: UInt16) {
         this.conn = TCPConnection(addr, port)
         this.conn.startListening(handleEnvelope)
     }

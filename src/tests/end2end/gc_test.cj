@@ -15,10 +15,11 @@ var isFinalized2 = AtomicBool(false)
 
 @Actor
 class FinalizerActor {
+    var state = 0.0
 
     @Receiver[mode: AskAndTell]
     func foo(): Unit {
-        // Empty function body
+        state += 37.2
     }
 
     ~init() {
@@ -27,8 +28,9 @@ class FinalizerActor {
 }
 
 class FinalizerClass {
+    var state = 0.0
     func foo(): Unit {
-        // Empty function body
+        state += 37.2
     }
 
     ~init() {

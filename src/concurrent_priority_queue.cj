@@ -4,11 +4,12 @@ import std.collection.concurrent.*
 
 const DEFAULT_CAPACITY = 10
 
-type ConcurrentLinkedQueue<T> = NonBlockingQueue<T>
+type ConcurrentLinkedQueue<T> = BlockingQueue<T>
 
 class ConcurrentPriorityQueue<T> {
     private let capacity: Int64
     private let queuePool: Array<ConcurrentLinkedQueue<T>>
+    private let semaphore = SingleConsumerSemaphore()
 
     init() {
         this(DEFAULT_CAPACITY)
@@ -26,6 +27,7 @@ class ConcurrentPriorityQueue<T> {
 
         // Note: ConcurrentLinkedQueue.add() will never return false
         queuePool[priority - 1].enqueue(item)
+        semaphore.signal()
     }
 
     func remove(): Option<T> {
@@ -36,8 +38,24 @@ class ConcurrentPriorityQueue<T> {
             }
         }
         if (index != -1) {
-            return queuePool[index].dequeue()
+            return queuePool[index].tryDequeue()
         }
         return None
+    }
+
+    func removeBlock(): T {
+        while (true) {
+            semaphore.wait()
+            var index: Int64 = -1
+            for (i in 0..capacity) {
+                if (queuePool[i].size > 0) {
+                    index = i
+                }
+            }
+            if (index != -1) {
+                return queuePool[index].dequeue()
+            }
+        }
+        throw IllegalStateException("Queue is empty")
     }
 }

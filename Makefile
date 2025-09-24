@@ -17,6 +17,7 @@ else
 endif
 
 # export LD_LIBRARY_PATH=./target/release/actors:./lib/linux_aarch64_llvm/dynamic/stdx/:$LD_LIBRARY_PATH
+# export LD_LIBRARY_PATH=./target/release/actors:$LD_LIBRARY_PATH
 
 example:
 	rm -rf ./target/examples/
@@ -27,6 +28,8 @@ example:
 	cjc ./examples/gc.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/gc.o
 	cjc ./examples/fjcreate.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/fjcreate.o
 	cjc ./examples/counter.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/counter.o
+	cjc ./examples/tcp-actor-host.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.tcp_actor_system  -o ./target/examples/tcp-actor-host.o
+	cjc ./examples/tcp-actor-client.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.tcp_actor_system  -o ./target/examples/tcp-actor-client.o
 
 build:
 	cjpm build

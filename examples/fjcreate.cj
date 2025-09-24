@@ -4,33 +4,49 @@ import actors.macros.*
 import std.collection.ArrayList
 
 import std.runtime.*
+import std.sync.*
+import std.time.*
+
+let finalCount = AtomicInt64(0)
 
 @Actor
 class ForkJoinActor {
     var state = 0.0
-    @Receiver[mode: AskOnly]
+
+    @Receiver
     func ping(): Unit {
         state += 37.2
     }
+
+    ~init() {
+        println("ForkJoinActor finalized.")
+        finalCount.fetchAdd(1)
+    }
 }
 
-public func run(numActors: Int64) {
-    let futures = ArrayList<LocalActorFuture<Unit>>(numActors)
-    for (_ in 0..numActors) {
+public func run() {
+    spawn {
         let actor = ForkJoinActor()
-        futures.append(actor.ping())
-    }
-
-    for (future in futures) {
-        future.get()
+        actor.ping(tell: True)
     }
 }
 
+func createActor(numRuns: Int64) {
+    for (_ in 0..numRuns) {
+        run()
+    }
+}
 
 main(): Unit {
-    for (_ in 0..1000) {
-        run(100)
-        // println("Num cangjie threads: ${getThreadCount()}")
-        // println("Garbage collector has been called ${getGCCount()} times")
+    let numRuns = 100
+
+    createActor(numRuns)
+
+    for (_ in 0..numRuns) {
+        sleep(Duration.millisecond * 100)
+        if (finalCount.load() == numRuns) {
+            break
+        }
+        println("Final count: ${finalCount.load()}")
     }
 }

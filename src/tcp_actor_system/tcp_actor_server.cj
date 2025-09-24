@@ -15,6 +15,7 @@ public class TCPActorHost <: ActorHost {
     private let localMap = ConcurrentHashMap<String, Distributable>()
     private let connMap = ConcurrentHashMap<Int64, TCPConnection>()
     private let serverSocket: TcpServerSocket
+    private var threadHandle: ?Future<Unit> = None
 
     public init(bindAt!: UInt16) {
         serverSocket = TcpServerSocket(bindAt: bindAt)
@@ -36,27 +37,33 @@ public class TCPActorHost <: ActorHost {
     }
 
     public func serve(): Unit {
-        TCPActorSystem.logger.debug("[TCPActorHost]: server starts.")
-        serverSocket.bind()
-        TCPActorSystem.logger.debug("[TCPActorHost]: server bound.")
-        while (true) {
-            try {
-                TCPActorSystem.logger.debug("[TCPActorHost]: listening to connection.")
-                let clientSocket = serverSocket.accept()
-                TCPActorSystem.logger.debug("[TCPActorHost]: client connected.")
-                let conn = TCPConnection(clientSocket)
-                if (let Some(_) <- connMap.putIfAbsent(conn.hashCode(), conn)) {
-                    TCPActorSystem.logger.debug("[TCPActorHost]: client already exist.")
-                    conn.close()
-                } else {
-                    TCPActorSystem.logger.debug("[TCPActorHost]: client start listening.")
-                    conn.startListening(handleEnvelope)
+        threadHandle = Some(spawn {
+            TCPActorSystem.logger.debug("[TCPActorHost]: server starts.")
+            serverSocket.bind()
+            TCPActorSystem.logger.debug("[TCPActorHost]: server bound.")
+            while (true) {
+                if (Thread.currentThread.hasPendingCancellation) {
+                    return
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                continue
+
+                try {
+                    TCPActorSystem.logger.debug("[TCPActorHost]: listening to connection.")
+                    let clientSocket = serverSocket.accept()
+                    TCPActorSystem.logger.debug("[TCPActorHost]: client connected.")
+                    let conn = TCPConnection(clientSocket)
+                    if (let Some(_) <- connMap.putIfAbsent(conn.hashCode(), conn)) {
+                        TCPActorSystem.logger.debug("[TCPActorHost]: client already exist.")
+                        conn.close()
+                    } else {
+                        TCPActorSystem.logger.debug("[TCPActorHost]: client start listening.")
+                        conn.startListening(handleEnvelope)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    continue
+                }
             }
-        }
+        })
     }
 
     func handleEnvelope(e: Envelope, conn: TCPConnection): Unit {
@@ -127,5 +134,6 @@ public class TCPActorHost <: ActorHost {
             c.close()
         }
         serverSocket.close()
+        threadHandle?.cancel()
     }
 }
