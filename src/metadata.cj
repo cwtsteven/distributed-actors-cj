@@ -2,7 +2,12 @@ package actors
 
 import encoding.json.*
 
-public type ActorInfo = (String, Metadata)
+public struct ActorInfo {
+    public ActorInfo(
+        public let name: String,
+        public let metadata: Metadata
+    ) {}
+}
 
 public struct Metadata <: ToString {
     public Metadata(

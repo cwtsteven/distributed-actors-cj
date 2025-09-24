@@ -17,23 +17,26 @@ public interface Distributable {
 public class ActorProxy {
     public ActorProxy(
         public let name: String,
-        public let actorSystem: ActorSystem
+        public let client: ActorClient
     ) {}
 
     public func postMessage(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
-        actorSystem.remoteTell(name, receiverName, args, config)
+        client.remoteTell(name, receiverName, args, config)
     }
 
     public func post<T>(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> where T <: Serializable<T> {
         let fut = DistributedActorFuture<T>()
-        actorSystem.remoteCall(name, receiverName, args, config, fut)
+        client.remoteCall(name, receiverName, args, config, fut)
         fut
     }
 }
 
-public interface ActorSystem {
+public interface ActorHost {
     func register(name: String, a: Distributable): Bool
     func deregister(name: String): Bool
+}
+
+public interface ActorClient {
     func find(name: String): Option<ActorInfo>
     func findAll(): Array<ActorInfo>
     func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit

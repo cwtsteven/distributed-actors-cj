@@ -1,0 +1,486 @@
+/**
+ * Envelope serialization and deserialization utilities
+ * Created on 16/09/2025
+ */
+
+package actors.tcp_actor_system
+
+import std.binary.*
+import std.io.*
+import std.collection.*
+import encoding.json.*
+
+import serialization.serialization.*
+import actors.*
+
+/**
+ * Serializes an Envelope object to a byte array
+ */
+func serializeEnvelope(envelope: Envelope): Array<Byte> {
+    try {
+        let buffer = ByteArrayStream()
+
+        // Serialize id (UInt64)
+        let idBytes = Array<Byte>(8, item: 0)
+        envelope.id.writeLittleEndian(idBytes)
+        buffer.write(idBytes)
+
+        // Serialize payload
+        serializePayload(buffer, envelope.msg)
+
+        // Get the serialized data
+        let result = Array<Byte>(Int64(buffer.length), item: 0)
+        buffer.read(result)
+        result
+    } catch (e: Exception) {
+        throw Exception("Failed to serialize envelope: " + e.message)
+    }
+}
+
+/**
+ * Deserializes a byte array back to an Envelope object
+ */
+func deserializeEnvelope(bytes: Array<Byte>): Envelope {
+    try {
+        let buffer = ByteArrayStream()
+        buffer.write(bytes)
+
+        // Deserialize id (UInt64)
+        let idBytes = Array<Byte>(8, item: 0)
+        buffer.read(idBytes)
+        let id = UInt64.readLittleEndian(idBytes)
+
+        // Deserialize payload
+        let payload = deserializePayload(buffer)
+
+        Envelope(id, payload)
+    } catch (e: Exception) {
+        throw Exception("Failed to deserialize envelope: " + e.message)
+    }
+}
+
+/**
+ * Serializes a Payload enum to the buffer
+ */
+func serializePayload(buffer: ByteArrayStream, payload: Payload): Unit {
+    let kindBytes = Array<Byte>(1, item: 0)
+    match (payload) {
+        case Ok =>
+            kindBytes[0] = 0
+            buffer.write(kindBytes)
+        case NotOk =>
+            kindBytes[0] = 1
+            buffer.write(kindBytes)
+        case Find(name) =>
+            kindBytes[0] = 5
+            buffer.write(kindBytes)
+            serializeString(buffer, name)
+        case FindAll =>
+            kindBytes[0] = 6
+            buffer.write(kindBytes)
+        case FindResponse(infos) =>
+            kindBytes[0] = 7
+            buffer.write(kindBytes)
+            serializeActorInfoArray(buffer, infos)
+        case Ask(name, methodName, args, config, futId) =>
+            kindBytes[0] = 2
+            buffer.write(kindBytes)
+            serializeString(buffer, name)
+            serializeString(buffer, methodName)
+            serializeDataModelArray(buffer, args)
+            serializeReceiverConfig(buffer, config)
+            let futIdBytes = Array<Byte>(8, item: 0)
+            futId.writeLittleEndian(futIdBytes)
+            buffer.write(futIdBytes)
+        case Tell(name, methodName, args, config) =>
+            kindBytes[0] = 3
+            buffer.write(kindBytes)
+            serializeString(buffer, name)
+            serializeString(buffer, methodName)
+            serializeDataModelArray(buffer, args)
+            serializeReceiverConfig(buffer, config)
+        case Fulfill(futId, res) =>
+            kindBytes[0] = 4
+            buffer.write(kindBytes)
+            let futIdBytes = Array<Byte>(8, item: 0)
+            futId.writeLittleEndian(futIdBytes)
+            buffer.write(futIdBytes)
+            serializeDataModel(buffer, res)
+    }
+}
+
+/**
+ * Deserializes a Payload enum from the buffer
+ */
+func deserializePayload(buffer: ByteArrayStream): Payload {
+    let kindBytes = Array<Byte>(1, item: 0)
+    buffer.read(kindBytes)
+    match (kindBytes[0]) {
+        case 0 => Ok
+        case 1 => NotOk
+        case 5 =>
+            let name = deserializeString(buffer)
+            Find(name)
+        case 6 => FindAll
+        case 7 =>
+            let infos = deserializeActorInfoArray(buffer)
+            FindResponse(infos)
+        case 2 =>
+            let name = deserializeString(buffer)
+            let methodName = deserializeString(buffer)
+            let args = deserializeDataModelArray(buffer)
+            let config = deserializeReceiverConfig(buffer)
+            let futIdBytes = Array<Byte>(8, item: 0)
+            buffer.read(futIdBytes)
+            let futId = UInt64.readLittleEndian(futIdBytes)
+            Ask(name, methodName, args, config, futId)
+        case 3 =>
+            let name = deserializeString(buffer)
+            let methodName = deserializeString(buffer)
+            let args = deserializeDataModelArray(buffer)
+            let config = deserializeReceiverConfig(buffer)
+            Payload.Tell(name, methodName, args, config)
+        case 4 =>
+            let futIdBytes = Array<Byte>(8, item: 0)
+            buffer.read(futIdBytes)
+            let futId = UInt64.readLittleEndian(futIdBytes)
+            let res = deserializeDataModel(buffer)
+            Fulfill(futId, res)
+        case _ => throw Exception("Invalid Payload kind: " + kindBytes[0].toString())
+    }
+}
+
+/**
+ * Serializes an array of ActorInfo to the buffer
+ */
+func serializeActorInfoArray(buffer: ByteArrayStream, infos: Array<ActorInfo>): Unit {
+    let count = Int32(infos.size)
+    let countBytes = Array<Byte>(4, item: 0)
+    count.writeLittleEndian(countBytes)
+    buffer.write(countBytes)
+
+    for (info in infos) {
+        // name
+        serializeString(buffer, info.name)
+        // metadata as length-prefixed bytes
+        let metaBytes = serializeMetadata(info.metadata)
+        let len = Int32(metaBytes.size)
+        let lenBytes = Array<Byte>(4, item: 0)
+        len.writeLittleEndian(lenBytes)
+        buffer.write(lenBytes)
+        buffer.write(metaBytes)
+    }
+}
+
+/**
+ * Deserializes an array of ActorInfo from the buffer
+ */
+func deserializeActorInfoArray(buffer: ByteArrayStream): Array<ActorInfo> {
+    let countBytes = Array<Byte>(4, item: 0)
+    buffer.read(countBytes)
+    let count = Int32.readLittleEndian(countBytes)
+
+    let list = ArrayList<ActorInfo>()
+    for (i in 0..count) {
+        let name = deserializeString(buffer)
+        let lenBytes = Array<Byte>(4, item: 0)
+        buffer.read(lenBytes)
+        let len = Int32.readLittleEndian(lenBytes)
+        let metaBytes = Array<Byte>(Int64(len), item: 0)
+        buffer.read(metaBytes)
+        let metadata = deserializeMetadata(metaBytes)
+        list.append(ActorInfo(name, metadata))
+    }
+    list.toArray()
+}
+
+/**
+ * Serializes an array of DataModel objects to the buffer
+ */
+func serializeDataModelArray(buffer: ByteArrayStream, dataModels: Array<DataModel>): Unit {
+    let count = Int32(dataModels.size)
+    let countBytes = Array<Byte>(4, item: 0)
+    count.writeLittleEndian(countBytes)
+    buffer.write(countBytes)
+
+    for (dataModel in dataModels) {
+        serializeDataModel(buffer, dataModel)
+    }
+}
+
+/**
+ * Deserializes an array of DataModel objects from the buffer
+ */
+func deserializeDataModelArray(buffer: ByteArrayStream): Array<DataModel> {
+    let countBytes = Array<Byte>(4, item: 0)
+    buffer.read(countBytes)
+    let count = Int32.readLittleEndian(countBytes)
+
+    let dataModels = ArrayList<DataModel>()
+    for (i in 0..count) {
+        let dataModel = deserializeDataModel(buffer)
+        dataModels.append(dataModel)
+    }
+
+    dataModels.toArray()
+}
+
+/**
+ * Serializes a DataModel object to the buffer
+ * DataModel is already a serialized representation, so we need to serialize it to bytes
+ */
+func serializeDataModel(buffer: ByteArrayStream, dataModel: DataModel): Unit {
+    // DataModel is already a serialized representation
+    // We need to convert it to a byte array for transmission
+    let dataModelBytes = serializeDataModelToBytes(dataModel)
+
+    // Write the length of the DataModel bytes first
+    let length = Int32(dataModelBytes.size)
+    let lengthBytes = Array<Byte>(4, item: 0)
+    length.writeLittleEndian(lengthBytes)
+    buffer.write(lengthBytes)
+
+    // Write the actual DataModel bytes
+    buffer.write(dataModelBytes)
+}
+
+/**
+ * Deserializes a DataModel object from the buffer
+ */
+func deserializeDataModel(buffer: ByteArrayStream): DataModel {
+    // Read the length of the DataModel bytes
+    let lengthBytes = Array<Byte>(4, item: 0)
+    buffer.read(lengthBytes)
+    let length = Int32.readLittleEndian(lengthBytes)
+
+    // Read the actual DataModel bytes
+    let dataModelBytes = Array<Byte>(Int64(length), item: 0)
+    buffer.read(dataModelBytes)
+
+    // Convert bytes back to DataModel
+    deserializeDataModelFromBytes(dataModelBytes)
+}
+
+/**
+ * Helper function to serialize DataModel to byte array
+ * This is a simplified implementation that converts DataModel to bytes
+ */
+func serializeDataModelToBytes(dataModel: DataModel): Array<Byte> {
+    let buffer = ByteArrayStream()
+
+    match (dataModel) {
+        case dm: DataModelNull =>
+            // Type: 0, no additional data
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 0
+            buffer.write(typeBytes)
+        case dm: DataModelBool =>
+            // Type: 1, value: 1 byte
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 1
+            buffer.write(typeBytes)
+
+            let valueBytes = Array<Byte>(1, item: 0)
+            valueBytes[0] = if (dm.getValue()) { 1 } else { 0 }
+            buffer.write(valueBytes)
+        case dm: DataModelFloat =>
+            // Type: 2, value: 8 bytes (Float64)
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 2
+            buffer.write(typeBytes)
+
+            let valueBytes = Array<Byte>(8, item: 0)
+            dm.getValue().writeLittleEndian(valueBytes)
+            buffer.write(valueBytes)
+        case dm: DataModelInt =>
+            // Type: 3, value: 8 bytes (Int64)
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 3
+            buffer.write(typeBytes)
+
+            let valueBytes = Array<Byte>(8, item: 0)
+            dm.getValue().writeLittleEndian(valueBytes)
+            buffer.write(valueBytes)
+        case dm: DataModelString =>
+            // Type: 4, value: string with length prefix
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 4
+            buffer.write(typeBytes)
+
+            let strBytes = dm.getValue().toArray()
+            let length = Int32(strBytes.size)
+            let lengthBytes = Array<Byte>(4, item: 0)
+            length.writeLittleEndian(lengthBytes)
+            buffer.write(lengthBytes)
+            buffer.write(strBytes)
+        case dm: DataModelSeq =>
+            // Type: 5, value: array of DataModels with length prefix
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 5
+            buffer.write(typeBytes)
+
+            let items = dm.getItems()
+            let count = Int32(items.size)
+            let countBytes = Array<Byte>(4, item: 0)
+            count.writeLittleEndian(countBytes)
+            buffer.write(countBytes)
+
+            for (item in items) {
+                let itemBytes = serializeDataModelToBytes(item)
+                let itemLength = Int32(itemBytes.size)
+                let itemLengthBytes = Array<Byte>(4, item: 0)
+                itemLength.writeLittleEndian(itemLengthBytes)
+                buffer.write(itemLengthBytes)
+                buffer.write(itemBytes)
+            }
+        case dm: DataModelStruct =>
+            // Type: 6, value: map of string keys to DataModel values
+            let typeBytes = Array<Byte>(1, item: 0)
+            typeBytes[0] = 6
+            buffer.write(typeBytes)
+
+            let fields = dm.getFields()
+            let count = Int32(fields.size)
+            let countBytes = Array<Byte>(4, item: 0)
+            count.writeLittleEndian(countBytes)
+            buffer.write(countBytes)
+
+            for (field in fields) {
+                // Serialize field name
+                let nameBytes = field.getName().toArray()
+                let nameLength = Int32(nameBytes.size)
+                let nameLengthBytes = Array<Byte>(4, item: 0)
+                nameLength.writeLittleEndian(nameLengthBytes)
+                buffer.write(nameLengthBytes)
+                buffer.write(nameBytes)
+
+                // Serialize field value
+                let valueBytes = serializeDataModelToBytes(field.getData())
+                let valueLength = Int32(valueBytes.size)
+                let valueLengthBytes = Array<Byte>(4, item: 0)
+                valueLength.writeLittleEndian(valueLengthBytes)
+                buffer.write(valueLengthBytes)
+                buffer.write(valueBytes)
+            }
+        case _ => throw Exception()
+    }
+
+    // Get the serialized data
+    let result = Array<Byte>(Int64(buffer.length), item: 0)
+    buffer.read(result)
+    result
+}
+
+/**
+ * Helper function to deserialize DataModel from byte array
+ * This is a simplified implementation that creates a basic DataModel
+ */
+func deserializeDataModelFromBytes(dataModelBytes: Array<Byte>): DataModel {
+    let buffer = ByteArrayStream()
+    buffer.write(dataModelBytes)
+
+    // Read the type byte
+    let typeBytes = Array<Byte>(1, item: 0)
+    buffer.read(typeBytes)
+
+    match (typeBytes[0]) {
+        case 0 => DataModelNull()
+        case 1 =>
+            // DataModelBool
+            let valueBytes = Array<Byte>(1, item: 0)
+            buffer.read(valueBytes)
+            let value = valueBytes[0] != 0
+            DataModelBool(value)
+        case 2 =>
+            // DataModelFloat
+            let valueBytes = Array<Byte>(8, item: 0)
+            buffer.read(valueBytes)
+            let value = Float64.readLittleEndian(valueBytes)
+            DataModelFloat(value)
+        case 3 =>
+            // DataModelInt
+            let valueBytes = Array<Byte>(8, item: 0)
+            buffer.read(valueBytes)
+            let value = Int64.readLittleEndian(valueBytes)
+            DataModelInt(value)
+        case 4 =>
+            // DataModelString
+            let lengthBytes = Array<Byte>(4, item: 0)
+            buffer.read(lengthBytes)
+            let length = Int32.readLittleEndian(lengthBytes)
+
+            let strBytes = Array<Byte>(Int64(length), item: 0)
+            buffer.read(strBytes)
+            let value = String.fromUtf8(strBytes)
+            DataModelString(value)
+        case 5 =>
+            // DataModelSeq
+            let countBytes = Array<Byte>(4, item: 0)
+            buffer.read(countBytes)
+            let count = Int32.readLittleEndian(countBytes)
+
+            let items = ArrayList<DataModel>()
+            for (i in 0..count) {
+                let itemLengthBytes = Array<Byte>(4, item: 0)
+                buffer.read(itemLengthBytes)
+                let itemLength = Int32.readLittleEndian(itemLengthBytes)
+
+                let itemBytes = Array<Byte>(Int64(itemLength), item: 0)
+                buffer.read(itemBytes)
+                let item = deserializeDataModelFromBytes(itemBytes)
+                items.append(item)
+            }
+            DataModelSeq(items)
+        case 6 =>
+            // DataModelStruct
+            let countBytes = Array<Byte>(4, item: 0)
+            buffer.read(countBytes)
+            let count = Int32.readLittleEndian(countBytes)
+
+            let fields = ArrayList<Field>()
+            for (i in 0..count) {
+                // Read field name
+                let nameLengthBytes = Array<Byte>(4, item: 0)
+                buffer.read(nameLengthBytes)
+                let nameLength = Int32.readLittleEndian(nameLengthBytes)
+
+                let nameBytes = Array<Byte>(Int64(nameLength), item: 0)
+                buffer.read(nameBytes)
+                let name = String.fromUtf8(nameBytes)
+
+                // Read field value
+                let valueLengthBytes = Array<Byte>(4, item: 0)
+                buffer.read(valueLengthBytes)
+                let valueLength = Int32.readLittleEndian(valueLengthBytes)
+
+                let valueBytes = Array<Byte>(Int64(valueLength), item: 0)
+                buffer.read(valueBytes)
+                let value = deserializeDataModelFromBytes(valueBytes)
+
+                fields.append(Field(name, value))
+            }
+            DataModelStruct(fields)
+        case _ => throw Exception("Invalid DataModel type: " + typeBytes[0].toString())
+    }
+}
+
+/**
+ * Serializes a ReceiverConfig object to the buffer
+ */
+func serializeReceiverConfig(buffer: ByteArrayStream, config: ReceiverConfig): Unit {
+    // Serialize priority (Int64)
+    let priorityBytes = Array<Byte>(8, item: 0)
+    config.priority.writeLittleEndian(priorityBytes)
+    buffer.write(priorityBytes)
+}
+
+/**
+ * Deserializes a ReceiverConfig object from the buffer
+ */
+func deserializeReceiverConfig(buffer: ByteArrayStream): ReceiverConfig {
+    // Deserialize priority (Int64)
+    let priorityBytes = Array<Byte>(8, item: 0)
+    buffer.read(priorityBytes)
+    let priority = Int64.readLittleEndian(priorityBytes)
+    ReceiverConfig(priority: priority)
+}

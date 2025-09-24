@@ -5,6 +5,8 @@ import std.time.*
 import serialization.serialization.DataModel
 import serialization.serialization.Serializable
 
+import serialization.serialization.*
+
 public interface Waitable {
     func wait(): DataModel
 }

@@ -1,5 +1,6 @@
 package actors.dummy_actor_system
 
+import std.collection.*
 import std.collection.concurrent.*
 import std.sync.*
 
@@ -8,19 +9,20 @@ import serialization.serialization.*
 import actors.macros.*
 import actors.*
 
+private let actorMap = ConcurrentHashMap<String, Distributable>()
+private let futMap = ConcurrentHashMap<UInt64, Fullfillable>()
+private let futId = AtomicUInt64(0)
+private let metadataMap = ConcurrentHashMap<String, ActorInfo>()
+
 @Actor
-public class DummyActorSystem <: ActorSystem {
-    private let actorMap = ConcurrentHashMap<String, Distributable>()
-    private let futMap = ConcurrentHashMap<UInt64, Fullfillable>()
-    private let futId = AtomicUInt64(0)
-    private let metadataMap = ConcurrentHashMap<String, Metadata>()
+public class DummyActorHost <: ActorHost {
 
     public func register(name: String, a: Distributable): Bool {
         let res = actorMap.putIfAbsent(name, a)
         match (res) {
             case Some(_) => false
             case None =>
-                metadataMap.putIfAbsent(name, a.getMetadata())
+                metadataMap.putIfAbsent(name, ActorInfo(name, a.getMetadata()))
                 true
         }
     }
@@ -32,29 +34,6 @@ public class DummyActorSystem <: ActorSystem {
                 true
             case None => false
         }
-    }
-
-    public func find(name: String): Option<ActorInfo> {
-        match (actorMap.get(name)) {
-            case Some(_) => Some((name, metadataMap.get(name).getOrThrow()))
-            case None => None
-        }
-    }
-
-    public func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
-        let _ = config
-        let id = futId.fetchAdd(1)
-        futMap.put(id, fut)
-        this.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
-    }
-
-    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
-        let _ = config
-        this.handleRemoteCall(name, receiverName, args, config, None, tell: True)
-    }
-
-    public func findAll(): Array<ActorInfo> {
-        metadataMap.toArray()
     }
 
     @Receiver[mode: TellOnly]
@@ -83,5 +62,40 @@ public class DummyActorSystem <: ActorSystem {
                 this.handleResult(id.getOrThrow(), res, tell: True)
             }
         }
+    }
+}
+
+public class DummyActorClient <: ActorClient {
+    public DummyActorClient(let host: DummyActorHost) {}
+
+    public func find(name: String): Option<ActorInfo> {
+        match (actorMap.get(name)) {
+            case Some(_) => Some(metadataMap[name])
+            case None => None
+        }
+    }
+
+    public func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
+        let _ = config
+        let id = futId.fetchAdd(1)
+        futMap.put(id, fut)
+        host.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
+    }
+
+    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+        let _ = config
+        host.handleRemoteCall(name, receiverName, args, config, None, tell: True)
+    }
+
+    public func findAll(): Array<ActorInfo> {
+        let list = ArrayList<ActorInfo>()
+        let it = actorMap.iterator()
+        while (true) {
+            match (it.next()) {
+                case Some((name, a)) => list.append(ActorInfo(name, a.getMetadata()))
+                case None => break
+            }
+        }
+        list.toArray()
     }
 }

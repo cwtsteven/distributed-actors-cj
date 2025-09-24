@@ -32,17 +32,18 @@ public class DummyActorSystemEnd2EndTest {
     @TestCase
     func testDistributedActorInterfaceWithDummySystem() {
         let service = TestServiceImpl()
-        let system = DummyActorSystem()
-        system.register<TestService>("testService", service)
-        let proxy = ActorProxy("testService", system)
+        let host = DummyActorHost()
+        host.register("testService", service)
+        let client = DummyActorClient(host)
+        let proxy = ActorProxy("testService", client)
         let fut = proxy.post<Int64>("addTen", [5.serialize()])
         let result = fut.get()
         @Expect(result, 15)
         // Also check metadata
-        let infos = system.findAll()
+        let infos = client.findAll()
         @Expect(infos.size, 1)
-        let (name, metadata) = infos[0]
-        @Expect(name, "testService")
-        @Expect(metadata.description, "Test distributed service")
+        let info = infos[0]
+        @Expect(info.name, "testService")
+        @Expect(info.metadata.description, "Test distributed service")
     }
 }
