@@ -56,15 +56,43 @@ public class SerializationTest {
             case _ => @Expect(false, true)  // This should never be reached
         }
 
-        // Test with ErrorCode payload
-        let envelope2 = Envelope(2, Payload.ErrorCode(TCPActorSystemError.ActorNotFound))
+        // Test with ErrorCode payload - UnknownError
+        let envelope2 = Envelope(2, Payload.ErrorCode(TCPActorSystemError.UnknownError))
         let serialized2 = serializeEnvelope(envelope2)
         let deserialized2 = deserializeEnvelope(serialized2)
         @Expect(deserialized2.id, 2)
         match(deserialized2.msg) {
             case ErrorCode(errorCode) =>
                 match(errorCode) {
+                    case UnknownError => @Expect(true, true)
+                    case _ => @Expect(false, true)  // This should never be reached
+                }
+            case _ => @Expect(false, true)  // This should never be reached
+        }
+
+        // Test with ErrorCode payload - ActorNotFound
+        let envelope2b = Envelope(2, Payload.ErrorCode(TCPActorSystemError.ActorNotFound))
+        let serialized2b = serializeEnvelope(envelope2b)
+        let deserialized2b = deserializeEnvelope(serialized2b)
+        @Expect(deserialized2b.id, 2)
+        match(deserialized2b.msg) {
+            case ErrorCode(errorCode) =>
+                match(errorCode) {
                     case ActorNotFound => @Expect(true, true)
+                    case _ => @Expect(false, true)  // This should never be reached
+                }
+            case _ => @Expect(false, true)  // This should never be reached
+        }
+
+        // Test with ErrorCode payload - ReceiverNotFound
+        let envelope2c = Envelope(2, Payload.ErrorCode(TCPActorSystemError.ReceiverNotFound))
+        let serialized2c = serializeEnvelope(envelope2c)
+        let deserialized2c = deserializeEnvelope(serialized2c)
+        @Expect(deserialized2c.id, 2)
+        match(deserialized2c.msg) {
+            case ErrorCode(errorCode) =>
+                match(errorCode) {
+                    case ReceiverNotFound => @Expect(true, true)
                     case _ => @Expect(false, true)  // This should never be reached
                 }
             case _ => @Expect(false, true)  // This should never be reached

@@ -505,8 +505,14 @@ func deserializeDataModelFromBytes(dataModelBytes: Array<Byte>): DataModel {
 func serializeTCPActorSystemError(buffer: ByteArrayStream, error: TCPActorSystemError): Unit {
     let errorBytes = Array<Byte>(1, item: 0)
     match (error) {
-        case ActorNotFound =>
+        case UnknownError =>
             errorBytes[0] = 0
+            buffer.write(errorBytes)
+        case ActorNotFound =>
+            errorBytes[0] = 1
+            buffer.write(errorBytes)
+        case ReceiverNotFound =>
+            errorBytes[0] = 2
             buffer.write(errorBytes)
     }
 }
@@ -518,7 +524,9 @@ func deserializeTCPActorSystemError(buffer: ByteArrayStream): TCPActorSystemErro
     let errorBytes = Array<Byte>(1, item: 0)
     buffer.read(errorBytes)
     match (errorBytes[0]) {
-        case 0 => ActorNotFound
+        case 0 => UnknownError
+        case 1 => ActorNotFound
+        case 2 => ReceiverNotFound
         case _ => throw Exception("Invalid TCPActorSystemError kind: " + errorBytes[0].toString())
     }
 }

@@ -1,18 +1,26 @@
-# impresario
+# Distributed actors framework
 
 ## Dependency
 
-cjc version: 1.0.1
-download link: https://cangjie-lang.cn/en/download/1.0.1
+cjc version: 0.53.18
 
 ## Build
 
-Run `make build`
+**1. Follow the instruction on the Cangjie language homepage to setup correct environment**
 
-## Run tests
+**2. Run `make` to build the package and all the examples**
 
-1. Run `make test`
+**3. Run `make test` to run all the tests**
 
-## Run benchmarks
+All tests should pass except for the followings:
+- [ FAILED ] CASE: testGarbageCollection
+- [ FAILED ] CASE: testForkJoinGarbageCollection
 
-## Run examples
+## Tutorial
+
+## APIs
+
+## TODOs
+
+- message delivery semantics, i.e. at-least-one or at-most-once, with or without retries
+- MCP schema generation

@@ -36,7 +36,7 @@ public class DummyActorSystemEnd2EndTest {
         host.register("testService", service)
         let client = DummyActorClient(host)
         let proxy = ActorProxy("testService", client)
-        let fut = proxy.post<Int64>("addTen", [5.serialize()])
+        let fut = proxy.ask<Int64>("addTen", [5.serialize()])
         let result = fut.get()
         @Expect(result, 15)
         // Also check metadata

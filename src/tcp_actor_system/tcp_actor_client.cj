@@ -12,6 +12,9 @@ import std.socket.SocketAddress
 
 type FutMap = ConcurrentHashMap<UInt64, Fullfillable>
 
+/*
+* A class representing a TCP actor client
+*/
 public class TCPActorClient <: ActorClient {
 
     private let conn: TCPConnection
@@ -19,6 +22,11 @@ public class TCPActorClient <: ActorClient {
     private let nextFutId = AtomicUInt64(0)
     private let futMap = FutMap()
 
+    /*
+    * Initializes the TCP actor client
+    * @param addr - the address of the TCP actor host
+    * @param port - the port of the TCP actor host
+    */
     public init(addr: String, port: UInt16) {
         this.conn = TCPConnection(addr, port)
         this.conn.startListening(handleEnvelope)
@@ -55,10 +63,24 @@ public class TCPActorClient <: ActorClient {
 
         let resp = conn.sendSync(Payload.Ask(name, receiverName, args, config, futId))
 
-        if (resp != Ok) {
-            TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
-            throw ActorSystemException("Unexpected response.")
+        match (resp) {
+            case Ok => ()
+            case ErrorCode(errorCode) => match (errorCode) {
+                case ActorNotFound =>
+                    TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Actor not found.")
+                    throw ActorNotFoundException(name)
+                case ReceiverNotFound =>
+                    TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Receiver not found.")
+                    throw ReceiverNotFoundException(name, receiverName)
+                case UnknownError =>
+                    TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unknown error.")
+                    throw ActorSystemException("Unknown error.")
+            }
+            case _ =>
+                TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
+                throw ActorSystemException("Unexpected response.")
         }
+
         TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteCall(${name}) ends.")
     }
 
@@ -67,10 +89,24 @@ public class TCPActorClient <: ActorClient {
 
         let resp = conn.sendSync(Payload.Tell(name, receiverName, args, config))
 
-        if (resp != Ok) {
-            TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
-            throw ActorSystemException("Unexpected response.")
+        match (resp) {
+            case Ok => ()
+            case ErrorCode(errorCode) => match (errorCode) {
+                case ActorNotFound =>
+                    TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Actor not found.")
+                    throw ActorNotFoundException(name)
+                case ReceiverNotFound =>
+                    TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Receiver not found.")
+                    throw ReceiverNotFoundException(name, receiverName)
+                case UnknownError =>
+                    TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unknown error.")
+                    throw ActorSystemException("Unknown error.")
+            }
+            case _ =>
+                TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
+                throw ActorSystemException("Unexpected response.")
         }
+
         TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteTell(${name}) ends.")
     }
 

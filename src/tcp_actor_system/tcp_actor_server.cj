@@ -114,6 +114,7 @@ public class TCPActorHost <: ActorHost {
                 TCPActorSystem.logger.error("${logTag}: unexpected message: ${msg}.")
                 throw ActorSystemException("Unexpected message: ${msg}.")
         }
+
         TCPActorSystem.logger.debug("${logTag}: handled a ${msg}.")
     }
 
@@ -137,17 +138,28 @@ public class TCPActorHost <: ActorHost {
 
         TCPActorSystem.logger.debug("${logTag}: try call ${name}.${methodName} with arg size = ${args.size}.")
 
-        let fut = a.dispatchAsk(methodName, args, config)
-        TCPActorSystem.logger.debug("${logTag}: called ${name}.${methodName} with arg size = ${args.size}.")
-        conn.send(Envelope(id, Ok))
+        try {
+            let fut = a.dispatchAsk(methodName, args, config)
+            TCPActorSystem.logger.debug("${logTag}: called ${name}.${methodName} with arg size = ${args.size}.")
+            conn.send(Envelope(id, Ok))
 
-        TCPActorSystem.logger.debug("${logTag}: spawn a thread to handle the result.")
+            TCPActorSystem.logger.debug("${logTag}: spawn a thread to handle the result.")
 
-        spawn {
-            TCPActorSystem.logger.debug("${logTag}: wait on local future.")
-            let res = fut.wait()
-            TCPActorSystem.logger.debug("${logTag}: local future done.")
-            conn.send(Envelope(id, Fulfill(futId, res)))
+            spawn {
+                TCPActorSystem.logger.debug("${logTag}: wait on local future.")
+                let res = fut.wait()
+                TCPActorSystem.logger.debug("${logTag}: local future done.")
+                conn.send(Envelope(id, Fulfill(futId, res)))
+            }
+        } catch (_: ReceiverNotFoundException) {
+            TCPActorSystem.logger.error("${logTag}: receiver not found for ${name}.${methodName}.")
+            conn.send(Envelope(id, ErrorCode(ReceiverNotFound)))
+        } catch (_: Exception) {
+            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}.")
+            conn.send(Envelope(id, ErrorCode(UnknownError)))
+        } catch (_: Error) {
+            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}.")
+            conn.send(Envelope(id, ErrorCode(UnknownError)))
         }
     }
 
@@ -157,11 +169,22 @@ public class TCPActorHost <: ActorHost {
             return
         }
 
-        TCPActorSystem.logger.debug("${logTag}: try call ${name}.${methodName} with arg size = ${args.size}.")
-        let a = localMap[name]
-        a.dispatchTell(methodName, args, config)
-        TCPActorSystem.logger.debug("${logTag}: called ${name}.${methodName} with arg size = ${args.size}.")
-        conn.send(Envelope(id, Ok))
+        try {
+            TCPActorSystem.logger.debug("${logTag}: try call ${name}.${methodName} with arg size = ${args.size}.")
+            let a = localMap[name]
+            a.dispatchTell(methodName, args, config)
+            TCPActorSystem.logger.debug("${logTag}: called ${name}.${methodName} with arg size = ${args.size}.")
+            conn.send(Envelope(id, Ok))
+        } catch (_: ReceiverNotFoundException) {
+            TCPActorSystem.logger.error("${logTag}: receiver not found for ${name}.${methodName}.")
+            conn.send(Envelope(id, ErrorCode(ReceiverNotFound)))
+        } catch (_: Exception) {
+            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}.")
+            conn.send(Envelope(id, ErrorCode(UnknownError)))
+        } catch (_: Error) {
+            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}.")
+            conn.send(Envelope(id, ErrorCode(UnknownError)))
+        }
     }
 
     /*
