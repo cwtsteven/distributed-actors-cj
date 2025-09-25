@@ -1,19 +1,16 @@
 package actors.tcp_actor_system
 
-import std.collection.concurrent.*
-import std.net.*
-import std.sync.*
-
-import encoding.json.*
-import serialization.serialization.*
-
-import actors.*
-import actors.macros.*
-
 import std.log.*
 
+/*
+* TCPActorSystem
+*/
 public class TCPActorSystem {
     private static var __logger: ?Logger = None
+
+    /*
+    * A mutable variable representing the logger of the TCPActorSystem
+    */
     public static mut prop logger: Logger {
         get() {
             match (__logger) {

@@ -130,7 +130,7 @@ protected class GenerateActorClass {
             case Ask =>
                 quote(post<$declaredType>({ => $(fd.block.nodes)}, config: config))
             case Tell => quote(
-                postMessage(
+                tell(
                     { =>
                         try {
                             { => $(fd.block.nodes) }()

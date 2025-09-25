@@ -14,6 +14,9 @@ private let futMap = ConcurrentHashMap<UInt64, Fullfillable>()
 private let futId = AtomicUInt64(0)
 private let metadataMap = ConcurrentHashMap<String, ActorInfo>()
 
+/*
+* Dummy Actor host
+*/
 @Actor
 public class DummyActorHost <: ActorHost {
 
@@ -65,6 +68,9 @@ public class DummyActorHost <: ActorHost {
     }
 }
 
+/*
+* Dummy Actor client
+*/
 public class DummyActorClient <: ActorClient {
     public DummyActorClient(let host: DummyActorHost) {}
 
@@ -73,18 +79,6 @@ public class DummyActorClient <: ActorClient {
             case Some(_) => Some(metadataMap[name])
             case None => None
         }
-    }
-
-    public func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
-        let _ = config
-        let id = futId.fetchAdd(1)
-        futMap.put(id, fut)
-        host.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
-    }
-
-    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
-        let _ = config
-        host.handleRemoteCall(name, receiverName, args, config, None, tell: True)
     }
 
     public func findAll(): Array<ActorInfo> {
@@ -97,5 +91,17 @@ public class DummyActorClient <: ActorClient {
             }
         }
         list.toArray()
+    }
+
+    public func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
+        let _ = config
+        let id = futId.fetchAdd(1)
+        futMap.put(id, fut)
+        host.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
+    }
+
+    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+        let _ = config
+        host.handleRemoteCall(name, receiverName, args, config, None, tell: True)
     }
 }

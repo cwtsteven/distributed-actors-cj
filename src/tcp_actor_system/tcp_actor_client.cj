@@ -16,7 +16,6 @@ public class TCPActorClient <: ActorClient {
 
     private let conn: TCPConnection
 
-    private let proxyMap = ConcurrentHashMap<String, Unit>()
     private let nextFutId = AtomicUInt64(0)
     private let futMap = FutMap()
 
@@ -32,7 +31,7 @@ public class TCPActorClient <: ActorClient {
                 if (arr.size == 0) { return None }
                 return arr[0]
             case _ =>
-                TCPActorSystem.logger.debug("[TCPActorClient]: Unexpected response.")
+                TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
                 throw ActorSystemException("Unexpected response.")
         }
     }
@@ -43,13 +42,13 @@ public class TCPActorClient <: ActorClient {
             case FindResponse(arr) =>
                 return arr
             case _ =>
-                TCPActorSystem.logger.debug("[TCPActorClient]: Unexpected response.")
+                TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
                 throw ActorSystemException("Unexpected response.")
         }
     }
 
-    public func remoteCall(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
-        TCPActorSystem.logger.debug("[TCPActorClient]: remoteCall(${name}) begins.")
+    public func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
+        TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteCall(${name}) begins.")
 
         let futId = nextFutId.fetchAdd(1)
         futMap.put(futId, fut)
@@ -57,21 +56,22 @@ public class TCPActorClient <: ActorClient {
         let resp = conn.sendSync(Payload.Ask(name, receiverName, args, config, futId))
 
         if (resp != Ok) {
-            TCPActorSystem.logger.debug("[TCPActorClient]: Unexpected response.")
+            TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
             throw ActorSystemException("Unexpected response.")
         }
-        TCPActorSystem.logger.debug("[TCPActorClient]: remoteCall(${name}) ends.")
+        TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteCall(${name}) ends.")
     }
 
     public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
-        TCPActorSystem.logger.debug("[TCPActorClient]: remoteTell(${name}) begins.")
+        TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteTell(${name}) begins.")
 
         let resp = conn.sendSync(Payload.Tell(name, receiverName, args, config))
 
         if (resp != Ok) {
+            TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected response.")
             throw ActorSystemException("Unexpected response.")
         }
-        TCPActorSystem.logger.debug("[TCPActorClient]: remoteTell(${name}) ends.")
+        TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteTell(${name}) ends.")
     }
 
     func handleEnvelope(e: Envelope, conn: TCPConnection): Unit {
@@ -82,11 +82,14 @@ public class TCPActorClient <: ActorClient {
                     fut.fulfill(res)
                     return
                 }
-                throw Exception("No future")
+                TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: No future found for ${futId}.")
+                throw ActorSystemException("No future found for ${futId}.")
 
-            case Ok | NotOk => conn.messageBoard.put(id, e)
+            case Ok | ErrorCode(_) | FindResponse(_) => conn.messageBoard.put(id, e)
 
-            case _ => throw Exception()
+            case _ =>
+                TCPActorSystem.logger.error("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: Unexpected message ${msg}.")
+                throw ActorSystemException("Unexpected message ${msg}.")
         }
     }
 

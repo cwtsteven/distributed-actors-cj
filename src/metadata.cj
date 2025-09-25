@@ -2,20 +2,51 @@ package actors
 
 import encoding.json.*
 
-public struct ActorInfo {
+/*
+* Information about an actor including its name and metadata
+* Metadata includes information about the actor's receivers, description, and custom info
+* This is used by actor systems to provide information about registered actors
+*/
+public struct ActorInfo <: ToString {
+    /*
+    * Initializes the ActorInfo
+    * @param name - the name of the actor
+    * @param metadata - the metadata of the actor
+    */
     public ActorInfo(
         public let name: String,
         public let metadata: Metadata
     ) {}
+
+    /*
+    * Creates an ActorInfo
+    * @param name - the name of the actor
+    * @param metadata - the metadata of the actor
+    */
+    public override func toString(): String {
+        "ActorInfo(name: ${name}, metadata: ${metadata.toString()})"
+    }
 }
 
+/*
+* Metadata about an actor
+*/
 public struct Metadata <: ToString {
+    /*
+    * Initializes the Metadata
+    * @param receivers - the receivers of the actor
+    * @param description - the description of the actor
+    * @param customInfo - the custom info of the actor
+    */
     public Metadata(
         public let receivers: Array<ReceiverInfo>,
         public let description: String,
         public let customInfo: JsonValue
     ) {}
 
+    /*
+    * Converts the Metadata to a string
+    */
     public override func toString(): String {
         var result = "Metadata(\n"
         result += "    receiver count: ${receivers.size},\n"
@@ -35,8 +66,19 @@ public struct Metadata <: ToString {
     }
 }
 
+/*
+* Information about a receiver
+*/
 public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
 
+    /*
+    * Initializes the ReceiverInfo
+    * @param description - the description of the receiver
+    * @param customInfo - the custom info of the receiver
+    * @param methodName - the name of the receiver
+    * @param paramSchema - the parameter schema of the receiver
+    * @param retTypeModel - the return type model of the receiver
+    */
     public ReceiverInfo(
         public let description: String,
         public let customInfo: JsonValue,
@@ -45,6 +87,9 @@ public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
         public let retTypeModel: TypeModel
     ) {}
 
+    /*
+    * Converts the ReceiverInfo to a string
+    */
     public override func toString(): String {
         var res = "${methodName} ("
         var i = 0
@@ -61,15 +106,28 @@ public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
         res
     }
 
+    /*
+    * Checks if the ReceiverInfo is equal to another ReceiverInfo
+    * @param other - the other ReceiverInfo
+    * @return true if the ReceiverInfo is equal to the other ReceiverInfo, false otherwise
+    */
     public override operator func ==(other: ReceiverInfo): Bool {
         this.methodName == other.methodName
     }
 
+    /*
+    * Checks if the ReceiverInfo is not equal to another ReceiverInfo
+    * @param other - the other ReceiverInfo
+    * @return true if the ReceiverInfo is not equal to the other ReceiverInfo, false otherwise
+    */
     public override operator func !=(other: ReceiverInfo): Bool {
         !(this == other)
     }
 }
 
+/*
+* Type model
+*/
 public enum TypeModel <: ToString {
     | IntType
     | FloatType
@@ -77,6 +135,9 @@ public enum TypeModel <: ToString {
     | StringType
     | UnitType
 
+    /*
+    * Converts the TypeModel to a string
+    */
     public override func toString(): String {
         match (this) {
             case IntType => "Int"

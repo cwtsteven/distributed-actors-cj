@@ -173,7 +173,10 @@ protected class GenerateDistributedActorInterface {
     private func newDispatchTellFunc(): FuncDecl {
         FuncDecl(quote(
             func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
-                $proxyClassIdent.$dispatchTellHashMapVarToken[receiverName](this, args, config)
+                match ($proxyClassIdent.$dispatchTellHashMapVarToken.get(receiverName)) {
+                    case Some(f) => f(this, args, config)
+                    case None => throw ReceiverNotFoundException($(interfaceName.value), receiverName)
+                }
             }
         ))
     }
@@ -181,7 +184,10 @@ protected class GenerateDistributedActorInterface {
     private func newDispatchAskFunc(): FuncDecl {
         FuncDecl(quote(
             func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Waitable {
-                $proxyClassIdent.$dispatchAskHashMapVarToken[receiverName](this, args, config)
+                match ($proxyClassIdent.$dispatchAskHashMapVarToken.get(receiverName)) {
+                    case Some(f) => f(this, args, config)
+                    case None => throw ReceiverNotFoundException($(interfaceName.value), receiverName)
+                }
             }
         ))
     }

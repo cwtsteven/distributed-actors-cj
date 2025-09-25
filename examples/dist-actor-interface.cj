@@ -43,7 +43,7 @@ main() {
     host.register("myService", myService)
 
     let proxy = ActorProxy("myService", client)
-    let fut = proxy.post<Int64>("foo", [0.serialize()])
+    let fut = proxy.ask<Int64>("foo", [0.serialize()])
     println(fut.get())
 
     let infos = client.findAll()

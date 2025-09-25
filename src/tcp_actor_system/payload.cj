@@ -3,9 +3,12 @@ package actors.tcp_actor_system
 import serialization.serialization.*
 import actors.*
 
+/*
+* Enum representing the message protocol betwen TCPActorHost and TCPActorClient
+*/
 enum Payload <: Equatable<Payload> & ToString {
     Ok
-    | NotOk
+    | ErrorCode(TCPActorSystemError)
     | Find(String)
     | FindAll
     | FindResponse(Array<ActorInfo>)
@@ -16,7 +19,7 @@ enum Payload <: Equatable<Payload> & ToString {
     public operator func ==(other: Payload): Bool {
         match ((this, other)) {
             case (Ok, Ok) => true
-            case (NotOk, NotOk) => true
+            case (ErrorCode(e1), ErrorCode(e2)) => e1 == e2
             case (Find(n1), Find(n2)) => n1 == n2
             case (FindAll, FindAll) => true
             case _ => false
@@ -30,7 +33,7 @@ enum Payload <: Equatable<Payload> & ToString {
     public func toString(): String {
         match (this) {
             case Ok => "Ok"
-            case NotOk => "NotOk"
+            case ErrorCode(e) => "ErrorCode(${e})"
             case Find(name) => "Find(${name})"
             case FindAll => "FindAll"
             case FindResponse(_) => "FindResponse"

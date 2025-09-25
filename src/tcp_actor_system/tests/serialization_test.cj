@@ -1,5 +1,6 @@
 package actors.tcp_actor_system.tests
 
+import std.binary.*
 import std.unittest.*
 import std.unittest.testmacro.*
 import std.collection.*
@@ -22,7 +23,13 @@ public class SerializationTest {
 
         // Serialize the envelope
         let serializedBytes = serializeEnvelope(originalEnvelope)
-        @Expect(serializedBytes.size > 0, true)  // Should have serialized data
+        @Expect(serializedBytes.size > 4, true)  // Should have at least 4 bytes for length prefix + data
+
+        // Verify the length prefix is correctly encoded
+        let lengthBytes = Array<Byte>(4, item: 0)
+        lengthBytes[0..4] = serializedBytes[0..4]
+        let encodedLength = Int32.readLittleEndian(lengthBytes)
+        @Expect(Int64(encodedLength + 4), serializedBytes.size)  // Total size should be length + 4
 
         // Deserialize the envelope
         let deserializedEnvelope = deserializeEnvelope(serializedBytes)
@@ -49,13 +56,17 @@ public class SerializationTest {
             case _ => @Expect(false, true)  // This should never be reached
         }
 
-        // Test with NotOk payload
-        let envelope2 = Envelope(2, Payload.NotOk)
+        // Test with ErrorCode payload
+        let envelope2 = Envelope(2, Payload.ErrorCode(TCPActorSystemError.ActorNotFound))
         let serialized2 = serializeEnvelope(envelope2)
         let deserialized2 = deserializeEnvelope(serialized2)
         @Expect(deserialized2.id, 2)
         match(deserialized2.msg) {
-            case NotOk => @Expect(true, true)
+            case ErrorCode(errorCode) =>
+                match(errorCode) {
+                    case ActorNotFound => @Expect(true, true)
+                    case _ => @Expect(false, true)  // This should never be reached
+                }
             case _ => @Expect(false, true)  // This should never be reached
         }
 
@@ -130,5 +141,93 @@ public class SerializationTest {
                 @Expect(true, true)  // Result creation successful
             case _ => @Expect(false, true)  // This should never be reached
         }
+    }
+
+    @TestCase
+    func testEnvelopeSerializationLengthPrefix() {
+        // Test that length prefix is correctly encoded for different payload sizes
+        let smallEnvelope = Envelope(1, Payload.Ok)
+        let largeEnvelope = Envelope(2, Payload.Find("aVeryLongActorNameThatShouldResultInALargerSerializedSize"))
+
+        let smallBytes = serializeEnvelope(smallEnvelope)
+        let largeBytes = serializeEnvelope(largeEnvelope)
+
+        // Both should have length prefix
+        @Expect(smallBytes.size >= 4, true)
+        @Expect(largeBytes.size >= 4, true)
+
+        // Large envelope should be bigger than small envelope
+        @Expect(largeBytes.size > smallBytes.size, true)
+
+        // Verify length prefixes are different
+        let smallLengthBytes = Array<Byte>(4, item: 0)
+        smallLengthBytes[0..4] = smallBytes[0..4]
+        let smallLength = Int32.readLittleEndian(smallLengthBytes)
+
+        let largeLengthBytes = Array<Byte>(4, item: 0)
+        largeLengthBytes[0..4] = largeBytes[0..4]
+        let largeLength = Int32.readLittleEndian(largeLengthBytes)
+
+        @Expect(largeLength > smallLength, true)
+    }
+
+    @TestCase
+    func testEnvelopeDeserializationErrorHandling() {
+        // Test deserialization with invalid data
+        let emptyBytes = Array<Byte>(0, item: 0)
+        let tooShortBytes = Array<Byte>(2, item: 0)
+        let invalidLengthBytes = Array<Byte>(8, item: 0)
+        // Set invalid length (larger than actual data)
+        invalidLengthBytes[0] = 100
+        invalidLengthBytes[1] = 0
+        invalidLengthBytes[2] = 0
+        invalidLengthBytes[3] = 0
+
+        // Test empty data
+        try {
+            deserializeEnvelope(emptyBytes)
+            @Expect(false, true)  // Should have thrown an exception
+        } catch (e: Exception) {
+            @Expect(e.message.contains("too short"), true)
+        }
+
+        // Test too short data
+        try {
+            deserializeEnvelope(tooShortBytes)
+            @Expect(false, true)  // Should have thrown an exception
+        } catch (e: Exception) {
+            @Expect(e.message.contains("too short"), true)
+        }
+
+        // Test length mismatch
+        try {
+            deserializeEnvelope(invalidLengthBytes)
+            @Expect(false, true)  // Should have thrown an exception
+        } catch (e: Exception) {
+            @Expect(e.message.contains("length mismatch"), true)
+        }
+    }
+
+    @TestCase
+    func testEnvelopeSerializationConsistency() {
+        // Test that multiple serializations of the same envelope produce consistent results
+        let envelope = Envelope(999, Payload.Ask("test", "method", Array<DataModel>(0, item: DataModelNull()), ReceiverConfig(priority: 1), 123))
+
+        let serialized1 = serializeEnvelope(envelope)
+        let serialized2 = serializeEnvelope(envelope)
+
+        // Should produce identical results
+        @Expect(serialized1.size, serialized2.size)
+
+        for (i in 0..serialized1.size) {
+            @Expect(serialized1[i], serialized2[i])
+        }
+
+        // Both should deserialize to the same envelope
+        let deserialized1 = deserializeEnvelope(serialized1)
+        let deserialized2 = deserializeEnvelope(serialized2)
+
+        @Expect(deserialized1.id, deserialized2.id)
+        @Expect(deserialized1.id, 999)
     }
 }

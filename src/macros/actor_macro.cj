@@ -31,12 +31,12 @@ import actors.macros.internal.*
  *     private let sequentialDispatch = SequentialDispatcher(enableReceiverPriority: `get from opts1`)
  *
  *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
- *       sequentialDispatch.post<T>( { => body }, config )
+ *       sequentialDispatch.ask<T>( { => body }, config )
  *     }
  *
  *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default, tell!: Tell): Unit {
  *       let _ = tell
- *       sequentialDispatch.postMessage( { => body }, config )
+ *       sequentialDispatch.tell( { => body }, config )
  *     }
  *   }
  *

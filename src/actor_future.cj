@@ -2,23 +2,25 @@ package actors
 
 import std.sync.*
 import std.time.*
-import serialization.serialization.DataModel
-import serialization.serialization.Serializable
 
 import serialization.serialization.*
 
-public interface Waitable {
-    func wait(): DataModel
-}
-
-sealed abstract class ActorFuture<T> <: Waitable {
+/*
+* Abstract base class representing the pending result of a closure submitted to an Actor.
+*/
+sealed abstract class ActorFuture<T> {
     protected var result: FutureResult<T> = unsafe { zeroValue<FutureResult<T>>() }
     protected let isReady = AtomicBool(false)
     protected let mtx = Monitor()
 
-    protected init() {
-    }
+    protected init() {}
 
+    /*
+    * Blocks the current thread until the result is ready
+    * @return the result
+    * @throws Exception - if the closure throws an exception
+    * @throws Error - if the closure throws an error
+    */
     public open func get(): T {
         if (isReady.load()) {
             return result.getOrThrow()
@@ -32,6 +34,13 @@ sealed abstract class ActorFuture<T> <: Waitable {
         }
     }
 
+    /*
+    * Blocks the current thread until the result is ready with a timeout
+    * @param timeout - the timeout duration
+    * @return the result within the timeout, None otherwise
+    * @throws Exception - if the closure throws an exception
+    * @throws Error - if the closure throws an error
+    */
     public open func get(timeout: Duration): Option<T> {
         if (timeout <= Duration.Zero) {
             return Some(get())
@@ -56,6 +65,12 @@ sealed abstract class ActorFuture<T> <: Waitable {
         return tryGet()
     }
 
+    /*
+    * Tries to get the result
+    * @return the result if it is ready, None otherwise
+    * @throws Exception - if the closure throws an exception
+    * @throws Error - if the closure throws an error
+    */
     public open func tryGet(): Option<T> {
         if (isReady.load()) {
             return Some(result.getOrThrow())
@@ -64,17 +79,23 @@ sealed abstract class ActorFuture<T> <: Waitable {
     }
 }
 
+/*
+* A concrete implementation of ActorFuture for local actor communication
+*/
 public class LocalActorFuture<T> <: ActorFuture<T> {
     private let closure: () -> T
 
+    /*
+    * Initializes the LocalActorFuture
+    * @param task - the task to execute
+    */
     init(task: () -> T) {
         closure = task
     }
 
-    public override func get(): T {
-        super.get()
-    }
-
+    /*
+    * Executes the task
+    */
     func execute(): Unit {
         synchronized(mtx) {
             try {
@@ -89,30 +110,45 @@ public class LocalActorFuture<T> <: ActorFuture<T> {
             mtx.notifyAll()
         }
     }
-
-    public func wait(): DataModel {
-        try {
-            this.get()
-        } catch (_: Exception) {
-        } catch (_: Error) {}
-
-        match (this.result as Serializable<FutureResult<T>>) {
-            case Some(res) => res.serialize()
-            case None => throw Exception()
-        }
-    }
 }
 
+
+/*
+* Enum representing the result of a future
+*/
 protected enum FutureResult<T> {
     Okay(T)
     | Exc(Exception)
     | Err(Error)
 
+    /*
+    * Gets the result
+    * @return the result
+    * @throws Exception - if the result is an exception
+    * @throws Error - if the result is an error
+    */
     func getOrThrow(): T {
         match (this) {
             case Okay(res) => return res
             case Exc(e) => throw e
             case Err(e) => throw e
         }
+    }
+}
+
+extend<T> ActorFuture<T> <: Waitable where T <: Serializable<T> {
+    /*
+    * Waits for the future to be ready
+    * @return the result
+    * @throws Exception - if the future throws an exception
+    * @throws Error - if the future throws an error
+    */
+    public func wait(): DataModel {
+        try {
+            get()
+        } catch (_: Exception) {
+        } catch (_: Error) {}
+
+        this.result.serialize()
     }
 }

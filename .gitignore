@@ -3,3 +3,4 @@ target/
 **.cj.macrocall
 /.vscode/
 /.cache/
+*.log

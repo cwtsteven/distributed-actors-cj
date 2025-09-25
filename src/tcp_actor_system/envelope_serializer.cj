@@ -28,9 +28,22 @@ func serializeEnvelope(envelope: Envelope): Array<Byte> {
         // Serialize payload
         serializePayload(buffer, envelope.msg)
 
-        // Get the serialized data
-        let result = Array<Byte>(Int64(buffer.length), item: 0)
-        buffer.read(result)
+        // Get the serialized data (without length prefix)
+        let dataWithoutLength = Array<Byte>(Int64(buffer.length), item: 0)
+        buffer.read(dataWithoutLength)
+
+        // Create final result with length prefix
+        let totalLength = Int32(dataWithoutLength.size)
+        let result = Array<Byte>(Int64(totalLength + 4), item: 0)
+
+        // Write length prefix (4 bytes)
+        let lengthBytes = Array<Byte>(4, item: 0)
+        totalLength.writeLittleEndian(lengthBytes)
+        result[0..4] = lengthBytes
+
+        // Write the actual data
+        result[4..result.size] = dataWithoutLength
+
         result
     } catch (e: Exception) {
         throw Exception("Failed to serialize envelope: " + e.message)
@@ -42,8 +55,27 @@ func serializeEnvelope(envelope: Envelope): Array<Byte> {
  */
 func deserializeEnvelope(bytes: Array<Byte>): Envelope {
     try {
+        // Check minimum length (4 bytes for length prefix)
+        if (bytes.size < 4) {
+            throw Exception("Invalid envelope data: too short")
+        }
+
+        // Read length prefix (4 bytes)
+        let lengthBytes = Array<Byte>(4, item: 0)
+        lengthBytes[0..4] = bytes[0..4]
+        let expectedLength = Int32.readLittleEndian(lengthBytes)
+
+        // Validate length
+        if (bytes.size != Int64(expectedLength + 4)) {
+            throw Exception("Invalid envelope data: length mismatch. Expected " + (expectedLength + 4).toString() + " bytes, got " + bytes.size.toString())
+        }
+
+        // Extract the actual data (skip the 4-byte length prefix)
+        let dataBytes = Array<Byte>(Int64(expectedLength), item: 0)
+        dataBytes[0..dataBytes.size] = bytes[4..bytes.size]
+
         let buffer = ByteArrayStream()
-        buffer.write(bytes)
+        buffer.write(dataBytes)
 
         // Deserialize id (UInt64)
         let idBytes = Array<Byte>(8, item: 0)
@@ -68,9 +100,10 @@ func serializePayload(buffer: ByteArrayStream, payload: Payload): Unit {
         case Ok =>
             kindBytes[0] = 0
             buffer.write(kindBytes)
-        case NotOk =>
+        case ErrorCode(errorCode) =>
             kindBytes[0] = 1
             buffer.write(kindBytes)
+            serializeTCPActorSystemError(buffer, errorCode)
         case Find(name) =>
             kindBytes[0] = 5
             buffer.write(kindBytes)
@@ -117,7 +150,9 @@ func deserializePayload(buffer: ByteArrayStream): Payload {
     buffer.read(kindBytes)
     match (kindBytes[0]) {
         case 0 => Ok
-        case 1 => NotOk
+        case 1 =>
+            let errorCode = deserializeTCPActorSystemError(buffer)
+            ErrorCode(errorCode)
         case 5 =>
             let name = deserializeString(buffer)
             Find(name)
@@ -461,6 +496,30 @@ func deserializeDataModelFromBytes(dataModelBytes: Array<Byte>): DataModel {
             }
             DataModelStruct(fields)
         case _ => throw Exception("Invalid DataModel type: " + typeBytes[0].toString())
+    }
+}
+
+/**
+ * Serializes a TCPActorSystemError enum to the buffer
+ */
+func serializeTCPActorSystemError(buffer: ByteArrayStream, error: TCPActorSystemError): Unit {
+    let errorBytes = Array<Byte>(1, item: 0)
+    match (error) {
+        case ActorNotFound =>
+            errorBytes[0] = 0
+            buffer.write(errorBytes)
+    }
+}
+
+/**
+ * Deserializes a TCPActorSystemError enum from the buffer
+ */
+func deserializeTCPActorSystemError(buffer: ByteArrayStream): TCPActorSystemError {
+    let errorBytes = Array<Byte>(1, item: 0)
+    buffer.read(errorBytes)
+    match (errorBytes[0]) {
+        case 0 => ActorNotFound
+        case _ => throw Exception("Invalid TCPActorSystemError kind: " + errorBytes[0].toString())
     }
 }
 

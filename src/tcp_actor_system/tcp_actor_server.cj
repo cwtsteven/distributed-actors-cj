@@ -11,14 +11,23 @@ import actors.macros.*
 import encoding.json.stream.*
 import serialization.serialization.DataModel
 
+/*
+* A class representing a TCP actor server
+*/
 public class TCPActorHost <: ActorHost {
     private let localMap = ConcurrentHashMap<String, Distributable>()
     private let connMap = ConcurrentHashMap<Int64, TCPConnection>()
     private let serverSocket: TcpServerSocket
+    private let logTag: String
     private var threadHandle: ?Future<Unit> = None
 
+    /*
+    * Initializes the server
+    * @param bindAt - the port to bind to
+    */
     public init(bindAt!: UInt16) {
         serverSocket = TcpServerSocket(bindAt: bindAt)
+        logTag = "[TCPActorHost (${serverSocket.localAddress})]"
     }
 
     public func register(name: String, a: Distributable): Bool  {
@@ -36,26 +45,31 @@ public class TCPActorHost <: ActorHost {
         }
     }
 
-    public func serve(): Unit {
+    /*
+    * Creates a new thread to serve requests
+    * @return A future handle to the thread
+    * @throws SocketException - if the server socket fails to bind
+    */
+    public func serve(): Future<Unit> {
         threadHandle = Some(spawn {
-            TCPActorSystem.logger.debug("[TCPActorHost]: server starts.")
+            TCPActorSystem.logger.debug("${logTag}: server starts.")
             serverSocket.bind()
-            TCPActorSystem.logger.debug("[TCPActorHost]: server bound.")
+            TCPActorSystem.logger.debug("${logTag}: server bound.")
             while (true) {
                 if (Thread.currentThread.hasPendingCancellation) {
                     return
                 }
 
                 try {
-                    TCPActorSystem.logger.debug("[TCPActorHost]: listening to connection.")
+                    TCPActorSystem.logger.debug("${logTag}: listening to connection.")
                     let clientSocket = serverSocket.accept()
-                    TCPActorSystem.logger.debug("[TCPActorHost]: client connected.")
+                    TCPActorSystem.logger.debug("${logTag}: client connected.")
                     let conn = TCPConnection(clientSocket)
                     if (let Some(_) <- connMap.putIfAbsent(conn.hashCode(), conn)) {
-                        TCPActorSystem.logger.debug("[TCPActorHost]: client already exist.")
+                        TCPActorSystem.logger.debug("${logTag}: client already exist.")
                         conn.close()
                     } else {
-                        TCPActorSystem.logger.debug("[TCPActorHost]: client start listening.")
+                        TCPActorSystem.logger.debug("${logTag}: client start listening.")
                         conn.startListening(handleEnvelope)
                     }
                 } catch (e: Exception) {
@@ -64,11 +78,18 @@ public class TCPActorHost <: ActorHost {
                 }
             }
         })
+        threadHandle.getOrThrow()
     }
 
+    /*
+    * Handles an envelope sent from a connection
+    * @param e - the envelope
+    * @param conn - the connection
+    * @throws ActorSystemException - if the message is unexpected
+    */
     func handleEnvelope(e: Envelope, conn: TCPConnection): Unit {
         let (id, msg) = (e.id, e.msg)
-        TCPActorSystem.logger.debug("[TCPActorHost]: handles a ${msg}.")
+        TCPActorSystem.logger.debug("${logTag}: handling a ${msg}.")
         match (msg) {
             case Find(name) =>
                 match (localMap.get(name)) {
@@ -89,51 +110,73 @@ public class TCPActorHost <: ActorHost {
                 handleRemoteCall(conn, id, name, methodName, args, config, futId)
             case Tell(name, methodName, args, config) =>
                 handleRemoteTell(conn, id, name, methodName, args, config)
-            case _ => throw Exception()
+            case _ =>
+                TCPActorSystem.logger.error("${logTag}: unexpected message: ${msg}.")
+                throw ActorSystemException("Unexpected message: ${msg}.")
         }
+        TCPActorSystem.logger.debug("${logTag}: handled a ${msg}.")
     }
 
+    /*
+    * Handles a remote call
+    * @param conn - the connection
+    * @param id - the id of the envelope
+    * @param name - the name of the actor
+    * @param methodName - the name of the method
+    * @param args - the arguments of the method
+    * @param config - the config of the method
+    * @param futId - the id of the future
+    */
     func handleRemoteCall(conn: TCPConnection, id: UInt64, name: String, methodName: String, args: Array<DataModel>, config: ReceiverConfig, futId: UInt64): Unit {
-
-        if (localMap.get(name).isNone()) {
-            conn.send(Envelope(id, NotOk))
+        let a = if (let Some(a) <- localMap.get(name)) {
+            a
+        } else {
+            conn.send(Envelope(id, ErrorCode(ActorNotFound)))
             return
         }
 
-        TCPActorSystem.logger.debug("[TCPActorHost]: try call ${name}.${methodName} with arg size = ${args.size}.")
-        let a = localMap[name]
+        TCPActorSystem.logger.debug("${logTag}: try call ${name}.${methodName} with arg size = ${args.size}.")
+
         let fut = a.dispatchAsk(methodName, args, config)
-        TCPActorSystem.logger.debug("[TCPActorHost]: called ${name}.${methodName} with arg size = ${args.size}.")
+        TCPActorSystem.logger.debug("${logTag}: called ${name}.${methodName} with arg size = ${args.size}.")
         conn.send(Envelope(id, Ok))
 
-        TCPActorSystem.logger.debug("[TCPActorHost]: spawn a thread to handle the result.")
+        TCPActorSystem.logger.debug("${logTag}: spawn a thread to handle the result.")
 
         spawn {
-            TCPActorSystem.logger.debug("[TCPActorHost]: wait on local future.")
+            TCPActorSystem.logger.debug("${logTag}: wait on local future.")
             let res = fut.wait()
-            TCPActorSystem.logger.debug("[TCPActorHost]: local future done.")
+            TCPActorSystem.logger.debug("${logTag}: local future done.")
             conn.send(Envelope(id, Fulfill(futId, res)))
         }
     }
 
     func handleRemoteTell(conn: TCPConnection, id: UInt64, name: String, methodName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
         if (localMap.get(name).isNone()) {
-            conn.send(Envelope(id, NotOk))
+            conn.send(Envelope(id, ErrorCode(ActorNotFound)))
             return
         }
-        TCPActorSystem.logger.debug("[TCPActorHost]: try call ${name}.${methodName} with arg size = ${args.size}.")
+
+        TCPActorSystem.logger.debug("${logTag}: try call ${name}.${methodName} with arg size = ${args.size}.")
         let a = localMap[name]
         a.dispatchTell(methodName, args, config)
-        TCPActorSystem.logger.debug("[TCPActorHost]: called ${name}.${methodName} with arg size = ${args.size}.")
+        TCPActorSystem.logger.debug("${logTag}: called ${name}.${methodName} with arg size = ${args.size}.")
         conn.send(Envelope(id, Ok))
     }
 
-
+    /*
+    * Closes the server
+    */
     public func close(): Unit {
-        for ((_, c) in connMap) {
-            c.close()
+        for ((_, conn) in connMap) {
+            conn.close()
         }
-        serverSocket.close()
-        threadHandle?.cancel()
+        if (!serverSocket.isClosed()) {
+            serverSocket.close()
+        }
+        match (threadHandle) {
+            case Some(t) => t.cancel()
+            case None => ()
+        }
     }
 }
