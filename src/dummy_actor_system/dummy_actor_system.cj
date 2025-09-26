@@ -4,13 +4,14 @@ import std.collection.*
 import std.collection.concurrent.*
 import std.sync.*
 
+import actors.*
+import actors.macros.*
+import actors.distributed.*
+
 import serialization.serialization.*
 
-import actors.macros.*
-import actors.*
-
 private let actorMap = ConcurrentHashMap<String, Distributable>()
-private let futMap = ConcurrentHashMap<UInt64, Fullfillable>()
+private let futMap = ConcurrentHashMap<UInt64, DistributedFuture>()
 private let futId = AtomicUInt64(0)
 private let metadataMap = ConcurrentHashMap<String, ActorInfo>()
 
@@ -25,7 +26,7 @@ public class DummyActorHost <: ActorHost {
         match (res) {
             case Some(_) => false
             case None =>
-                metadataMap.putIfAbsent(name, ActorInfo(name, a.getMetadata()))
+                metadataMap.putIfAbsent(name, ActorInfo(name: name, metadata: a.getMetadata()))
                 true
         }
     }
@@ -49,21 +50,26 @@ public class DummyActorHost <: ActorHost {
 
     @Receiver[mode: TellOnly]
     func handleRemoteCall(name: String, receiverName: String, args: Array<DataModel>, remoteConfig: ReceiverConfig, id: ?UInt64): Unit {
-        let a = match (actorMap.get(name)) {
-            case Some(p) => p
-            case None => throw ActorNotFoundException(name)
-        }
-
-        let isTell = id == None
-        if (isTell) {
-            a.dispatchTell(receiverName, args, remoteConfig)
-        } else {
-            let fut = a.dispatchAsk(receiverName, args, remoteConfig)
-
-            spawn {
-                let res = fut.wait()
-                this.handleResult(id.getOrThrow(), res, tell: True)
+        try {
+            let a = match (actorMap.get(name)) {
+                case Some(p) => p
+                case None => throw ActorNotFoundException(name)
             }
+
+            let isTell = id == None
+            if (isTell) {
+                a.dispatchTell(receiverName, args, remoteConfig)
+            } else {
+                let fut = a.dispatchAsk(receiverName, args, remoteConfig)
+
+                spawn {
+                    let res = fut.getResult()
+                    this.handleResult(id.getOrThrow(), res, tell: True)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
         }
     }
 }
@@ -86,21 +92,28 @@ public class DummyActorClient <: ActorClient {
         let it = actorMap.iterator()
         while (true) {
             match (it.next()) {
-                case Some((name, a)) => list.append(ActorInfo(name, a.getMetadata()))
+                case Some((name, a)) => list.append(ActorInfo(name: name, metadata: a.getMetadata()))
                 case None => break
             }
         }
         list.toArray()
     }
 
-    public func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
+    public func remoteCall(invokeInfo: InvokeInfo): Unit {
+        match (invokeInfo.fut) {
+            case Some(fut) => remoteAsk(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config, fut)
+            case None => remoteTell(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config)
+        }
+    }
+
+    func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: DistributedFuture): Unit {
         let _ = config
         let id = futId.fetchAdd(1)
         futMap.put(id, fut)
         host.handleRemoteCall(name, receiverName, args, config, Some(id), tell: True)
     }
 
-    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+    func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
         let _ = config
         host.handleRemoteCall(name, receiverName, args, config, None, tell: True)
     }

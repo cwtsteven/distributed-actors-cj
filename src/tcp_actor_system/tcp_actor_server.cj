@@ -8,6 +8,7 @@ import std.log.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
 import encoding.json.stream.*
 import serialization.serialization.DataModel
 
@@ -93,7 +94,7 @@ public class TCPActorHost <: ActorHost {
         match (msg) {
             case Find(name) =>
                 match (localMap.get(name)) {
-                    case Some(a) => conn.send(Envelope(id, FindResponse([ActorInfo(name, a.getMetadata())])))
+                    case Some(a) => conn.send(Envelope(id, FindResponse([ActorInfo(name: name, metadata: a.getMetadata())])))
                     case None => conn.send(Envelope(id, FindResponse([])))
                 }
             case FindAll =>
@@ -101,7 +102,7 @@ public class TCPActorHost <: ActorHost {
                 let it = localMap.iterator()
                 while (true) {
                     match (it.next()) {
-                        case Some((name, a)) => list.append(ActorInfo(name, a.getMetadata()))
+                        case Some((name, a)) => list.append(ActorInfo(name: name, metadata: a.getMetadata()))
                         case None => break
                     }
                 }
@@ -147,7 +148,7 @@ public class TCPActorHost <: ActorHost {
 
             spawn {
                 TCPActorSystem.logger.debug("${logTag}: wait on local future.")
-                let res = fut.wait()
+                let res = fut.getResult()
                 TCPActorSystem.logger.debug("${logTag}: local future done.")
                 conn.send(Envelope(id, Fulfill(futId, res)))
             }

@@ -89,7 +89,7 @@ public class GCTest {
         let numActors = 10
         ForkJoinActor.numFinalized.store(0)
 
-        let futures = ArrayList<LocalActorFuture<Unit>>(numActors)
+        let futures = ArrayList<ActorFuture<Unit>>(numActors)
         for (_ in 0..numActors) {
             let actor = ForkJoinActor()
             futures.append(actor.ping())

@@ -1,4 +1,4 @@
-package actors.dummy_actor_system
+package actors.dummy_actor_system.tests
 
 import std.collection.*
 import std.unittest.*
@@ -9,6 +9,8 @@ import serialization.serialization.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
+import actors.dummy_actor_system.*
 
 @ActorInterface[
     distributed: true,
@@ -36,8 +38,8 @@ public class DummyActorSystemEnd2EndTest {
         host.register("testService", service)
         let client = DummyActorClient(host)
         let proxy = ActorProxy("testService", client)
-        let fut = proxy.ask<Int64>("addTen", [5.serialize()])
-        let result = fut.get()
+        let fut = proxy.ask("addTen", [5.serialize()])
+        let result = Int64.deserialize(fut.get())
         @Expect(result, 15)
         // Also check metadata
         let infos = client.findAll()

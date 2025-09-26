@@ -12,7 +12,7 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
     | Distributed(Bool)
     | Mode(ReceiverMode)
     | Description(String)
-    | CustomInfos(JsonValue)
+    | CustomInfos(JsonObject)
 
     public override func hashCode(): Int64 {
         match (this) {
@@ -40,7 +40,7 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
             case Distributed(b) => "distributed: ${b}"
             case Mode(m) => "mode: ${m}"
             case Description(d) => "description: ${d}"
-            case CustomInfos(c) => "customInfos: ${c.toString()}"
+            case CustomInfos(c) => "customInfos: ${c}"
         }
     }
 
@@ -99,6 +99,16 @@ protected class MacroOptionSet {
         true
     }
 
+    func getMode(): ReceiverMode {
+        for (opt in opts) {
+            match (opt) {
+                case Mode(m) => return m
+                case _ => continue
+            }
+        }
+        AskAndTell
+    }
+
     func isDistributed(): Bool {
         for (opt in opts) {
             match (opt) {
@@ -127,14 +137,14 @@ protected class MacroOptionSet {
         "_"
     }
 
-    func getCustomInfos(): JsonValue {
+    func getCustomInfos(): JsonObject {
         for (opt in opts) {
             match (opt) {
                 case CustomInfos(c) => return c
                 case _ => continue
             }
         }
-        JsonValue.fromStr("{ \"dummy\" : \"dummy\" }")
+        JsonObject()
     }
 
     func getPriority(): Int64 {
@@ -253,8 +263,8 @@ class MacroOptionParser {
             case "description" =>
                 addOption(Description(val.value))
             case "customInfo" =>
-                let jsonValue: JsonValue = try {
-                    JsonValue.fromStr(val.value)
+                let jsonValue: JsonObject = try {
+                    JsonValue.fromStr(val.value).asObject()
                 } catch (_: JsonException) {
                     errors.add(MacroOptionCustomInfosInvalidFormat)
                     return

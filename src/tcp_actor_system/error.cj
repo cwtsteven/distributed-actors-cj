@@ -1,7 +1,5 @@
 package actors.tcp_actor_system
 
-import std.binary.*
-
 /*
 * Enum representing the error codes of the TCPActorSystem
 */
@@ -10,7 +8,7 @@ enum TCPActorSystemError <: ToString & Equatable<TCPActorSystemError> {
     | ActorNotFound
     | ReceiverNotFound
 
-    public func toString(): String {
+    public override func toString(): String {
         match (this) {
             case UnknownError => "UnknownError"
             case ActorNotFound => "ActorNotFound"
@@ -18,7 +16,7 @@ enum TCPActorSystemError <: ToString & Equatable<TCPActorSystemError> {
         }
     }
 
-    public operator func ==(other: TCPActorSystemError): Bool {
+    public override operator func ==(other: TCPActorSystemError): Bool {
         match ((this, other)) {
             case (UnknownError, UnknownError) => true
             case (ActorNotFound, ActorNotFound) => true
@@ -27,7 +25,7 @@ enum TCPActorSystemError <: ToString & Equatable<TCPActorSystemError> {
         }
     }
 
-    public operator func !=(other: TCPActorSystemError): Bool {
+    public override operator func !=(other: TCPActorSystemError): Bool {
         !(this == other)
     }
 }

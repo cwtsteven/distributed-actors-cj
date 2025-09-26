@@ -5,6 +5,7 @@ import encoding.json.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
 import actors.dummy_actor_system.*
 
 @ActorInterface[
@@ -43,8 +44,8 @@ main() {
     host.register("myService", myService)
 
     let proxy = ActorProxy("myService", client)
-    let fut = proxy.ask<Int64>("foo", [0.serialize()])
-    println(fut.get())
+    let fut = proxy.ask("foo", [0.serialize()])
+    println(Int64.deserialize(fut.get()))
 
     let infos = client.findAll()
     println("Metadata count: ${infos.size}")

@@ -8,6 +8,7 @@ import std.fs.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
 import actors.tcp_actor_system.*
 import serialization.serialization.*
 import encoding.json.*

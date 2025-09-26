@@ -122,7 +122,7 @@ protected class GenerateActorClass {
         let declaredType = fd.declType
 
         fd.declType = match (behaviour) {
-            case Ask => RefType(quote(LocalActorFuture<$declaredType>))
+            case Ask => RefType(quote(ActorFuture<$declaredType>))
             case Tell => PrimitiveType(quote(Unit))
         }
 

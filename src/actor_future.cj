@@ -3,8 +3,6 @@ package actors
 import std.sync.*
 import std.time.*
 
-import serialization.serialization.*
-
 /*
 * Abstract base class representing the pending result of a closure submitted to an Actor.
 */
@@ -21,7 +19,7 @@ sealed abstract class ActorFuture<T> {
     * @throws Exception - if the closure throws an exception
     * @throws Error - if the closure throws an error
     */
-    public open func get(): T {
+    public func get(): T {
         if (isReady.load()) {
             return result.getOrThrow()
         }
@@ -41,7 +39,7 @@ sealed abstract class ActorFuture<T> {
     * @throws Exception - if the closure throws an exception
     * @throws Error - if the closure throws an error
     */
-    public open func get(timeout: Duration): Option<T> {
+    public func get(timeout: Duration): Option<T> {
         if (timeout <= Duration.Zero) {
             return Some(get())
         }
@@ -71,7 +69,7 @@ sealed abstract class ActorFuture<T> {
     * @throws Exception - if the closure throws an exception
     * @throws Error - if the closure throws an error
     */
-    public open func tryGet(): Option<T> {
+    public func tryGet(): Option<T> {
         if (isReady.load()) {
             return Some(result.getOrThrow())
         }
@@ -82,7 +80,7 @@ sealed abstract class ActorFuture<T> {
 /*
 * A concrete implementation of ActorFuture for local actor communication
 */
-public class LocalActorFuture<T> <: ActorFuture<T> {
+protected class LocalActorFuture<T> <: ActorFuture<T> {
     private let closure: () -> T
 
     /*
@@ -133,22 +131,5 @@ protected enum FutureResult<T> {
             case Exc(e) => throw e
             case Err(e) => throw e
         }
-    }
-}
-
-extend<T> ActorFuture<T> <: Waitable where T <: Serializable<T> {
-    /*
-    * Waits for the future to be ready
-    * @return the result
-    * @throws Exception - if the future throws an exception
-    * @throws Error - if the future throws an error
-    */
-    public func wait(): DataModel {
-        try {
-            get()
-        } catch (_: Exception) {
-        } catch (_: Error) {}
-
-        this.result.serialize()
     }
 }

@@ -3,7 +3,7 @@ package actors
 /*
 * Configuration for a receiver call
 */
-public class ReceiverConfig {
+public struct ReceiverConfig <: Equatable<ReceiverConfig> {
     /*
     * The default receiver config
     */
@@ -20,5 +20,13 @@ public class ReceiverConfig {
     */
     public ReceiverConfig(priority!: Int64 = 5) {
         this.priority = priority
+    }
+
+    public override operator func ==(other: ReceiverConfig): Bool {
+        this.priority == other.priority
+    }
+
+    public override operator func !=(other: ReceiverConfig): Bool {
+        !(this == other)
     }
 }

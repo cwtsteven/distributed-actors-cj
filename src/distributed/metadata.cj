@@ -1,6 +1,8 @@
-package actors
+package actors.distributed
 
+import actors.*
 import encoding.json.*
+import serialization.serialization.*
 
 /*
 * Information about an actor including its name and metadata
@@ -14,8 +16,8 @@ public struct ActorInfo <: ToString {
     * @param metadata - the metadata of the actor
     */
     public ActorInfo(
-        public let name: String,
-        public let metadata: Metadata
+        public let name!: String,
+        public let metadata!: Metadata
     ) {}
 
     /*
@@ -39,9 +41,9 @@ public struct Metadata <: ToString {
     * @param customInfo - the custom info of the actor
     */
     public Metadata(
-        public let receivers: Array<ReceiverInfo>,
-        public let description: String,
-        public let customInfo: JsonValue
+        public let receivers!: Array<ReceiverInfo>,
+        public let description!: String,
+        public let customInfo!: JsonObject
     ) {}
 
     /*
@@ -66,10 +68,37 @@ public struct Metadata <: ToString {
     }
 }
 
+public enum ReceiverMode <: ToString & Equatable<ReceiverMode> {
+    | AskOnly
+    | TellOnly
+    | AskAndTell
+
+    public override func toString(): String {
+        match (this) {
+            case AskOnly => "AskOnly"
+            case TellOnly => "TellOnly"
+            case AskAndTell => "AskAndTell"
+        }
+    }
+
+    public override operator func ==(other: ReceiverMode): Bool {
+        match ((this, other)) {
+            case (AskOnly, AskOnly) => true
+            case (TellOnly, TellOnly) => true
+            case (AskAndTell, AskAndTell) => true
+            case _ => false
+        }
+    }
+
+    public override operator func !=(other: ReceiverMode): Bool {
+        !(this == other)
+    }
+}
+
 /*
 * Information about a receiver
 */
-public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
+public struct ReceiverInfo <: ToString {
 
     /*
     * Initializes the ReceiverInfo
@@ -78,13 +107,15 @@ public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
     * @param methodName - the name of the receiver
     * @param paramSchema - the parameter schema of the receiver
     * @param retTypeModel - the return type model of the receiver
+    * @param mode - the calling mode of the receiver (AskOnly, TellOnly, AskAndTell)
     */
     public ReceiverInfo(
-        public let description: String,
-        public let customInfo: JsonValue,
-        public let methodName: String,
-        public let paramSchema: Array<(String, TypeModel)>,
-        public let retTypeModel: TypeModel
+        public let description!: String,
+        public let customInfo!: JsonObject,
+        public let methodName!: String,
+        public let paramSchema!: Array<ReceiverParameter>,
+        public let retTypeModel!: TypeModel,
+        public let mode!: ReceiverMode
     ) {}
 
     /*
@@ -93,42 +124,37 @@ public struct ReceiverInfo <: ToString & Equatable<ReceiverInfo> {
     public override func toString(): String {
         var res = "${methodName} ("
         var i = 0
-        for ((name, typeModel) in paramSchema) {
-            res += "${name}: ${typeModel}"
+        for (param in paramSchema) {
+            res += "${param.name}: ${param.typeModel} [${param.description}]"
             if (i < paramSchema.size - 1) {
                 res += ", "
             }
             i += 1
         }
         res += "): ${retTypeModel}"
+        res += " [${mode}]"
         res += " [${description}]"
         res += " [${customInfo}]"
         res
     }
+}
 
-    /*
-    * Checks if the ReceiverInfo is equal to another ReceiverInfo
-    * @param other - the other ReceiverInfo
-    * @return true if the ReceiverInfo is equal to the other ReceiverInfo, false otherwise
-    */
-    public override operator func ==(other: ReceiverInfo): Bool {
-        this.methodName == other.methodName
-    }
+public struct ReceiverParameter <: ToString {
+    public ReceiverParameter(
+        public let name!: String,
+        public let typeModel!: TypeModel,
+        public let description!: String
+    ) {}
 
-    /*
-    * Checks if the ReceiverInfo is not equal to another ReceiverInfo
-    * @param other - the other ReceiverInfo
-    * @return true if the ReceiverInfo is not equal to the other ReceiverInfo, false otherwise
-    */
-    public override operator func !=(other: ReceiverInfo): Bool {
-        !(this == other)
+    public override func toString(): String {
+        "${name}: ${typeModel} [${description}]"
     }
 }
 
 /*
 * Type model
 */
-public enum TypeModel <: ToString {
+public enum TypeModel <: ToString & Equatable<TypeModel> {
     | IntType
     | FloatType
     | BoolType
@@ -147,4 +173,29 @@ public enum TypeModel <: ToString {
             case UnitType => "Unit"
         }
     }
+
+    public override operator func ==(other: TypeModel): Bool {
+        match ((this, other)) {
+            case (IntType, IntType) => true
+            case (FloatType, FloatType) => true
+            case (BoolType, BoolType) => true
+            case (StringType, StringType) => true
+            case (UnitType, UnitType) => true
+            case _ => false
+        }
+    }
+
+    public override operator func !=(other: TypeModel): Bool {
+        !(this == other)
+    }
+}
+
+public struct InvokeInfo {
+    public InvokeInfo(
+        public let name!: String,
+        public let receiverName!: String,
+        public let args!: Array<DataModel>,
+        public let config!: ReceiverConfig,
+        public let fut!: ?DistributedFuture
+    ) {}
 }

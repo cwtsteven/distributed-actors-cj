@@ -8,10 +8,13 @@ package actors.tcp_actor_system
 import std.binary.*
 import std.io.*
 import std.collection.*
+
+import actors.*
+import actors.distributed.*
+
 import encoding.json.*
 
 import serialization.serialization.*
-import actors.*
 
 /**
  * Serializes an Envelope object to a byte array
@@ -224,7 +227,7 @@ func deserializeActorInfoArray(buffer: ByteArrayStream): Array<ActorInfo> {
         let metaBytes = Array<Byte>(Int64(len), item: 0)
         buffer.read(metaBytes)
         let metadata = deserializeMetadata(metaBytes)
-        list.append(ActorInfo(name, metadata))
+        list.append(ActorInfo(name: name, metadata: metadata))
     }
     list.toArray()
 }

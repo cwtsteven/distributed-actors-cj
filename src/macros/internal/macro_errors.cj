@@ -78,7 +78,7 @@ extend MacroError <: ToString {
             case MacroOptionPriorityIllegalArgument => "Macro options: priority must be an integer literal inside the range [1..10]."
             case MacroOptionModeIllegalArgument => "Macro options: mode must be either AskOnly, TellOnly, or AskAndTell."
             case MacroOptionDistributedIllegalArgument => "Macro options: distributed must must take a boolean literal."
-            case MacroOptionCustomInfosInvalidFormat => "Macro options: customInfo must be a valid JSON array of objects with string key-value pairs."
+            case MacroOptionCustomInfosInvalidFormat => "Macro options: customInfo must be a valid JSON object with string key-value pairs."
             case MacroOptionDuplicatedOption(opt) => "Macro options: duplicated option '${opt.getKeyString()}'."
             case MacroReceiverInfoUnsupportedType => "${ACTOR_DISTRIBUTED_INTERFACE_MACRO} macro: unsupported type for parameter schema generation."
         }

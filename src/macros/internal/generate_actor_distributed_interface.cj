@@ -19,13 +19,13 @@ protected class GenerateDistributedActorInterface {
         EnableReceiverPriority(true),
         Distributed(true),
         Description(""),
-        CustomInfos(JsonValue.fromStr("{}"))
+        CustomInfos(JsonObject())
     ]
 
     static let allowedReceiverOptions: Array<MacroOption> = [
         Mode(AskAndTell),
         Description(""),
-        CustomInfos(JsonValue.fromStr("{}"))
+        CustomInfos(JsonObject())
     ]
 
     protected static func Run(aOpts: MacroOptionSet, headDecl: Decl, decl: InterfaceDecl, errors: MacroErrors) {
@@ -137,7 +137,7 @@ protected class GenerateDistributedActorInterface {
             let callExpr = deserializeFuncParams(fd, false)
             staticInit.block.nodes.append(CallExpr(quote(
                 $dispatchAskHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
-                    a.$(fd.identifier)$(callExpr)
+                    LocalWaitable.fromActorFuture<$(fd.declType)>(a.$(fd.identifier)$(callExpr))
                 })
             )))
         }
@@ -165,7 +165,11 @@ protected class GenerateDistributedActorInterface {
         let customInfo = aOpts.getCustomInfos()
         FuncDecl(quote(
             func getMetadata(): Metadata {
-                Metadata($proxyClassIdent.$receiverInfosArrayVarToken.toArray(), $desc, JsonValue.fromStr($(customInfo.toString())))
+                Metadata(
+                    receivers: $proxyClassIdent.$receiverInfosArrayVarToken.toArray(),
+                    description: $desc,
+                    customInfo: JsonObject.fromStr($(customInfo.toString())).asObject()
+                )
             }
         ))
     }
@@ -183,7 +187,7 @@ protected class GenerateDistributedActorInterface {
 
     private func newDispatchAskFunc(): FuncDecl {
         FuncDecl(quote(
-            func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Waitable {
+            func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable {
                 match ($proxyClassIdent.$dispatchAskHashMapVarToken.get(receiverName)) {
                     case Some(f) => f(this, args, config)
                     case None => throw ReceiverNotFoundException($(interfaceName.value), receiverName)
@@ -196,7 +200,7 @@ protected class GenerateDistributedActorInterface {
         ClassDecl(quote(
             private class $proxyClassIdent {
                 static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
-                static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Waitable>()
+                static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> LocalWaitable>()
                 static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
             }
         ))
@@ -226,9 +230,8 @@ protected class GenerateDistributedActorInterface {
             )))
         }
 
-        let retTy = fd.declType
         fd.declType = match (behaviour) {
-            case Ask => actorFutureType(retTy)
+            case Ask => RefType(quote(Object))
             case Tell => PrimitiveType(quote(Unit))
         }
     }
@@ -251,9 +254,15 @@ protected class GenerateDistributedActorInterface {
             errors.doThrow()
         }
 
+        let modeToken = Token(IDENTIFIER, rOpts.getMode().toString())
         Some(VarDecl(quote(
             static let $receiverInfoVarIdent: $receiverInfoToken = $receiverInfoToken(
-                $(description), JsonValue.fromStr($(customInfo.toString())), $(fd.identifier.value), $paramSchema, $retTypeModel
+                description: $(description),
+                customInfo: JsonObject.fromStr($(customInfo.toString())).asObject(),
+                methodName: $(fd.identifier.value),
+                paramSchema: $paramSchema,
+                retTypeModel: $retTypeModel,
+                mode: $modeToken
             )
         )))
     }
@@ -268,7 +277,7 @@ private func buildParamSchema(fd: FuncDecl): Tokens {
     for (i in 0..fd.funcParams.size) {
         let fp = fd.funcParams[i]
         let paramTypeModel = getTypeModel(fp.paramType)
-        schema += quote(($(fp.identifier.value), $paramTypeModel))
+        schema += quote(ReceiverParameter(name: $(fp.identifier.value), typeModel: $paramTypeModel, description: $(fp.identifier.value)))
         if (i < fd.funcParams.size - 1) {
             schema += quote(, )
         }

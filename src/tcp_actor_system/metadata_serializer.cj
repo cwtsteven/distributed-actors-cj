@@ -8,9 +8,11 @@ package actors.tcp_actor_system
 import std.binary.*
 import std.io.*
 import std.collection.*
-import encoding.json.*
 
 import actors.*
+import actors.distributed.*
+
+import encoding.json.*
 
 /**
  * Serializes a Metadata object to a byte array
@@ -34,8 +36,8 @@ func serializeMetadata(metadata: Metadata): Array<Byte> {
         // Serialize description
         serializeString(buffer, metadata.description)
 
-        // Serialize customInfo (JsonValue)
-        serializeJsonValue(buffer, metadata.customInfo)
+        // Serialize customInfo (JsonObject)
+        serializeJsonObject(buffer, metadata.customInfo)
 
         // Get the serialized data
         let result = Array<Byte>(Int64(buffer.length), item: 0)
@@ -68,10 +70,10 @@ func deserializeMetadata(bytes: Array<Byte>): Metadata {
         // Deserialize description
         let description = deserializeString(buffer)
 
-        // Deserialize customInfo (JsonValue)
-        let customInfo = deserializeJsonValue(buffer)
+        // Deserialize customInfo (JsonObject)
+        let customInfo = deserializeJsonObject(buffer)
 
-        Metadata(receivers.toArray(), description, customInfo)
+        Metadata(receivers: receivers.toArray(), description: description, customInfo: customInfo)
     } catch (e: Exception) {
         throw Exception("Failed to deserialize metadata: " + e.message)
     }
@@ -85,7 +87,7 @@ func serializeReceiverInfo(buffer: ByteArrayStream, receiver: ReceiverInfo): Uni
     serializeString(buffer, receiver.description)
 
     // Serialize customInfo
-    serializeJsonValue(buffer, receiver.customInfo)
+    serializeJsonObject(buffer, receiver.customInfo)
 
     // Serialize methodName
     serializeString(buffer, receiver.methodName)
@@ -96,13 +98,17 @@ func serializeReceiverInfo(buffer: ByteArrayStream, receiver: ReceiverInfo): Uni
     paramCount.writeLittleEndian(paramCountBytes)
     buffer.write(paramCountBytes)
 
-    for ((paramName, typeModel) in receiver.paramSchema) {
-        serializeString(buffer, paramName)
-        serializeTypeModel(buffer, typeModel)
+    for (param in receiver.paramSchema) {
+        serializeString(buffer, param.name)
+        serializeTypeModel(buffer, param.typeModel)
+        serializeString(buffer, param.description)
     }
 
     // Serialize retTypeModel
     serializeTypeModel(buffer, receiver.retTypeModel)
+
+    // Serialize mode
+    serializeReceiverMode(buffer, receiver.mode)
 }
 
 /**
@@ -113,7 +119,7 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
     let description = deserializeString(buffer)
 
     // Deserialize customInfo
-    let customInfo = deserializeJsonValue(buffer)
+    let customInfo = deserializeJsonObject(buffer)
 
     // Deserialize methodName
     let methodName = deserializeString(buffer)
@@ -123,17 +129,28 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
     buffer.read(paramCountBytes)
     let paramCount = Int32.readLittleEndian(paramCountBytes)
 
-    let paramSchema = ArrayList<(String, TypeModel)>()
+    let paramSchema = ArrayList<ReceiverParameter>()
     for (_ in 0..paramCount) {
         let paramName = deserializeString(buffer)
         let typeModel = deserializeTypeModel(buffer)
-        paramSchema.append((paramName, typeModel))
+        let paramDescription = deserializeString(buffer)
+        paramSchema.append(ReceiverParameter(name: paramName, typeModel: typeModel, description: paramDescription))
     }
 
     // Deserialize retTypeModel
     let retTypeModel = deserializeTypeModel(buffer)
 
-    ReceiverInfo(description, customInfo, methodName, paramSchema.toArray(), retTypeModel)
+    // Deserialize mode
+    let mode = deserializeReceiverMode(buffer)
+
+    ReceiverInfo(
+        description: description,
+        customInfo: customInfo,
+        methodName: methodName,
+        paramSchema: paramSchema.toArray(),
+        retTypeModel: retTypeModel,
+        mode: mode
+    )
 }
 
 /**
@@ -168,6 +185,33 @@ func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
 }
 
 /**
+ * Serializes a ReceiverMode enum to the buffer
+ */
+func serializeReceiverMode(buffer: ByteArrayStream, mode: ReceiverMode): Unit {
+    let modeBytes = Array<Byte>(1, item: 0)
+    match (mode) {
+        case AskOnly => modeBytes[0] = 0
+        case TellOnly => modeBytes[0] = 1
+        case AskAndTell => modeBytes[0] = 2
+    }
+    buffer.write(modeBytes)
+}
+
+/**
+ * Deserializes a ReceiverMode enum from the buffer
+ */
+func deserializeReceiverMode(buffer: ByteArrayStream): ReceiverMode {
+    let modeBytes = Array<Byte>(1, item: 0)
+    buffer.read(modeBytes)
+    match (modeBytes[0]) {
+        case 0 => AskOnly
+        case 1 => TellOnly
+        case 2 => AskAndTell
+        case _ => throw Exception("Invalid ReceiverMode value: " + modeBytes[0].toString())
+    }
+}
+
+/**
  * Serializes a string to the buffer (UTF-8 encoded with length prefix)
  */
 func serializeString(buffer: ByteArrayStream, str: String): Unit {
@@ -193,21 +237,25 @@ func deserializeString(buffer: ByteArrayStream): String {
 }
 
 /**
- * Serializes a JsonValue to the buffer
+ * Serializes a JsonObject to the buffer
  */
-func serializeJsonValue(buffer: ByteArrayStream, jsonValue: JsonValue): Unit {
-    // Convert JsonValue to string and serialize as string
-    let jsonString = jsonValue.toString()
+func serializeJsonObject(buffer: ByteArrayStream, jsonObject: JsonObject): Unit {
+    // Convert JsonObject to string and serialize as string
+    let jsonString = jsonObject.toString()
     serializeString(buffer, jsonString)
 }
 
 /**
- * Deserializes a JsonValue from the buffer
+ * Deserializes a JsonObject from the buffer
  */
-func deserializeJsonValue(buffer: ByteArrayStream): JsonValue {
+func deserializeJsonObject(buffer: ByteArrayStream): JsonObject {
     let jsonString = deserializeString(buffer)
-    // Parse the JSON string back to JsonValue
+    // Parse the JSON string back to JsonObject
     // Note: This is a simplified implementation - in practice you'd want proper JSON parsing
-    // For now, we'll create a basic JsonValue representation
-    JsonValue.fromStr(jsonString)
+    // For now, we'll create a basic JsonObject representation
+    try {
+        JsonObject.fromStr(jsonString).asObject()
+    } catch (_: JsonException) {
+        throw TCPActorSystemDeserializationException("Failed to deserialize JsonObject: " + jsonString)
+    }
 }

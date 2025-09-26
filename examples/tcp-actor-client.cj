@@ -8,6 +8,7 @@ import std.fs.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
 import actors.tcp_actor_system.*
 import serialization.serialization.*
 import encoding.json.*
@@ -27,8 +28,8 @@ main(args: Array<String>) {
     let proxy = ActorProxy("testService 1", client)
 
     while (true) {
-        let fut = proxy.ask<Int64>("addTen", [5.serialize()])
-        let result = fut.get()
+        let fut = proxy.ask("addTen", [5.serialize()])
+        let result = Int64.deserialize(fut.get())
         println(result)
 
         let info = client.find("testService 1")

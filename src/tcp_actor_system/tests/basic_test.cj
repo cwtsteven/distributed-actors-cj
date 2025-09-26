@@ -8,6 +8,7 @@ import std.sync.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
 import actors.tcp_actor_system.*
 import serialization.serialization.*
 

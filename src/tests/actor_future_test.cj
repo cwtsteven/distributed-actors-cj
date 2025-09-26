@@ -63,61 +63,6 @@ public class ActorFutureTest {
         @Expect(thrownExn.message, "Test exception")
     }
 
-    // Test DistributedActorFuture basic functionality
-    @TestCase
-    func testDistributedActorFutureBasicFulfill() {
-        let future = DistributedActorFuture<Int64>()
-        let success = future.fulfill(Okay(42).serialize())
-        @Expect(success, true)
-        let result = future.get()
-        @Expect(result, 42)
-    }
-
-    @TestCase
-    func testDistributedActorFutureFulfillWithString() {
-        let future = DistributedActorFuture<String>()
-        let success = future.fulfill(Okay("hello world").serialize())
-        @Expect(success, true)
-        let result = future.get()
-        @Expect(result, "hello world")
-    }
-
-    @TestCase
-    func testDistributedActorFutureFulfillWithException() {
-        let future = DistributedActorFuture<Int64>()
-        let err = Exception("Test error")
-        let success = future.fulfill(Exc<Int64>(err).serialize())
-        @Expect(success, true)
-        let thrownErr = @AssertThrows[Exception](future.get())
-        @Expect(thrownErr.message, "Test error")
-    }
-
-    @TestCase
-    func testDistributedActorFutureTryGetBeforeFulfill() {
-        let future = DistributedActorFuture<Int64>()
-        let result = future.tryGet()
-        @Expect(result.isSome(), false)
-    }
-
-    @TestCase
-    func testDistributedActorFutureTryGetAfterFulfill() {
-        let future = DistributedActorFuture<Int64>()
-        future.fulfill(Okay(42).serialize())
-        let result = future.tryGet()
-        @Expect(result.isSome(), true)
-        @Expect(result.getOrThrow(), 42)
-    }
-
-    @TestCase
-    func testDistributedActorFutureDoubleFulfill() {
-        let future = DistributedActorFuture<Int64>()
-        let success1 = future.fulfill(Okay(42).serialize())
-        let success2 = future.fulfill(Okay(100).serialize())
-        @Expect(success1, true)
-        @Expect(success2, false) // Second fulfill should fail
-        let result = future.get()
-        @Expect(result, 42) // Should still be the first value
-    }
 
     // Test FutureResult
     @TestCase
@@ -150,20 +95,6 @@ public class ActorFutureTest {
         @Expect(future3.get(), 3)
     }
 
-    @TestCase
-    func testMultipleDistributedActorFutures() {
-        let future1 = DistributedActorFuture<Int64>()
-        let future2 = DistributedActorFuture<Int64>()
-        let future3 = DistributedActorFuture<Int64>()
-
-        future1.fulfill(Okay(10).serialize())
-        future2.fulfill(Okay(20).serialize())
-        future3.fulfill(Okay(30).serialize())
-
-        @Expect(future1.get(), 10)
-        @Expect(future2.get(), 20)
-        @Expect(future3.get(), 30)
-    }
 
     @TestCase
     func testMixedLocalActorFutures() {
@@ -180,15 +111,4 @@ public class ActorFutureTest {
         @Expect(exn.message, "Task failed")
     }
 
-    @TestCase
-    func testMixedDistributedActorFutures() {
-        let successFuture = DistributedActorFuture<Int64>()
-        let failureFuture = DistributedActorFuture<Int64>()
-        successFuture.fulfill(Okay(42).serialize())
-        failureFuture.fulfill(Exc<Int64>(Exception("Fulfill failed")).serialize())
-
-        @Expect(successFuture.get(), 42)
-        let exn = @AssertThrows[Exception](failureFuture.get())
-        @Expect(exn.message, "Fulfill failed")
-    }
 }

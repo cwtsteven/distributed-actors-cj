@@ -8,9 +8,10 @@ import serialization.serialization.*
 
 import actors.*
 import actors.macros.*
+import actors.distributed.*
 import std.socket.SocketAddress
 
-type FutMap = ConcurrentHashMap<UInt64, Fullfillable>
+type FutMap = ConcurrentHashMap<UInt64, DistributedFuture>
 
 /*
 * A class representing a TCP actor client
@@ -55,7 +56,14 @@ public class TCPActorClient <: ActorClient {
         }
     }
 
-    public func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: Fullfillable): Unit {
+    public func remoteCall(invokeInfo: InvokeInfo): Unit {
+        match (invokeInfo.fut) {
+            case Some(fut) => remoteAsk(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config, fut)
+            case None => remoteTell(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config)
+        }
+    }
+
+    func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: DistributedFuture): Unit {
         TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteCall(${name}) begins.")
 
         let futId = nextFutId.fetchAdd(1)
@@ -84,7 +92,7 @@ public class TCPActorClient <: ActorClient {
         TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteCall(${name}) ends.")
     }
 
-    public func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+    func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
         TCPActorSystem.logger.debug("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]: remoteTell(${name}) begins.")
 
         let resp = conn.sendSync(Payload.Tell(name, receiverName, args, config))

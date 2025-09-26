@@ -45,7 +45,7 @@ public class SequentialDispatcher {
     * @param config - the configuration of the task
     * @return the future of the task
     */
-    public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): LocalActorFuture<T> {
+    public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
         let fut = LocalActorFuture<T>(f)
         mailbox.add((this, fut.execute), config.priority)
         return fut

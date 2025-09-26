@@ -1,5 +1,7 @@
 package actors.tcp_actor_system
 
+import encoding.json.*
+
 extend<T> Array<T> {
     /*
     * Fills the array with the same value
