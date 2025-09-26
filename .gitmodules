@@ -1,0 +1,4 @@
+[submodule "libs/CangjieMagic"]
+	path = libs/CangjieMagic
+	url = https://github.com/Huawei-Edinburgh-Programming-Languages/CangjieMagic.git
+	branch = edinburgh_pl_mod
