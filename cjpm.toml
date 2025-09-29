@@ -10,7 +10,7 @@
       path-option = [ "${X86_64_OHOS_LIBS}", "${X86_64_OHOS_MACRO_LIBS}" ]
 
 [dependencies]
-  magic = { path = "./libs/CangjieMagic", version = "1.0.0" }
+  magic = { git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git", tag = "harmony_os_edition" }
 
 [package]
   cjc-version = "0.53.18"
