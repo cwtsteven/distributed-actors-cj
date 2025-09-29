@@ -159,13 +159,34 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
 func serializeTypeModel(buffer: ByteArrayStream, typeModel: TypeModel): Unit {
     let typeBytes = Array<Byte>(1, item: 0)
     match (typeModel) {
-        case IntType => typeBytes[0] = 0
-        case FloatType => typeBytes[0] = 1
-        case BoolType => typeBytes[0] = 2
-        case StringType => typeBytes[0] = 3
-        case UnitType => typeBytes[0] = 4
+        case IntType =>
+            typeBytes[0] = 0
+            buffer.write(typeBytes)
+        case FloatType =>
+            typeBytes[0] = 1
+            buffer.write(typeBytes)
+        case BoolType =>
+            typeBytes[0] = 2
+            buffer.write(typeBytes)
+        case StringType =>
+            typeBytes[0] = 3
+            buffer.write(typeBytes)
+        case UnitType =>
+            typeBytes[0] = 4
+            buffer.write(typeBytes)
+        case StructType(fields) =>
+            typeBytes[0] = 5
+            buffer.write(typeBytes)
+            // Serialize the fields array
+            let fieldCount = Int32(fields.size)
+            let fieldCountBytes = Array<Byte>(4, item: 0)
+            fieldCount.writeLittleEndian(fieldCountBytes)
+            buffer.write(fieldCountBytes)
+
+            for (field in fields) {
+                serializeFieldModel(buffer, field)
+            }
     }
-    buffer.write(typeBytes)
 }
 
 /**
@@ -180,6 +201,18 @@ func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
         case 2 => BoolType
         case 3 => StringType
         case 4 => UnitType
+        case 5 =>
+            // Deserialize StructType
+            let fieldCountBytes = Array<Byte>(4, item: 0)
+            buffer.read(fieldCountBytes)
+            let fieldCount = Int32.readLittleEndian(fieldCountBytes)
+
+            let fields = ArrayList<FieldModel>()
+            for (_ in 0..fieldCount) {
+                let field = deserializeFieldModel(buffer)
+                fields.append(field)
+            }
+            StructType(fields.toArray())
         case _ => throw Exception("Invalid TypeModel value: " + typeBytes[0].toString())
     }
 }
@@ -258,4 +291,26 @@ func deserializeJsonObject(buffer: ByteArrayStream): JsonObject {
     } catch (_: JsonException) {
         throw TCPActorSystemDeserializationException("Failed to deserialize JsonObject: " + jsonString)
     }
+}
+
+/**
+ * Serializes a FieldModel struct to the buffer
+ */
+func serializeFieldModel(buffer: ByteArrayStream, field: FieldModel): Unit {
+    // Serialize field name
+    serializeString(buffer, field.name)
+    // Serialize field type model
+    serializeTypeModel(buffer, field.typeModel)
+}
+
+/**
+ * Deserializes a FieldModel struct from the buffer
+ */
+func deserializeFieldModel(buffer: ByteArrayStream): FieldModel {
+    // Deserialize field name
+    let name = deserializeString(buffer)
+    // Deserialize field type model
+    let typeModel = deserializeTypeModel(buffer)
+
+    FieldModel(name: name, typeModel: typeModel)
 }

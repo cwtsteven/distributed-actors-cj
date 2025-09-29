@@ -160,6 +160,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
     | BoolType
     | StringType
     | UnitType
+    | StructType(Array<FieldModel>)
 
     /*
     * Converts the TypeModel to a string
@@ -171,6 +172,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
             case BoolType => "Bool"
             case StringType => "String"
             case UnitType => "Unit"
+            case StructType(fields) => "Struct(${fields})"
         }
     }
 
@@ -181,12 +183,32 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
             case (BoolType, BoolType) => true
             case (StringType, StringType) => true
             case (UnitType, UnitType) => true
+            case (StructType(fields1), StructType(fields2)) => fields1 == fields2
             case _ => false
         }
     }
 
     public override operator func !=(other: TypeModel): Bool {
         !(this == other)
+    }
+}
+
+public struct FieldModel <: ToString & Equatable<FieldModel> {
+    public FieldModel(
+        public let name!: String,
+        public let typeModel!: TypeModel
+    ) {}
+
+    public override operator func ==(other: FieldModel): Bool {
+        this.name == other.name && this.typeModel == other.typeModel
+    }
+
+    public override operator func !=(other: FieldModel): Bool {
+        !(this == other)
+    }
+
+    public override func toString(): String {
+        "${name}: ${typeModel}"
     }
 }
 

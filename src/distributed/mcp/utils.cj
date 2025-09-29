@@ -1,4 +1,4 @@
-package actors.mcp
+package actors.distributed.mcp
 
 import std.collection.*
 

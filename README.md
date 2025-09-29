@@ -24,3 +24,4 @@ All tests should pass except for the followings:
 
 - message delivery semantics, i.e. at-least-one or at-most-once, with or without retries
 - MCP schema generation
+- move distributed macros to a separate package
