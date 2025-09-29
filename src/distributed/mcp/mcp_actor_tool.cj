@@ -11,6 +11,8 @@ import magic.core.tool.*
 import magic.mcp.*
 import magic.jsonable.*
 
+const SEPARATOR = ";__actors_08275892475824__;"
+
 let receiverConfigTypeModel =
     TypeModel.StructType([
         FieldModel(name: "priority", typeModel: TypeModel.IntType)
@@ -63,7 +65,7 @@ public class ReceiverTool <: Tool {
 
     // TODO: support config
     public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse {
-        let names = __name.split(".")
+        let names = __name.split(SEPARATOR)
         if (names.size != 2) {
             throw ActorMCPException("Invalid tool name: ${__name}")
         }
@@ -140,7 +142,7 @@ func generateMCPToolsFromActorInfo(client: ActorClient, actorInfo: ActorInfo): A
         // ))
         tools.append(
             ReceiverTool(
-                name: actorInfo.name + "." + receiver.methodName,
+                name: actorInfo.name + SEPARATOR + receiver.methodName,
                 description: receiver.description,
                 parameters: parameters,
                 retType: generateTypeSchemaFromTypeModel(receiver.retTypeModel),
