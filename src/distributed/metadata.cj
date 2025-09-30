@@ -161,6 +161,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
     | StringType
     | UnitType
     | StructType(Array<FieldModel>)
+    | ListType(TypeModel)
 
     /*
     * Converts the TypeModel to a string
@@ -173,6 +174,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
             case StringType => "String"
             case UnitType => "Unit"
             case StructType(fields) => "Struct(${fields})"
+            case ListType(itemType) => "List(${itemType})"
         }
     }
 
@@ -184,6 +186,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
             case (StringType, StringType) => true
             case (UnitType, UnitType) => true
             case (StructType(fields1), StructType(fields2)) => fields1 == fields2
+            case (ListType(itemType1), ListType(itemType2)) => itemType1 == itemType2
             case _ => false
         }
     }
@@ -196,11 +199,12 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
 public struct FieldModel <: ToString & Equatable<FieldModel> {
     public FieldModel(
         public let name!: String,
+        public let description!: String,
         public let typeModel!: TypeModel
     ) {}
 
     public override operator func ==(other: FieldModel): Bool {
-        this.name == other.name && this.typeModel == other.typeModel
+        this.name == other.name && this.description == other.description && this.typeModel == other.typeModel
     }
 
     public override operator func !=(other: FieldModel): Bool {
@@ -208,7 +212,7 @@ public struct FieldModel <: ToString & Equatable<FieldModel> {
     }
 
     public override func toString(): String {
-        "${name}: ${typeModel}"
+        "${name}: ${typeModel} [${description}]"
     }
 }
 

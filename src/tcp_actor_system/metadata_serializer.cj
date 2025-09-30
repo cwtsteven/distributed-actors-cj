@@ -186,6 +186,11 @@ func serializeTypeModel(buffer: ByteArrayStream, typeModel: TypeModel): Unit {
             for (field in fields) {
                 serializeFieldModel(buffer, field)
             }
+        case ListType(itemType) =>
+            typeBytes[0] = 6
+            buffer.write(typeBytes)
+            // Serialize the inner item type
+            serializeTypeModel(buffer, itemType)
     }
 }
 
@@ -213,6 +218,10 @@ func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
                 fields.append(field)
             }
             StructType(fields.toArray())
+        case 6 =>
+            // Deserialize ListType by reading the inner item type model
+            let itemType = deserializeTypeModel(buffer)
+            ListType(itemType)
         case _ => throw Exception("Invalid TypeModel value: " + typeBytes[0].toString())
     }
 }
@@ -299,6 +308,8 @@ func deserializeJsonObject(buffer: ByteArrayStream): JsonObject {
 func serializeFieldModel(buffer: ByteArrayStream, field: FieldModel): Unit {
     // Serialize field name
     serializeString(buffer, field.name)
+    // Serialize field description
+    serializeString(buffer, field.description)
     // Serialize field type model
     serializeTypeModel(buffer, field.typeModel)
 }
@@ -309,8 +320,10 @@ func serializeFieldModel(buffer: ByteArrayStream, field: FieldModel): Unit {
 func deserializeFieldModel(buffer: ByteArrayStream): FieldModel {
     // Deserialize field name
     let name = deserializeString(buffer)
+    // Deserialize field description
+    let description = deserializeString(buffer)
     // Deserialize field type model
     let typeModel = deserializeTypeModel(buffer)
 
-    FieldModel(name: name, typeModel: typeModel)
+    FieldModel(name: name, description: description, typeModel: typeModel)
 }

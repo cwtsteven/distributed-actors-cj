@@ -24,7 +24,7 @@ main(args: Array<String>) {
     }
     TCPActorSystem.logger.level = LogLevel.DEBUG
 
-    let client = TCPActorClient("localhost", 52185)
+    let client = TCPActorClient("1", "localhost", 52185)
     let proxy = ActorProxy("testService 1", client)
 
     while (true) {

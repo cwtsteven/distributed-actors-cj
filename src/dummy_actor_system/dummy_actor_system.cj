@@ -78,6 +78,8 @@ public class DummyActorHost <: ActorHost {
 * Dummy Actor client
 */
 public class DummyActorClient <: ActorClient {
+    public prop id: String { get() { "dummy" } }
+
     public DummyActorClient(let host: DummyActorHost) {}
 
     public func find(name: String): Option<ActorInfo> {

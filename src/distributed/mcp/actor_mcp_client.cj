@@ -10,7 +10,7 @@ import magic.mcp.*
 import magic.jsonable.*
 
 public class ActorMCPClient <: MCPClient {
-    private let clients = ArrayList<ActorClient>()
+    private let clients = HashMap<String, ActorClient>()
     private let tools = HashMap<String, Tool>()
 
     public func getTools(): Array<Tool> {
@@ -31,12 +31,16 @@ public class ActorMCPClient <: MCPClient {
         }
     }
 
-    public func addClient(client: ActorClient) {
-        clients.append(client)
+    public func addActorClient(client: ActorClient) {
+        clients.put(client.id, client)
+    }
+
+    public func removeActorClient(clientId: String) {
+        clients.remove(clientId)
     }
 
     private func updateTools() {
-        for (client in clients) {
+        for ((_, client) in clients) {
             let actorInfos = client.findAll()
             let newTools = generateMCPToolsFromActorInfos(client, actorInfos)
             for (tool in newTools) {

@@ -15,7 +15,7 @@ const SEPARATOR = ";__actors_08275892475824__;"
 
 let receiverConfigTypeModel =
     TypeModel.StructType([
-        FieldModel(name: "priority", typeModel: TypeModel.IntType)
+        FieldModel(name: "priority", description: "The priority of the receiver call", typeModel: TypeModel.IntType)
     ])
 
 let receiverConfigTypeSchema =
@@ -63,7 +63,6 @@ public class ReceiverTool <: Tool {
     public prop client: ActorClient { get() { __client } }
     public prop info: ReceiverInfo { get() { __info } }
 
-    // TODO: support config
     public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse {
         let names = __name.split(SEPARATOR)
         if (names.size != 2) {
@@ -75,11 +74,18 @@ public class ReceiverTool <: Tool {
         let proxy = ActorProxy(actorName, __client)
 
         try {
+            let config = match (args.get("config")) {
+                case Some(config) =>
+                    let dm = generateDataModelFromToJsonValue(receiverConfigTypeModel, config)
+                    ReceiverConfig(priority: (dm as DataModelInt).getOrThrow().getValue())
+                case None => ReceiverConfig.default
+            }
+
             let result = if (info.mode == ReceiverMode.TellOnly) {
-                proxy.tell(receiverName, generateArgsFromTypeModel(args))
+                proxy.tell(receiverName, generateArgsFromTypeModel(args), config: config)
                 DataModelNull()
             } else {
-                let fut = proxy.ask(receiverName, generateArgsFromTypeModel(args))
+                let fut = proxy.ask(receiverName, generateArgsFromTypeModel(args), config: config)
                 fut.get()
             }
             return ToolResponse(deserializeFromDataModelToString(info.retTypeModel, result))
@@ -113,7 +119,49 @@ func generateDataModelFromToJsonValue(typeModel: TypeModel, arg: ToJsonValue): D
         case TypeModel.FloatType => DataModelFloat(arg.toJsonValue().asFloat().getValue())
         case TypeModel.BoolType => DataModelBool(arg.toJsonValue().asBool().getValue())
         case TypeModel.StringType => DataModelString(arg.toJsonValue().asString().getValue())
-        case _ => throw ActorMCPException("Unsupported type model: ${typeModel}")
+        case TypeModel.UnitType => DataModelNull()
+        case TypeModel.StructType(fieldTypeModels) =>
+            let structValue = arg.toJsonValue().asObject()
+            DataModelStruct(ArrayList<Field>(fieldTypeModels.map<Field>({ field: FieldModel =>
+                Field(field.name, generateDataModelFromToJsonValue(field.typeModel, structValue.get(field.name).getOrThrow()))
+            })))
+        case TypeModel.ListType(itemType) =>
+            DataModelSeq(arg.toJsonValue().asArray().getItems().map({ item =>
+                generateDataModelFromToJsonValue(itemType, item)
+            }))
+    }
+}
+
+func deserializeFromDataModelToString(typeModel: TypeModel, dm: DataModel): String {
+    try {
+        match (typeModel) {
+            case TypeModel.IntType => (dm as DataModelInt).getOrThrow().getValue().toString()
+            case TypeModel.FloatType => (dm as DataModelFloat).getOrThrow().getValue().toString()
+            case TypeModel.BoolType => (dm as DataModelBool).getOrThrow().getValue().toString()
+            case TypeModel.StringType => (dm as DataModelString).getOrThrow().getValue()
+            case TypeModel.UnitType => "()"
+            case TypeModel.StructType(fields) =>
+                var result = ""
+                let structValue = (dm as DataModelStruct).getOrThrow()
+                result += "{"
+                for (field in fields) {
+                    let fieldType = field.typeModel
+                    let fieldValue = structValue.get(field.name)
+                    let valueString = deserializeFromDataModelToString(fieldType, fieldValue)
+                    result += "${field.name} = ${valueString}, "
+                }
+                result + "}"
+            case TypeModel.ListType(itemType) =>
+                var result = "["
+                let seq = (dm as DataModelSeq).getOrThrow()
+                for (item in seq.getItems()) {
+                    let valueString = deserializeFromDataModelToString(itemType, item)
+                    result += "${valueString}, "
+                }
+                result + "]"
+        }
+    } catch (e: NoneValueException) {
+        throw DataModelException("Cannot deserialize data model.")
     }
 }
 
@@ -128,23 +176,23 @@ func generateMCPToolsFromActorInfos(client: ActorClient, actorInfos: Array<Actor
 func generateMCPToolsFromActorInfo(client: ActorClient, actorInfo: ActorInfo): Array<Tool> {
     let tools = ArrayList<Tool>()
     for (receiver in actorInfo.metadata.receivers) {
-        let parameters = receiver.paramSchema.map({ param =>
+        let parameters = ArrayList<ToolParameter>(receiver.paramSchema.map({ param =>
             ToolParameter(
                 param.name,
                 param.description,
                 generateTypeSchemaFromTypeModel(param.typeModel)
             )
-        })
-        // parameters.append(ToolParameter(
-        //     "config",
-        //     "The configuration of the receiver call",
-        //     receiverConfigTypeSchema
-        // ))
+        }))
+        parameters.append(ToolParameter(
+            "config",
+            "The configuration of the receiver call",
+            receiverConfigTypeSchema
+        ))
         tools.append(
             ReceiverTool(
                 name: actorInfo.name + SEPARATOR + receiver.methodName,
                 description: receiver.description,
-                parameters: parameters,
+                parameters: parameters.toArray(),
                 retType: generateTypeSchemaFromTypeModel(receiver.retTypeModel),
                 examples: [],
                 extra: HashMap<String, String>(),
@@ -164,21 +212,8 @@ func generateTypeSchemaFromTypeModel(typeModel: TypeModel): TypeSchema {
         case TypeModel.StringType => TypeSchema.Str
         case TypeModel.UnitType => TypeSchema.Boolean
         case TypeModel.StructType(fields) => TypeSchema.Obj(fields.map({ field =>
-            FieldSchema(field.name, field.name, generateTypeSchemaFromTypeModel(field.typeModel))
+            FieldSchema(field.name, field.description, generateTypeSchemaFromTypeModel(field.typeModel))
         }))
-    }
-}
-
-func deserializeFromDataModelToString(typeModel: TypeModel, dm: DataModel): String {
-    try {
-        match (typeModel) {
-            case TypeModel.IntType => (dm as DataModelInt).getOrThrow().getValue().toString()
-            case TypeModel.FloatType => (dm as DataModelFloat).getOrThrow().getValue().toString()
-            case TypeModel.BoolType => (dm as DataModelBool).getOrThrow().getValue().toString()
-            case TypeModel.StringType => (dm as DataModelString).getOrThrow().getValue()
-            case _ => throw ActorMCPException("Unsupported type model: ${typeModel}")
-        }
-    } catch (e: NoneValueException) {
-        throw DataModelException("Cannot deserialize data model.")
+        case TypeModel.ListType(itemType) => TypeSchema.Arr(generateTypeSchemaFromTypeModel(itemType))
     }
 }

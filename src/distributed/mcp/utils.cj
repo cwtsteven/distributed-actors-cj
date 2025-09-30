@@ -7,3 +7,9 @@ extend<T> Array<T> {
         Array<K>(size, { i => f(this[i]) })
     }
 }
+
+extend<T> ArrayList<T> {
+    func map<K>(f: (T) -> K): ArrayList<K> {
+        ArrayList<K>(size, { i => f(this[i]) })
+    }
+}

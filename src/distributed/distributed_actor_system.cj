@@ -93,6 +93,11 @@ public interface ActorHost {
 */
 public interface ActorClient {
     /*
+    * The id of the actor client
+    */
+    prop id: String
+
+    /*
     * Finds an actor
     * @param name - the name of the actor
     * @return the actor information if found, None otherwise

@@ -15,7 +15,6 @@ const ENABLE_RECEIVER_PRIORITY_NAME = "enableReceiverPriority"
 const DISPATCH_HASH_MAP_VAR_NAME = "dispatchMap"
 const RECEIVER_INFOS_ARRAY_VAR_NAME = "receiverInfos"
 const DISTRIBUTABLE_TYPE_NAME = "Distributable"
-const DISTRIBUTED_FUTURE_TYPE_NAME = "DistributedFuture"
 
 const ACTOR_MACRO = "@Actor"
 const ACTOR_INTERFACE_MACRO = "@ActorInterface"
@@ -40,10 +39,6 @@ let seqDispatcherTypeToken = Token(IDENTIFIER, SEQ_DISPATCHER_NAME)
 let enableReceiverPriorityToken = Token(IDENTIFIER, ENABLE_RECEIVER_PRIORITY_NAME)
 
 let distributableTypeToken = Token(IDENTIFIER, DISTRIBUTABLE_TYPE_NAME)
-
-let distributedFutureTypeToken = Token(IDENTIFIER, DISTRIBUTED_FUTURE_TYPE_NAME)
-
-let distributedFutureType: RefType = RefType(quote($distributedFutureTypeToken))
 
 func deserializeFuncParams(fd: FuncDecl, isTell: Bool): Tokens {
     if (fd.funcParams.size == 0) {

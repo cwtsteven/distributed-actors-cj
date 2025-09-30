@@ -18,6 +18,9 @@ type FutMap = ConcurrentHashMap<UInt64, DistributedFuture>
 */
 public class TCPActorClient <: ActorClient {
 
+    public prop id: String { get() { __id } }
+    private let __id: String
+
     private let conn: TCPConnection
 
     private let nextFutId = AtomicUInt64(0)
@@ -28,7 +31,8 @@ public class TCPActorClient <: ActorClient {
     * @param addr - the address of the TCP actor host
     * @param port - the port of the TCP actor host
     */
-    public init(addr: String, port: UInt16) {
+    public init(id: String, addr: String, port: UInt16) {
+        this.__id = id
         this.conn = TCPConnection(addr, port)
         this.conn.startListening(handleEnvelope)
     }

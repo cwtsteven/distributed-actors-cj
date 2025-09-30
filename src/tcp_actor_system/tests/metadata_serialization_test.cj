@@ -206,10 +206,10 @@ public class MetadataSerializationTest {
     func testStructTypeSerialization() {
         // Create a StructType with multiple fields
         let structFields = ArrayList<FieldModel>()
-        structFields.append(FieldModel(name: "id", typeModel: TypeModel.IntType))
-        structFields.append(FieldModel(name: "name", typeModel: TypeModel.StringType))
-        structFields.append(FieldModel(name: "isActive", typeModel: TypeModel.BoolType))
-        structFields.append(FieldModel(name: "score", typeModel: TypeModel.FloatType))
+        structFields.append(FieldModel(name: "id", description: "User ID", typeModel: TypeModel.IntType))
+        structFields.append(FieldModel(name: "name", description: "User name", typeModel: TypeModel.StringType))
+        structFields.append(FieldModel(name: "isActive", description: "Active status", typeModel: TypeModel.BoolType))
+        structFields.append(FieldModel(name: "score", description: "User score", typeModel: TypeModel.FloatType))
 
         let structType = TypeModel.StructType(structFields.toArray())
 
@@ -253,12 +253,16 @@ public class MetadataSerializationTest {
             case StructType(fields) =>
                 @Expect(fields.size, 4)
                 @Expect(fields[0].name, "id")
+                @Expect(fields[0].description, "User ID")
                 @Expect(fields[0].typeModel, TypeModel.IntType)
                 @Expect(fields[1].name, "name")
+                @Expect(fields[1].description, "User name")
                 @Expect(fields[1].typeModel, TypeModel.StringType)
                 @Expect(fields[2].name, "isActive")
+                @Expect(fields[2].description, "Active status")
                 @Expect(fields[2].typeModel, TypeModel.BoolType)
                 @Expect(fields[3].name, "score")
+                @Expect(fields[3].description, "User score")
                 @Expect(fields[3].typeModel, TypeModel.FloatType)
             case _ => @Expect(false, true) // Should not reach here
         }
@@ -268,13 +272,13 @@ public class MetadataSerializationTest {
     func testNestedStructTypeSerialization() {
         // Create a nested StructType (StructType containing another StructType)
         let innerFields = ArrayList<FieldModel>()
-        innerFields.append(FieldModel(name: "x", typeModel: TypeModel.FloatType))
-        innerFields.append(FieldModel(name: "y", typeModel: TypeModel.FloatType))
+        innerFields.append(FieldModel(name: "x", description: "X coordinate", typeModel: TypeModel.FloatType))
+        innerFields.append(FieldModel(name: "y", description: "Y coordinate", typeModel: TypeModel.FloatType))
         let innerStruct = TypeModel.StructType(innerFields.toArray())
 
         let outerFields = ArrayList<FieldModel>()
-        outerFields.append(FieldModel(name: "position", typeModel: innerStruct))
-        outerFields.append(FieldModel(name: "name", typeModel: TypeModel.StringType))
+        outerFields.append(FieldModel(name: "position", description: "Entity position", typeModel: innerStruct))
+        outerFields.append(FieldModel(name: "name", description: "Entity name", typeModel: TypeModel.StringType))
         let outerStruct = TypeModel.StructType(outerFields.toArray())
 
         // Create a receiver parameter using the nested StructType
@@ -316,7 +320,9 @@ public class MetadataSerializationTest {
             case StructType(outerFields) =>
                 @Expect(outerFields.size, 2)
                 @Expect(outerFields[0].name, "position")
+                @Expect(outerFields[0].description, "Entity position")
                 @Expect(outerFields[1].name, "name")
+                @Expect(outerFields[1].description, "Entity name")
                 @Expect(outerFields[1].typeModel, TypeModel.StringType)
 
                 // Verify the inner struct
@@ -324,8 +330,10 @@ public class MetadataSerializationTest {
                     case StructType(innerFields) =>
                         @Expect(innerFields.size, 2)
                         @Expect(innerFields[0].name, "x")
+                        @Expect(innerFields[0].description, "X coordinate")
                         @Expect(innerFields[0].typeModel, TypeModel.FloatType)
                         @Expect(innerFields[1].name, "y")
+                        @Expect(innerFields[1].description, "Y coordinate")
                         @Expect(innerFields[1].typeModel, TypeModel.FloatType)
                     case _ => @Expect(false, true) // Should not reach here
                 }
@@ -336,7 +344,7 @@ public class MetadataSerializationTest {
     @TestCase
     func testEmptyStructTypeSerialization() {
         // Create an empty StructType (no fields)
-        let emptyStruct = TypeModel.StructType(Array<FieldModel>(0, item: FieldModel(name: "", typeModel: TypeModel.UnitType)))
+        let emptyStruct = TypeModel.StructType(Array<FieldModel>(0, item: FieldModel(name: "", description: "", typeModel: TypeModel.UnitType)))
 
         // Create a receiver parameter using the empty StructType
         let paramSchema = ArrayList<ReceiverParameter>()
@@ -384,18 +392,18 @@ public class MetadataSerializationTest {
     func testComplexStructTypeSerialization() {
         // Create a complex StructType with all basic types and nested structures
         let addressFields = ArrayList<FieldModel>()
-        addressFields.append(FieldModel(name: "street", typeModel: TypeModel.StringType))
-        addressFields.append(FieldModel(name: "city", typeModel: TypeModel.StringType))
-        addressFields.append(FieldModel(name: "zipCode", typeModel: TypeModel.IntType))
+        addressFields.append(FieldModel(name: "street", description: "Street address", typeModel: TypeModel.StringType))
+        addressFields.append(FieldModel(name: "city", description: "City name", typeModel: TypeModel.StringType))
+        addressFields.append(FieldModel(name: "zipCode", description: "ZIP code", typeModel: TypeModel.IntType))
         let addressStruct = TypeModel.StructType(addressFields.toArray())
 
         let personFields = ArrayList<FieldModel>()
-        personFields.append(FieldModel(name: "id", typeModel: TypeModel.IntType))
-        personFields.append(FieldModel(name: "name", typeModel: TypeModel.StringType))
-        personFields.append(FieldModel(name: "age", typeModel: TypeModel.IntType))
-        personFields.append(FieldModel(name: "height", typeModel: TypeModel.FloatType))
-        personFields.append(FieldModel(name: "isActive", typeModel: TypeModel.BoolType))
-        personFields.append(FieldModel(name: "address", typeModel: addressStruct))
+        personFields.append(FieldModel(name: "id", description: "Person ID", typeModel: TypeModel.IntType))
+        personFields.append(FieldModel(name: "name", description: "Person name", typeModel: TypeModel.StringType))
+        personFields.append(FieldModel(name: "age", description: "Person age", typeModel: TypeModel.IntType))
+        personFields.append(FieldModel(name: "height", description: "Person height", typeModel: TypeModel.FloatType))
+        personFields.append(FieldModel(name: "isActive", description: "Active status", typeModel: TypeModel.BoolType))
+        personFields.append(FieldModel(name: "address", description: "Person address", typeModel: addressStruct))
         let personStruct = TypeModel.StructType(personFields.toArray())
 
         // Create a receiver parameter using the complex StructType
@@ -437,30 +445,110 @@ public class MetadataSerializationTest {
             case StructType(personFields) =>
                 @Expect(personFields.size, 6)
                 @Expect(personFields[0].name, "id")
+                @Expect(personFields[0].description, "Person ID")
                 @Expect(personFields[0].typeModel, TypeModel.IntType)
                 @Expect(personFields[1].name, "name")
+                @Expect(personFields[1].description, "Person name")
                 @Expect(personFields[1].typeModel, TypeModel.StringType)
                 @Expect(personFields[2].name, "age")
+                @Expect(personFields[2].description, "Person age")
                 @Expect(personFields[2].typeModel, TypeModel.IntType)
                 @Expect(personFields[3].name, "height")
+                @Expect(personFields[3].description, "Person height")
                 @Expect(personFields[3].typeModel, TypeModel.FloatType)
                 @Expect(personFields[4].name, "isActive")
+                @Expect(personFields[4].description, "Active status")
                 @Expect(personFields[4].typeModel, TypeModel.BoolType)
                 @Expect(personFields[5].name, "address")
+                @Expect(personFields[5].description, "Person address")
 
                 // Verify the nested address struct
                 match (personFields[5].typeModel) {
                     case StructType(addressFields) =>
                         @Expect(addressFields.size, 3)
                         @Expect(addressFields[0].name, "street")
+                        @Expect(addressFields[0].description, "Street address")
                         @Expect(addressFields[0].typeModel, TypeModel.StringType)
                         @Expect(addressFields[1].name, "city")
+                        @Expect(addressFields[1].description, "City name")
                         @Expect(addressFields[1].typeModel, TypeModel.StringType)
                         @Expect(addressFields[2].name, "zipCode")
+                        @Expect(addressFields[2].description, "ZIP code")
                         @Expect(addressFields[2].typeModel, TypeModel.IntType)
                     case _ => @Expect(false, true) // Should not reach here
                 }
             case _ => @Expect(false, true) // Should not reach here
+        }
+    }
+
+    @TestCase
+    func testListTypeSerialization() {
+        // List of primitive type
+        let listOfInt = TypeModel.ListType(TypeModel.IntType)
+
+        // List of struct type
+        let itemFields = ArrayList<FieldModel>()
+        itemFields.append(FieldModel(name: "id", description: "Item ID", typeModel: TypeModel.IntType))
+        itemFields.append(FieldModel(name: "label", description: "Item label", typeModel: TypeModel.StringType))
+        let itemStruct = TypeModel.StructType(itemFields.toArray())
+        let listOfStruct = TypeModel.ListType(itemStruct)
+
+        // Two parameters to exercise both cases
+        let paramSchema = ArrayList<ReceiverParameter>()
+        paramSchema.append(ReceiverParameter(name: "numbers", typeModel: listOfInt, description: "List of numbers"))
+        paramSchema.append(ReceiverParameter(name: "items", typeModel: listOfStruct, description: "List of items"))
+
+        let receiverInfo = ReceiverInfo(
+            description: "Receiver with list parameters",
+            customInfo: JsonObject.fromStr("{\"list\": true}").asObject(),
+            methodName: "processLists",
+            paramSchema: paramSchema.toArray(),
+            retTypeModel: TypeModel.UnitType,
+            mode: ReceiverMode.TellOnly
+        )
+
+        let receivers = ArrayList<ReceiverInfo>()
+        receivers.append(receiverInfo)
+
+        let metadata = Metadata(
+            receivers: receivers.toArray(),
+            description: "Actor using ListType in metadata",
+            customInfo: JsonObject.fromStr("{\"list-actor\": true}").asObject()
+        )
+
+        // Serialize and deserialize
+        let serializedBytes = serializeMetadata(metadata)
+        let deserializedMetadata = deserializeMetadata(serializedBytes)
+
+        @Expect(deserializedMetadata.receivers.size, 1)
+        let deserializedReceiver = deserializedMetadata.receivers[0]
+        @Expect(deserializedReceiver.paramSchema.size, 2)
+
+        // Verify first parameter is List<Int>
+        @Expect(deserializedReceiver.paramSchema[0].name, "numbers")
+        @Expect(deserializedReceiver.paramSchema[0].description, "List of numbers")
+        match (deserializedReceiver.paramSchema[0].typeModel) {
+            case ListType(itemType) => @Expect(itemType, TypeModel.IntType)
+            case _ => @Expect(false, true)
+        }
+
+        // Verify second parameter is List<Struct>
+        @Expect(deserializedReceiver.paramSchema[1].name, "items")
+        @Expect(deserializedReceiver.paramSchema[1].description, "List of items")
+        match (deserializedReceiver.paramSchema[1].typeModel) {
+            case ListType(inner) =>
+                match (inner) {
+                    case StructType(fields) =>
+                        @Expect(fields.size, 2)
+                        @Expect(fields[0].name, "id")
+                        @Expect(fields[0].description, "Item ID")
+                        @Expect(fields[0].typeModel, TypeModel.IntType)
+                        @Expect(fields[1].name, "label")
+                        @Expect(fields[1].description, "Item label")
+                        @Expect(fields[1].typeModel, TypeModel.StringType)
+                    case _ => @Expect(false, true)
+                }
+            case _ => @Expect(false, true)
         }
     }
 }

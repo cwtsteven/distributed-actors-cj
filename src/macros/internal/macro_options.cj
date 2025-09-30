@@ -6,7 +6,7 @@ import std.convert.*
 
 import encoding.json.*
 
-enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
+enum MacroOption <: Hashable & Equatable<MacroOption> {
     EnableReceiverPriority(Bool)
     | Priority(Int64)
     | Distributed(Bool)
@@ -31,17 +31,6 @@ enum MacroOption <: Hashable & Equatable<MacroOption> & ToString {
 
     public override operator func !=(other: MacroOption): Bool {
         !(this == other)
-    }
-
-    public override func toString(): String {
-        match (this) {
-            case EnableReceiverPriority(b) => "enableReceiverPriority: ${b}"
-            case Priority(p) => "priority: ${p}"
-            case Distributed(b) => "distributed: ${b}"
-            case Mode(m) => "mode: ${m}"
-            case Description(d) => "description: ${d}"
-            case CustomInfos(c) => "customInfos: ${c}"
-        }
     }
 
     public func getKeyString(): String {
