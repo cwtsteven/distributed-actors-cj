@@ -66,7 +66,7 @@ class A {
 
     /* ... */
 
-    func foo(): LocalActorFuture<Int64> {
+    func foo(): ActorFuture<Int64> {
         return dispatcher.post<Int64>({ => 42 })
     }
 
@@ -110,7 +110,7 @@ class A {
 
     /* ... */
 
-    func foo(): LocalActorFuture<Int64> {
+    func foo(): ActorFuture<Int64> {
         return dispatcher.post<Int64>({ => 42 })
     }
 

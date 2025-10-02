@@ -9,25 +9,25 @@ import serialization.serialization.*
 @Test
 public class ActorFutureTest {
 
-    // Test LocalActorFuture basic functionality
+    // Test ActorFuture basic functionality
     @TestCase
-    func testLocalActorFutureBasicExecution() {
-        let future = LocalActorFuture<Int64>({ => 42 })
+    func testActorFutureBasicExecution() {
+        let future = ActorFuture<Int64>({ => 42 })
         future.execute()
         let result = future.get()
         @Expect(result, 42)
     }
 
     @TestCase
-    func testLocalActorFutureTryGetBeforeExecution() {
-        let future = LocalActorFuture<Int64>({ => 42 })
+    func testActorFutureTryGetBeforeExecution() {
+        let future = ActorFuture<Int64>({ => 42 })
         let result = future.tryGet()
         @Expect(result.isSome(), false)
     }
 
     @TestCase
-    func testLocalActorFutureTryGetAfterExecution() {
-        let future = LocalActorFuture<Int64>({ => 42 })
+    func testActorFutureTryGetAfterExecution() {
+        let future = ActorFuture<Int64>({ => 42 })
         future.execute()
         let result = future.tryGet()
         @Expect(result.isSome(), true)
@@ -35,16 +35,16 @@ public class ActorFutureTest {
     }
 
     @TestCase
-    func testLocalActorFutureWithString() {
-        let future = LocalActorFuture<String>({ => "hello world" })
+    func testActorFutureWithString() {
+        let future = ActorFuture<String>({ => "hello world" })
         future.execute()
         let result = future.get()
         @Expect(result, "hello world")
     }
 
     @TestCase
-    func testLocalActorFutureWithException() {
-        let future = LocalActorFuture<Int64>({ =>
+    func testActorFutureWithException() {
+        let future = ActorFuture<Int64>({ =>
             throw Exception("Test exception")
         })
         future.execute()
@@ -53,8 +53,8 @@ public class ActorFutureTest {
     }
 
     @TestCase
-    func testLocalActorFutureTryGetWithException() {
-        let future = LocalActorFuture<Int64>({ =>
+    func testActorFutureTryGetWithException() {
+        let future = ActorFuture<Int64>({ =>
             throw Exception("Test exception")
         })
         future.execute()
@@ -81,10 +81,10 @@ public class ActorFutureTest {
 
     // Test multiple futures
     @TestCase
-    func testMultipleLocalActorFutures() {
-        let future1 = LocalActorFuture<Int64>({ => 1 })
-        let future2 = LocalActorFuture<Int64>({ => 2 })
-        let future3 = LocalActorFuture<Int64>({ => 3 })
+    func testMultipleActorFutures() {
+        let future1 = ActorFuture<Int64>({ => 1 })
+        let future2 = ActorFuture<Int64>({ => 2 })
+        let future3 = ActorFuture<Int64>({ => 3 })
 
         future1.execute()
         future2.execute()
@@ -97,9 +97,9 @@ public class ActorFutureTest {
 
 
     @TestCase
-    func testMixedLocalActorFutures() {
-        let successFuture = LocalActorFuture<Int64>({ => 42 })
-        let failureFuture = LocalActorFuture<Int64>({ =>
+    func testMixedActorFutures() {
+        let successFuture = ActorFuture<Int64>({ => 42 })
+        let failureFuture = ActorFuture<Int64>({ =>
             throw Exception("Task failed")
         })
 

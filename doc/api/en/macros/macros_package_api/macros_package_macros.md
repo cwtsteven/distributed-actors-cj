@@ -33,7 +33,6 @@ Available options:
 - `distributed: value` - Specifies whether this is a distributed actor interface. Must be a boolean literal (`true` or `false`). Defaults to `false`.
 - `description: value` - A human-readable description of the actor interface. Must be a string literal.
 - `customInfo: value` - Custom metadata in JSON format. Must be a valid JSON string.
-- `enableReceiverPriority: value` - Specifies whether to enable priority between receiver functions. Must be a boolean literal. Defaults to `false`.
 
 Each option can only appear once; otherwise, an error will be thrown during macro expansion.
 

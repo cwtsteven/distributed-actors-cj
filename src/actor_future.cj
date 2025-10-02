@@ -4,14 +4,21 @@ import std.sync.*
 import std.time.*
 
 /*
-* Abstract base class representing the pending result of a closure submitted to an Actor.
+* A future that represents the result of a closure submitted to an Actor.
 */
-sealed abstract class ActorFuture<T> {
-    protected var result: FutureResult<T> = unsafe { zeroValue<FutureResult<T>>() }
-    protected let isReady = AtomicBool(false)
-    protected let mtx = Monitor()
+public class ActorFuture<T> {
+    var result: FutureResult<T> = unsafe { zeroValue<FutureResult<T>>() }
+    let isReady = AtomicBool(false)
+    let mtx = Monitor()
+    let closure: () -> T
 
-    protected init() {}
+    /*
+    * Initializes the ActorFuture
+    * @param task - the task to execute
+    */
+    init(task: () -> T) {
+        closure = task
+    }
 
     /*
     * Blocks the current thread until the result is ready
@@ -75,21 +82,6 @@ sealed abstract class ActorFuture<T> {
         }
         return None
     }
-}
-
-/*
-* A concrete implementation of ActorFuture for local actor communication
-*/
-protected class LocalActorFuture<T> <: ActorFuture<T> {
-    private let closure: () -> T
-
-    /*
-    * Initializes the LocalActorFuture
-    * @param task - the task to execute
-    */
-    init(task: () -> T) {
-        closure = task
-    }
 
     /*
     * Executes the task
@@ -109,7 +101,6 @@ protected class LocalActorFuture<T> <: ActorFuture<T> {
         }
     }
 }
-
 
 /*
 * Enum representing the result of a future
