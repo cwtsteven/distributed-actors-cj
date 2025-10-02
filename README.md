@@ -4,17 +4,17 @@ A comprehensive distributed actors framework for the Cangjie programming languag
 
 ## Features
 
-- **Actor Programming Model**: Core actor abstractions with message-passing concurrency
-- **Distributed Communication**: TCP-based actor communication across network boundaries
-- **MCP Integration**: Model Context Protocol support for AI agent integration
-- **Macro-based Development**: Compile-time actor and interface generation
-- **Priority-based Execution**: Configurable priority queues for actor message processing
-- **Serialization Support**: Built-in serialization for distributed actor communication
-- **Multiple Implementations**: TCP, dummy, and extensible actor system implementations
+- **Actor Programming Model**: Core actor abstractions with asynchronous method calls and message-passing concurrency
+- **Macro-based Development**: Compile-time actor and interface generation using declarative annotations
+- **Priority-based Execution**: Configurable priority queues for actor message processing and task scheduling
+- **Distributed Actors Declaration**: Declarative syntax for defining distributed actor interfaces and implementations
+- **Distributed Actor System Abstraction**: Extensible interfaces for actor host and client implementations
+- **TCP Actor System**: Production-ready TCP-based distributed actor system implementation
+- **MCP Integration**: Model Context Protocol support for AI agent integration and tool discovery
 
 ## Requirements
 
-- **Cangjie Compiler**: Version 0.53.18 or later
+- **Cangjie Compiler**: Version 0.53.18 (not compatible with version 1.0.0+)
 - **CangjieMagic**: For AI agent integration features used in `actors.distributed.mcp` package
 
 ## Installation
@@ -27,7 +27,7 @@ Add the following to your `cjpm.toml`:
 [dependencies]
   actors = {
     git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git",
-    branch = "hmos_5.0.5",
+    branch = "main",
     version = "1.0.0"
   }
   ```
@@ -36,8 +36,8 @@ Add the following to your `cjpm.toml`:
 
 ### Prerequisites
 
-1. Follow the instructions on the [Cangjie language homepage](https://cangjie-lang.com) to set up the correct environment
-2. Ensure you have the required Cangjie compiler version (0.53.18+)
+1. Follow the instructions on the [Cangjie language homepage](https://cangjie-lang.cn/) to set up the correct environment
+2. Ensure you have the required Cangjie compiler version (0.53.18)
 
 ### Build Commands
 
@@ -47,9 +47,6 @@ make
 
 # Run all tests
 make test
-
-# Run specific test categories
-cjpm test
 ```
 
 ### Test Status
@@ -181,20 +178,46 @@ main() {
 
 ## Package Structure
 
-The framework is organized into several packages:
+The framework is organized into a hierarchical package structure:
 
-- **`actors`**: Core actor programming model and local actor system
-- **`actors.distributed`**: Distributed actor interfaces and metadata
-- **`actors.distributed.mcp`**: Model Context Protocol integration
-- **`actors.macros`**: Compile-time actor and interface generation
-- **`actors.tcp_actor_system`**: TCP-based distributed actor implementation
-- **`actors.dummy_actor_system`**: In-memory actor system for testing
+```
+actors                   # Core actor programming model and local actor system
+├── ActorFuture          # Asynchronous result handling
+├── SequentialDispatcher # Thread-safe task execution
+├── ReceiverConfig       # Priority-based configuration
+│
+├── actors.distributed      # Distributed actor interfaces and metadata
+│   ├── ActorHost           # Actor registration interface
+│   ├── ActorClient         # Remote actor access interface
+│   ├── ActorProxy          # Client-side proxy for remote actors
+│   ├── DistributedFuture   # Distributed operation results
+│   │
+│   └── actors.distributed.mcp  # Model Context Protocol integration
+│       ├── ActorMCPClient      # MCP client for AI agent integration
+│       └── ReceiverTool        # MCP tool wrapper for actor receivers
+│
+├── actors.macros          # Compile-time actor and interface generation
+│   ├── @Actor             # Transform classes into actors
+│   ├── @ActorInterface    # Transform interfaces into actor interfaces
+│   └── @Receiver          # Transform methods into receiver functions
+│
+├── actors.tcp_actor_system # TCP-based distributed actor implementation
+│   ├── TCPActorHost        # TCP-based actor host
+│   ├── TCPActorClient      # TCP-based actor client
+│   └── TCPActorSystem      # Main TCP actor system configuration
+│
+└── actors.dummy_actor_system # In-memory actor system for testing
+    ├── DummyActorHost        # In-memory actor host
+    └── DummyActorClient      # In-memory actor client
+```
+
 
 ## Documentation
 
 - **[Tutorial](doc/tutorial.md)**: Comprehensive guide to using the distributed actors framework
-- **[API Documentation](doc/api/en/)**: Complete API reference for all packages
+- **[API Documentation](doc/apis.md)**: Complete API reference for all packages
 - **[Examples](examples/)**: Working examples demonstrating various features
+- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**: Example AI-powered applications demonstrating distributed actors with MCP integration on HarmonyOS
 
 ## Key Concepts
 
@@ -210,9 +233,8 @@ The framework is organized into several packages:
 - **Metadata**: Type-safe information about actor interfaces for distributed communication
 
 ### MCP Integration
-- **Tool Discovery**: Automatic discovery of actor receiver functions as AI agent tools
-- **Natural Language Interface**: AI agents can interact with actors using natural language
-- **Type Safety**: Ensures proper serialization/deserialization of arguments and return values
+- **Tool Generation**: Automatic generation of MCP tools from actor receiver functions
+- **MCP Client**: Manages multiple actor clients and exposes their receiver functions as MCP tools
 
 ## Contributing
 
@@ -225,7 +247,7 @@ The framework is organized into several packages:
 
 ## License
 
-This project is licensed under the terms specified in the repository.
+// TODO
 
 ## Roadmap
 

@@ -612,28 +612,10 @@ bankProxy.tell("createAccount", [
 ])
 ```
 
-## Error Handling in Distributed Actors
-
-Exceptions thrown by remote actors are wrapped in `RemoteReceiverException` and can be handled normally:
-
-```cangjie
-try {
-    let fut: DistributedFuture = bankProxy.ask("transfer", [
-        "account1".serialize(),
-        "account2".serialize(),
-        10000.0.serialize() // This will cause insufficient funds
-    ])
-    fut.get()
-} catch (e: RemoteReceiverException) {
-    println("Remote operation failed: ${e.message}")
-} catch (e: Exception) {
-    println("Unexpected error: ${e.message}")
-}
-```
 
 ## Actor Discovery
 
-You can discover and list all registered actors in the system:
+You can discover and list all registered actors in the corresponding host:
 
 ```cangjie
 // Find a specific actor
@@ -646,7 +628,7 @@ match (actorInfo) {
     case None => println("Actor not found")
 }
 
-// List all actors
+// List all actors registered with this host
 let allActors = actorClient.findAll()
 for (info in allActors) {
     println("Actor: ${info.name} - ${info.metadata.description}")
@@ -657,8 +639,7 @@ for (info in allActors) {
 
 1. **Serialization**: All parameters and return values must be serializable
 2. **Network Communication**: Calls go over the network, so they have higher latency
-3. **Error Handling**: Exceptions are wrapped in `RemoteReceiverException`
-4. **Actor Discovery**: You need to register actors with an actor system and use proxies for communication
+4. **Actor Discovery**: You need to register actors with an actor host and use proxies for communication
 5. **No Direct References**: You cannot hold direct references to remote actors
 
 Distributed actors provide a powerful abstraction for building scalable, fault-tolerant distributed systems while maintaining the simplicity and safety guarantees of the actor model.
@@ -835,34 +816,10 @@ main() {
 }
 ```
 
-## Error Handling in TCP Actor System
-
-The TCP actor system provides specific exception types for different error conditions:
-
-```cangjie
-try {
-    let fut: DistributedFuture = bankProxy.ask("transfer", [
-        "alice".serialize(),
-        "bob".serialize(),
-        10000.0.serialize() // This will cause insufficient funds
-    ])
-    fut.get()
-} catch (e: RemoteReceiverException) {
-    println("Remote operation failed: ${e.message}")
-} catch (e: TCPActorSystemSerializationException) {
-    println("Serialization error: ${e.message}")
-} catch (e: TCPActorSystemDeserializationException) {
-    println("Deserialization error: ${e.message}")
-} catch (e: ActorNotFoundException) {
-    println("Actor not found: ${e.message}")
-} catch (e: Exception) {
-    println("Unexpected error: ${e.message}")
-}
-```
 
 ## Actor Discovery with TCP Actor System
 
-You can discover and list all registered actors:
+You can discover and list all registered actors in the corresponding TCP host:
 
 ```cangjie
 // Find a specific actor
@@ -876,7 +833,7 @@ match (actorInfo) {
     case None => println("Actor not found")
 }
 
-// List all actors
+// List all actors registered with this TCP host
 let allActors = tcpClient.findAll()
 for (info in allActors) {
     println("Actor: ${info.name} - ${info.metadata.description}")
@@ -917,14 +874,12 @@ TCPActorSystem.logger = customLogger
 
 1. **Reliable Communication**: TCP provides reliable, ordered message delivery
 2. **Concurrent Connections**: Supports multiple concurrent client connections
-3. **Error Handling**: Comprehensive error handling for network and serialization issues
 4. **Logging**: Built-in logging for debugging and monitoring
 5. **Graceful Shutdown**: Proper connection cleanup and resource management
 
 ## Best Practices
 
 1. **Connection Management**: Always close client connections when done
-2. **Error Handling**: Handle network errors and serialization exceptions
 3. **Resource Cleanup**: Properly shut down the host when the application exits
 4. **Logging**: Use appropriate logging levels for production vs development
 5. **Serialization**: Ensure all data types used in remote calls are serializable
@@ -1302,96 +1257,4 @@ The AI agent analyzes user requests and automatically selects the appropriate to
 
 ### 4. **Conversation Context**
 The system maintains conversation context, allowing for follow-up questions and multi-turn interactions.
-
-### 5. **Error Handling**
-The system gracefully handles errors and provides helpful feedback to users.
-
-## Best Practices
-
-### 1. **Descriptive Tool Metadata**
-Use clear, descriptive metadata for your actor interfaces and receiver functions:
-
-```cangjie
-@ActorInterface[
-    distributed: true,
-    description: "Calendar service for managing personal and work events"
-]
-public interface CalendarService {
-    @Receiver[description: "Add a new event to the calendar with title, date, and time"]
-    func addEvent(title: String, date: String, startTime: String, endTime: String): Bool
-}
-```
-
-### 2. **Comprehensive Error Handling**
-Handle both MCP and AI agent errors gracefully:
-
-```cangjie
-try {
-    let response = assistantManager.chat(userInput)
-    // Process response
-} catch (e: Exception) {
-    // Handle errors appropriately
-    println("Error: ${e.message}")
-}
-```
-
-### 3. **Tool Validation**
-Always validate that tools are available before attempting to use them:
-
-```cangjie
-func connectToServices(): Unit {
-    try {
-        let client = TCPActorClient("service-name", "localhost", port)
-        mcpClient.addActorClient(client)
-        agent.toolManager.addTools(mcpClient.getTools())
-    } catch (e: Exception) {
-        // Handle connection errors
-    }
-}
-```
-
-### 4. **Resource Management**
-Properly manage connections and resources:
-
-```cangjie
-func disconnectFromServices(): Unit {
-    mcpClient.removeActorClient("service-name")
-    agent.toolManager.clear()
-    agent.toolManager.addTools(mcpClient.getTools())
-}
-```
-
-## Advanced Usage
-
-### Custom Tool Integration
-You can extend the system with custom tools beyond actor services:
-
-```cangjie
-class CustomTool <: Tool {
-    func call(args: Map<String, DataModel>): Result<DataModel, String> {
-        // Custom tool implementation
-        Success("Custom result".serialize())
-    }
-}
-
-// Add custom tools to the agent
-agent.toolManager.addTool(CustomTool())
-```
-
-### Multi-Model Support
-The system supports different AI models:
-
-```cangjie
-@agent[model: "openai:gpt-4"]
-class GPT4Agent {
-    @prompt("You are a helpful assistant...")
-}
-
-@agent[model: "anthropic:claude-3"]
-class ClaudeAgent {
-    @prompt("You are a helpful assistant...")
-}
-```
-
-The combination of MCP extension and CangjieMagic provides a powerful foundation for building intelligent applications that can seamlessly interact with distributed actor systems through natural language interfaces.
 
