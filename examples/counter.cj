@@ -3,27 +3,22 @@ import actors.macros.*
 
 @Actor
 public class Counter {
-    private var count = 0
+    private var value: Int64 = 0
 
-    @Receiver[mode: AskAndTell]
-    public func incrementAndGet(): Int64 {
-        count++
-        return count
+    @Receiver
+    public func increment(): Int64 {
+        value += 1
+        return value
+    }
+
+    @Receiver
+    public func getValue(): Int64 {
+        return value
     }
 }
 
 main() {
     let counter = Counter()
-    let limit = 100
-    var res = None<Int64>
-    for (i in 0..limit) {
-        if (i == limit - 1) {
-            // synchronize with the counter thread at the end
-            res = counter.incrementAndGet().get()
-        } else {
-            // fire and forget
-            counter.incrementAndGet(tell: True)
-        }
-    }
-    println("Counted until ${limit}, got ${res}")
+    let future = counter.increment()
+    println("Counter value: ${future.get()}")
 }

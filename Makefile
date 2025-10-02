@@ -30,6 +30,8 @@ example:
 	cjc ./examples/dist-actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.distributed -lactors.dummy_actor_system  -o ./target/examples/dist-actor-interface.o
 	cjc ./examples/tcp-actor-host.cj -g --import-path ./target/release/actors --import-path ./target/release/magic -L./target/release/actors -L./target/release/magic -lmagic.core.tool -lmagic.mcp -lmagic.jsonable -lactors -lactors.distributed -lactors.tcp_actor_system  -o ./target/examples/tcp-actor-host.o
 	cjc ./examples/tcp-actor-client.cj -g --import-path ./target/release/actors --import-path ./target/release/magic -L./target/release/actors -L./target/release/magic -lmagic.core.tool -lmagic.mcp -lmagic.jsonable -lactors -lactors.distributed -lactors.tcp_actor_system  -o ./target/examples/tcp-actor-client.o
+	cjc ./examples/distributed-actor-example.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.distributed -lactors.tcp_actor_system  -o ./target/examples/distributed-actor-example.o
+	cjc ./examples/agent-example.cj -g --import-path ./target/release/actors --import-path ./target/release/magic -L./target/release/actors -L./target/release/magic -lmagic.agent_executor -lmagic.core.rag -lmagic.prelude -lmagic.tool -lmagic.core.tool -lmagic.mcp -lmagic.jsonable -lactors -lactors.distributed -lactors.distributed.mcp -lactors.tcp_actor_system  -o ./target/examples/agent-example.o
 
 build:
 	cjpm build -i

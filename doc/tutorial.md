@@ -385,7 +385,7 @@ func foo(account: Account) {
 }
 ```
 
-It is also possible to for users to restrict the ways in which a receiver can be called by providing the `mode` option
+It is also possible for users to restrict the ways in which a receiver can be called by providing the `mode` option
 to the `@Receiver` macro:
 
 ```cangjie
@@ -502,13 +502,13 @@ To create distributed actors, you first need to define an *actor interface* usin
 @ActorInterface[distributed: true]
 public interface BankService {
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Unit
+    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool
 
     @Receiver
     public func getBalance(accountId: String): Float64
 
     @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Unit
+    public func createAccount(accountId: String, initialBalance: Float64): Bool
 }
 ```
 
@@ -526,7 +526,7 @@ public class BankServiceImpl <: BankService {
     public init() {}
 
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Unit {
+    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool {
         let fromBalance = accounts.get(fromAccount).getOrElse(0.0)
         if (fromBalance < amount) {
             throw InsufficientFundsException(fromAccount)
@@ -535,6 +535,7 @@ public class BankServiceImpl <: BankService {
         let toBalance = accounts.get(toAccount).getOrElse(0.0)
         accounts.put(fromAccount, fromBalance - amount)
         accounts.put(toAccount, toBalance + amount)
+        true
     }
 
     @Receiver
@@ -543,13 +544,14 @@ public class BankServiceImpl <: BankService {
     }
 
     @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Unit {
+    public func createAccount(accountId: String, initialBalance: Float64): Bool {
         accounts.put(accountId, initialBalance)
+        true
     }
 }
 ```
 
-## ActorHost and ActorClient
+## ActorHost
 
 To manage distributed actors, you need an actor host and client. The actor host handles actor registration, and the actor client provides remote communication:
 
@@ -564,12 +566,14 @@ if (!registered) {
     println("Failed to register bank service")
     return
 }
+```
 
+## Actor Client and Remote Actor Communication
+
+```cangjie
 // Create an actor client for remote communication
 let actorClient: ActorClient
 ```
-
-## Remote Actor Communication
 
 To communicate with remote actors, you use an `ActorProxy`:
 
@@ -639,8 +643,8 @@ for (info in allActors) {
 
 1. **Serialization**: All parameters and return values must be serializable
 2. **Network Communication**: Calls go over the network, so they have higher latency
-4. **Actor Discovery**: You need to register actors with an actor host and use proxies for communication
-5. **No Direct References**: You cannot hold direct references to remote actors
+3. **Actor Discovery**: You need to register actors with an actor host and use proxies for communication
+4. **No Direct References**: You cannot hold direct references to remote actors
 
 Distributed actors provide a powerful abstraction for building scalable, fault-tolerant distributed systems while maintaining the simplicity and safety guarantees of the actor model.
 
@@ -707,16 +711,19 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
+import encoding.json.*
+import serialization.serialization.*
+
 @ActorInterface[distributed: true, description: "Bank service for account management"]
 public interface BankService {
     @Receiver[description: "Transfer money between accounts"]
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Unit
+    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool
 
     @Receiver[description: "Get account balance"]
     public func getBalance(accountId: String): Float64
 
     @Receiver[description: "Create a new account"]
-    public func createAccount(accountId: String, initialBalance: Float64): Unit
+    public func createAccount(accountId: String, initialBalance: Float64): Bool
 }
 
 @Actor
@@ -726,7 +733,7 @@ public class BankServiceImpl <: BankService {
     public init() {}
 
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Unit {
+    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool {
         let fromBalance = accounts.get(fromAccount).getOrElse(0.0)
         if (fromBalance < amount) {
             throw InsufficientFundsException(fromAccount)
@@ -735,6 +742,7 @@ public class BankServiceImpl <: BankService {
         let toBalance = accounts.get(toAccount).getOrElse(0.0)
         accounts.put(fromAccount, fromBalance - amount)
         accounts.put(toAccount, toBalance + amount)
+        true
     }
 
     @Receiver
@@ -743,8 +751,9 @@ public class BankServiceImpl <: BankService {
     }
 
     @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Unit {
+    public func createAccount(accountId: String, initialBalance: Float64): Bool {
         accounts.put(accountId, initialBalance)
+        true
     }
 }
 
@@ -776,9 +785,11 @@ main() {
 ```cangjie
 package tcpActorClientDemo
 
+import std.collection.*
 import actors.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
+import encoding.json.*
 import serialization.serialization.*
 
 main() {
@@ -874,15 +885,14 @@ TCPActorSystem.logger = customLogger
 
 1. **Reliable Communication**: TCP provides reliable, ordered message delivery
 2. **Concurrent Connections**: Supports multiple concurrent client connections
-4. **Logging**: Built-in logging for debugging and monitoring
-5. **Graceful Shutdown**: Proper connection cleanup and resource management
+3. **Logging**: Built-in logging for debugging and monitoring
 
 ## Best Practices
 
 1. **Connection Management**: Always close client connections when done
-3. **Resource Cleanup**: Properly shut down the host when the application exits
-4. **Logging**: Use appropriate logging levels for production vs development
-5. **Serialization**: Ensure all data types used in remote calls are serializable
+2. **Resource Cleanup**: Properly shut down the host when the application exits
+3. **Logging**: Use appropriate logging levels for production vs development
+4. **Serialization**: Ensure all data types used in remote calls are serializable
 
 The TCP actor system provides a robust foundation for building distributed actor applications with reliable network communication.
 
@@ -1239,22 +1249,3 @@ main() {
     }
 }
 ```
-
-## Key Features
-
-### 1. **Automatic Tool Discovery**
-The MCP client automatically discovers all available actor receiver functions and makes them available as tools to the AI agent.
-
-### 2. **Natural Language Interface**
-Users can interact with distributed actor services using natural language:
-- "Schedule a meeting with John tomorrow at 2 PM"
-- "Book Room 1 for a team meeting on Friday"
-- "What meetings do I have today?"
-- "Show me all available rooms for next Monday"
-
-### 3. **Intelligent Tool Selection**
-The AI agent analyzes user requests and automatically selects the appropriate tools to fulfill them.
-
-### 4. **Conversation Context**
-The system maintains conversation context, allowing for follow-up questions and multi-turn interactions.
-
