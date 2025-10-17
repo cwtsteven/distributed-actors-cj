@@ -4,13 +4,10 @@ A comprehensive distributed actors framework for the Cangjie programming languag
 
 ## Features
 
-- **Actor Programming Model**: Core actor abstractions with asynchronous method calls and message-passing concurrency
-- **Macro-based Development**: Compile-time actor and interface generation using declarative annotations
-- **Priority-based Execution**: Configurable priority queues for actor message processing and task scheduling
-- **Distributed Actors Declaration**: Declarative syntax for defining distributed actor interfaces and implementations
-- **Distributed Actor System Abstraction**: Extensible interfaces for actor host and client implementations
+- **Actor Programming Model**: Active object abstractions with asynchronous method calls
+- **Distributed Actors**: Declarative syntax for defining distributed actor interfaces and implementations
 - **TCP Actor System**: Production-ready TCP-based distributed actor system implementation
-- **MCP Integration**: Model Context Protocol support for AI agent integration and tool discovery
+- **Agent Integration**: Exposing actors as tools under MCP protocol
 
 ## Requirements
 
@@ -25,11 +22,7 @@ Add the following to your `cjpm.toml`:
 
 ```toml
 [dependencies]
-  actors = {
-    git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git",
-    branch = "main",
-    version = "1.0.0"
-  }
+  actors = { git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git", branch = "main", version = "1.0.0" }
   ```
 
 ## Building
@@ -146,40 +139,27 @@ main() {
 import magic.prelude.*
 import magic.dsl.*
 import magic.config.Config
-import actors.distributed.mcp.ActorMCPClient
+
+import actors.distributed.mcp.*
 import actors.tcp_actor_system.*
 
 @agent[model: "deepseek:deepseek-chat"]
 class AssistantAgent {
     @prompt("You are a helpful assistant that can interact with distributed services.")
-}
 
-public class AgentManager {
-    private let agent: AssistantAgent
-    private let mcpClient = ActorMCPClient()
-
-    init() {
-        agent = AssistantAgent()
-        Config.env["DEEPSEEK_API_KEY"] = "your-api-key"
-    }
-
-    func addActorClient(client: TCPActorClient): Unit {
-        mcpClient.addActorClient(client)
-        agent.toolManager.addTools(mcpClient.getTools())
-    }
-
-    func chat(userInput: String): String {
-        let res = agent.chat(AgentRequest(userInput))
-        res.content
+    init(toolManager!: ToolManager) {
+        __TOOL_MANAGER__ = Some(toolManager)
     }
 }
 
 main() {
-    let agentManager = AgentManager()
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
-    agentManager.addActorClient(tcpClient)
+    let toolManager = ActorToolManager()
+    let agent = AssistantAgent(toolManager: toolManager)
 
-    let response = agentManager.chat("Transfer $100 from Alice to Bob")
+    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    toolManager.addActorClient(tcpClient)
+
+    let response = agent.chat("Transfer $100 from Alice to Bob")
     println("Assistant: ${response}")
 }
 ```
@@ -192,7 +172,6 @@ The framework is organized into a hierarchical package structure:
 actors                   # Core actor programming model and local actor system
 ├── ActorFuture          # Asynchronous result handling
 ├── SequentialDispatcher # Thread-safe task execution
-├── ReceiverConfig       # Priority-based configuration
 │
 ├── actors.distributed      # Distributed actor interfaces and metadata
 │   ├── ActorHost           # Actor registration interface
@@ -210,13 +189,9 @@ actors                   # Core actor programming model and local actor system
 │   └── @Receiver          # Transform methods into receiver functions
 │
 ├── actors.tcp_actor_system # TCP-based distributed actor implementation
-│   ├── TCPActorHost        # TCP-based actor host
-│   ├── TCPActorClient      # TCP-based actor client
-│   └── TCPActorSystem      # Main TCP actor system configuration
-│
-└── actors.dummy_actor_system # In-memory actor system for testing
-    ├── DummyActorHost        # In-memory actor host
-    └── DummyActorClient      # In-memory actor client
+    ├── TCPActorHost        # TCP-based actor host
+    ├── TCPActorClient      # TCP-based actor client
+    └── TCPActorSystem      # Main TCP actor system configuration
 ```
 
 
@@ -225,33 +200,23 @@ actors                   # Core actor programming model and local actor system
 - **[Tutorial](doc/tutorial.md)**: Comprehensive guide to using the distributed actors framework
 - **[API Documentation](doc/apis.md)**: Complete API reference for all packages
 - **[Examples](examples/)**: Working examples demonstrating various features
-- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**: Example AI-powered applications demonstrating distributed actors with MCP integration on HarmonyOS
+- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**: Example AI-powered applications demonstrating distributed actors with agent integration on HarmonyOS
 
 ## Key Concepts
 
 ### Actor Model
-- **Actors**: Encapsulated units of computation that communicate via message passing
-- **Receivers**: Methods that can be called on actors, supporting both ask (synchronous) and tell (fire-and-forget) patterns
+- **Actors**: Encapsulated units of computation that communicate via asynchronous method calls
+- **Receivers**: Asynchronous methods that can be called on actors, supporting both ask (synchronous) and tell (fire-and-forget) patterns
 - **Futures**: Asynchronous result handling for actor operations
 
 ### Distributed Actors
 - **Actor Host**: Manages actor registration and handles incoming requests
 - **Actor Client**: Provides remote access to actors hosted elsewhere
 - **Actor Proxy**: Client-side representation of remote actors
-- **Metadata**: Type-safe information about actor interfaces for distributed communication
 
-### MCP Integration
-- **Tool Generation**: Automatic generation of MCP tools from actor receiver functions
-- **MCP Client**: Manages multiple actor clients and exposes their receiver functions as MCP tools
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+### Agent Integration
+- **Tool Generation**: Automatic generation of MCP tools from actor receivers
+- **Actor Tool Manager**: Manages multiple actor clients and exposes their receiver functions as MCP tools
 
 ## License
 
@@ -259,6 +224,7 @@ actors                   # Core actor programming model and local actor system
 
 ## Roadmap
 
+- [ ] Typed actor proxy
 - [ ] Message delivery semantics (at-least-once vs at-most-once)
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Move distributed macros to a separate package

@@ -70,7 +70,7 @@ This document provides a comprehensive list of all public APIs in the distribute
 
 | Class Name | Description |
 |------------|-------------|
-| **[ActorMCPClient](api/en/distributed/mcp/mcp_package_api/mcp_package_classes.md#class-actormcpclient)** | MCP client for distributed actors |
+| **[ActorToolManager](api/en/distributed/mcp/mcp_package_api/mcp_package_classes.md#class-actortoolmanager)** | Tool manager for distributed actors |
 | **[ReceiverTool](api/en/distributed/mcp/mcp_package_api/mcp_package_classes.md#class-receivertool)** | MCP tool implementation for receiver functions |
 | **[ActorMCPException](api/en/distributed/mcp/mcp_package_api/mcp_package_classes.md#class-actormcpexception)** | Exception for MCP operations |
 

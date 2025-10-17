@@ -2,6 +2,8 @@ all: clean build example
 
 EXAMPLE_DIR = ./examples
 
+TARGET_DIR = ./target/examples
+
 ARCH := $(shell uname -m)
 
 OS := $(shell uname -s)
@@ -16,22 +18,24 @@ else
     OS_NAME := unknown
 endif
 
-# export LD_LIBRARY_PATH=./target/release/actors:./lib/linux_aarch64_llvm/dynamic/stdx/:$LD_LIBRARY_PATH
-# export LD_LIBRARY_PATH=./target/release/actors:$LD_LIBRARY_PATH
+OPTIONS = -g
+IMPORT_ACTORS = --import-path ./target/release/actors -L./target/release/actors -lactors
+IMPORT_ACTORS_DISTRIBUTED = -lactors.distributed -lactors.dummy_actor_system -lactors.tcp_actor_system -lactors.distributed.mcp
 
 example:
-	rm -rf ./target/examples/
-	mkdir ./target/examples
-	cjc ./examples/ping-pong.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/ping-pong.o
-	cjc ./examples/actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/actor-interface.o
-	cjc ./examples/gc.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/gc.o
-	cjc ./examples/fjcreate.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/fjcreate.o
-	cjc ./examples/counter.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors  -o ./target/examples/counter.o
-	cjc ./examples/dist-actor-interface.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.distributed -lactors.dummy_actor_system  -o ./target/examples/dist-actor-interface.o
-	cjc ./examples/tcp-actor-host.cj -g --import-path ./target/release/actors --import-path ./target/release/magic -L./target/release/actors -L./target/release/magic -lmagic.core.tool -lmagic.mcp -lmagic.jsonable -lactors -lactors.distributed -lactors.tcp_actor_system  -o ./target/examples/tcp-actor-host.o
-	cjc ./examples/tcp-actor-client.cj -g --import-path ./target/release/actors --import-path ./target/release/magic -L./target/release/actors -L./target/release/magic -lmagic.core.tool -lmagic.mcp -lmagic.jsonable -lactors -lactors.distributed -lactors.tcp_actor_system  -o ./target/examples/tcp-actor-client.o
-	cjc ./examples/distributed-actor-example.cj -g --import-path ./target/release/actors -L./target/release/actors -lactors -lactors.distributed -lactors.tcp_actor_system  -o ./target/examples/distributed-actor-example.o
-	cjc ./examples/agent-example.cj -g --import-path ./target/release/actors --import-path ./target/release/magic -L./target/release/actors -L./target/release/magic -lmagic.agent_executor -lmagic.core.rag -lmagic.prelude -lmagic.tool -lmagic.core.tool -lmagic.mcp -lmagic.jsonable -lactors -lactors.distributed -lactors.distributed.mcp -lactors.tcp_actor_system  -o ./target/examples/agent-example.o
+	rm -rf $(TARGET_DIR)
+	mkdir $(TARGET_DIR)
+	cjc $(EXAMPLE_DIR)/ping-pong.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(TARGET_DIR)/ping-pong
+	cjc $(EXAMPLE_DIR)/actor-interface.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(TARGET_DIR)/actor-interface
+	cjc $(EXAMPLE_DIR)/gc.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(TARGET_DIR)/gc
+	cjc $(EXAMPLE_DIR)/fjcreate.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(TARGET_DIR)/fjcreate
+	cjc $(EXAMPLE_DIR)/counter.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(TARGET_DIR)/counter
+	cjc $(EXAMPLE_DIR)/complete-example.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(TARGET_DIR)/complete-example
+	cjc $(EXAMPLE_DIR)/dist-actor-interface.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/dist-actor-interface
+	cjc $(EXAMPLE_DIR)/tcp-actor-host.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-actor-host
+	cjc $(EXAMPLE_DIR)/tcp-actor-client.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-actor-client
+	cjc $(EXAMPLE_DIR)/distributed-actor-example.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/distributed-actor-example
+	pushd $(EXAMPLE_DIR)/agent-example && cjpm build && popd && cp $(EXAMPLE_DIR)/agent-example/target/release/bin/agent_example $(TARGET_DIR)/agent_example
 
 build:
 	cjpm build -i
@@ -40,4 +44,5 @@ test:
 	cjpm test src/tests src/tests/end2end src/macros/internal/tests src/dummy_actor_system/tests src/tcp_actor_system/tests
 
 clean:
+	pushd $(EXAMPLE_DIR)/agent-example && cjpm clean && popd
 	cjpm clean

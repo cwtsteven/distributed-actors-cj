@@ -1,53 +1,43 @@
 import std.collection.*
-import std.collection.concurrent.*
-import std.time.*
-import std.sync.*
-import std.socket.*
-import std.io.*
-import std.fs.*
 
 import actors.*
 import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
-import serialization.serialization.*
-import encoding.json.*
-import std.log.*
 
-@ActorInterface[
-    distributed: true,
-    description: "Test distributed service"
-]
-public interface TestService {
-    @Receiver[description: "Adds 10 to input"]
-    func addTen(x: Int64): Int64
+import encoding.json.*
+import serialization.serialization.*
+
+@ActorInterface[distributed: true, description: "Bank service"]
+public interface BankService {
+    @Receiver[description: "Transfer money between accounts"]
+    func transfer(from: String, to: String, amount: Float64): Bool
 }
 
 @Actor
-public class TestServiceImpl <: TestService {
+public class BankServiceImpl <: BankService {
     @Receiver
-    public func addTen(x: Int64): Int64 {
-        x + 10
+    public func transfer(from: String, to: String, amount: Float64): Bool {
+        // Transfer logic here
+        println("Transferred ${amount} from ${from} to ${to}")
+        true
     }
 }
 
-main(args: Array<String>) {
-    TCPActorSystem.logger = if (args.size < 1) {
-        SimpleLogger()
-    } else {
-        let logFile = args[0]
-        let os = File(logFile, OpenOption.CreateOrTruncate(false))
-        SimpleLogger("host", LogLevel.DEBUG, os)
-    }
-    TCPActorSystem.logger.level = LogLevel.DEBUG
+const PORT: UInt16 = 52165
 
-    let host = TCPActorHost(bindAt: 52185)
-    for (i in 0..100) {
-        let service = TestServiceImpl()
-        host.register("testService ${i}", service)
-    }
-    host.serve()
-    while (true) {
-        sleep(Duration.second)
-    }
+main() {
+    // Create and start the TCP actor host
+    let tcpHost = TCPActorHost(bindAt: PORT)
+    let serverFuture = tcpHost.serve()
+
+    // Register the bank service
+    let bankService = BankServiceImpl()
+    tcpHost.register("bank-service", bankService)
+
+    println("TCP Actor Host is running on port ${PORT}")
+    println("Press Ctrl+C to stop the server")
+
+    // Keep the server running
+    serverFuture.get()
 }

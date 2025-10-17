@@ -1,45 +1,121 @@
 # Classes
 
-## class ActorMCPClient
+## class ActorToolManager
 
 ```cangjie
-public class ActorMCPClient <: MCPClient
+public class ActorToolManager <: ToolManager
 ```
 
-Function: MCP client implementation that manages multiple actor clients and exposes their receiver functions as MCP tools. This class acts as a bridge between the MCP protocol and distributed actor systems, automatically generating MCP tools from actor metadata.
+Function: Tool manager implementation that manages multiple actor clients and exposes their receiver functions as MCP tools. This class acts as a bridge between the MCP protocol and distributed actor systems, automatically generating MCP tools from actor metadata.
+
+### init(ToolManager)
+
+```cangjie
+public init(baseManager!: ToolManager = SimpleToolManager())
+```
+
+Function: Creates an ActorToolManager with an optional base tool manager.
+
+Parameters:
+
+- baseManager!: ToolManager - The base tool manager to delegate to, defaults to SimpleToolManager().
+
+### func addTool()
+
+```cangjie
+public override func addTool(tool: Tool): Unit
+```
+
+Function: Adds a tool to the tool manager.
+
+Parameters:
+
+- tool: Tool - The tool to add.
+
+### func delTool()
+
+```cangjie
+public override func delTool(tool: Tool): Unit
+```
+
+Function: Removes a tool from the tool manager.
+
+Parameters:
+
+- tool: Tool - The tool to remove.
+
+### func addTools()
+
+```cangjie
+public override func addTools(tools: Array<Tool>): Unit
+```
+
+Function: Adds multiple tools to the tool manager.
+
+Parameters:
+
+- tools: Array<Tool> - The tools to add.
+
+### func clear()
+
+```cangjie
+public override func clear(): Unit
+```
+
+Function: Removes all tools from the tool manager.
+
+### func findTool()
+
+```cangjie
+public override func findTool(name: String): Option<Tool>
+```
+
+Function: Finds a tool by name.
+
+Parameters:
+
+- name: String - The name of the tool to find.
+
+Return Value:
+
+- Option<Tool> - Some(tool) if found, None otherwise.
 
 ### func getTools()
 
 ```cangjie
-public func getTools(): Array<Tool>
+public override func getTools(): Array<Tool>
 ```
 
-Function: Gets all available MCP tools generated from registered actor clients.
+Function: Gets all available tools in the tool manager.
 
 Return Value:
 
-- Array<Tool> - An array of all available MCP tools.
+- Array<Tool> - An array of all available tools.
 
-### func callTool()
+### func filterTool()
 
 ```cangjie
-public func callTool(name: String, args: Array<(String, ToJsonValue)>): ToolResponse
+public override func filterTool(question: String, config: ToolSearchConfig): Array<Tool>
 ```
 
-Function: Calls an MCP tool by name with the provided arguments.
+Function: Filters tools based on a question and search configuration.
 
 Parameters:
 
-- name: String - The name of the tool to call.
-- args: Array<(String, ToJsonValue)> - The arguments for the tool call.
+- question: String - The search question.
+- config: ToolSearchConfig - The search configuration.
 
 Return Value:
 
-- ToolResponse - The response from the tool execution.
+- Array<Tool> - An array of filtered tools.
 
-Exceptions:
+### prop enableFilter
 
-- ActorMCPException - If the tool is not found.
+```cangjie
+public prop enableFilter: Bool
+```
+
+Function: Gets whether tool filtering is enabled.
 
 ### func addActorClient()
 
@@ -47,7 +123,7 @@ Exceptions:
 public func addActorClient(client: ActorClient): Unit
 ```
 
-Function: Adds an actor client to the MCP client, making its actors available as MCP tools.
+Function: Adds an actor client to the tool manager, making its actors available as MCP tools.
 
 Parameters:
 
@@ -59,11 +135,15 @@ Parameters:
 public func removeActorClient(clientId: String): Unit
 ```
 
-Function: Removes an actor client from the MCP client, making its actors no longer available as MCP tools.
+Function: Removes an actor client from the tool manager, making its actors no longer available as MCP tools.
 
 Parameters:
 
 - clientId: String - The ID of the actor client to remove.
+
+Exceptions:
+
+- ActorMCPException - If the client is not found.
 
 ## class ReceiverTool
 
@@ -92,7 +172,7 @@ Function: Creates a ReceiverTool with the specified configuration.
 
 Parameters:
 
-- name!: String - The name of the tool.
+- name!: String - The name of the tool (format: "actorName;__actors_08275892475824__;receiverName").
 - description!: String - The description of the tool.
 - parameters!: Array<ToolParameter> - The parameters for the tool.
 - retType!: TypeSchema - The return type schema for the tool.
@@ -171,15 +251,19 @@ Function: The receiver information for the actor function.
 public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse
 ```
 
-Function: Invokes the MCP tool with the provided arguments, converting them to actor parameters and executing the receiver function.
+Function: Invokes the MCP tool with the provided arguments, converting them to actor parameters and executing the receiver function. The tool name is parsed to extract the actor name and receiver name, then an ActorProxy is created to call the receiver.
 
 Parameters:
 
-- args: HashMap<String, ToJsonValue> - The arguments for the tool invocation.
+- args: HashMap<String, ToJsonValue> - The arguments for the tool invocation, including an optional "config" parameter for ReceiverConfig.
 
 Return Value:
 
-- ToolResponse - The response from the tool execution.
+- ToolResponse - The response from the tool execution, serialized as a string.
+
+Exceptions:
+
+- ActorMCPException - If the tool name format is invalid or required arguments are missing.
 
 ### func toString()
 
@@ -191,7 +275,7 @@ Function: Converts the ReceiverTool to a string representation.
 
 Return Value:
 
-- String - A string representation of the ReceiverTool.
+- String - A string representation of the ReceiverTool in the format "name [description]".
 
 ## class ActorMCPException
 
