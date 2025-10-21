@@ -21,7 +21,7 @@ Function: Creates a ReceiverConfig with the specified priority.
 
 Parameters:
 
-- priority!: Int64 - The priority level for the receiver call, must be between 1 and 10. Defaults to 5.
+- `priority!: Int64` - The priority level for the receiver call, must be between 1 and 10. Defaults to 5.
 
 ### static let default
 
@@ -41,11 +41,11 @@ Function: Compares two ReceiverConfig instances for equality.
 
 Parameters:
 
-- other: ReceiverConfig - The other ReceiverConfig to compare with.
+- `other: ReceiverConfig` - The other ReceiverConfig to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the ReceiverConfigs are equal, `false` otherwise.
+- `Bool` - Returns `true` if the ReceiverConfigs are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -57,8 +57,8 @@ Function: Compares two ReceiverConfig instances for inequality.
 
 Parameters:
 
-- other: ReceiverConfig - The other ReceiverConfig to compare with.
+- `other: ReceiverConfig` - The other ReceiverConfig to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the ReceiverConfigs are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the ReceiverConfigs are not equal, `false` otherwise.

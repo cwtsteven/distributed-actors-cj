@@ -8,7 +8,7 @@ This document provides a comprehensive list of all public APIs in the distribute
 
 | Class Name | Description |
 |------------|-------------|
-| **[ActorFuture<T>](api/en/actors_package_api/actors_package_classes.md#class-actorfuture)** | Concrete class representing the pending result of a closure submitted to an Actor |
+| **[ActorFuture\<T>](api/en/actors_package_api/actors_package_classes.md#class-actorfuture)** | Concrete class representing the pending result of a closure submitted to an Actor |
 | **[SequentialDispatcher](api/en/actors_package_api/actors_package_classes.md#class-sequentialdispatcher)** | Thread-safe dispatcher for sequential task execution |
 
 ### Structs

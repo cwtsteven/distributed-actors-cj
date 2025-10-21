@@ -2,7 +2,7 @@
 
 ## enum ReceiverMode
 
-```Cangjie
+```cangjie
 public enum ReceiverMode <: ToString & Equatable<ReceiverMode> {
     | AskOnly
     | TellOnly
@@ -24,11 +24,11 @@ Function: Represents the calling mode for receiver functions. This enum determin
 public override func toString(): String
 ```
 
-Function: Converts the ReceiverMode to a string representation.
+Function: Converts the `ReceiverMode` to a string representation.
 
 Return Value:
 
-- String - A string representation of the ReceiverMode.
+- `String` - A string representation of the `ReceiverMode`.
 
 ### operator ==()
 
@@ -36,15 +36,15 @@ Return Value:
 public override operator func ==(other: ReceiverMode): Bool
 ```
 
-Function: Compares two ReceiverMode instances for equality.
+Function: Compares two `ReceiverMode` instances for equality.
 
 Parameters:
 
-- other: ReceiverMode - The other ReceiverMode to compare with.
+- `other: ReceiverMode` - The other `ReceiverMode` to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the ReceiverModes are equal, `false` otherwise.
+- `Bool` - Returns `true` if the `ReceiverModes` are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -52,19 +52,19 @@ Return Value:
 public override operator func !=(other: ReceiverMode): Bool
 ```
 
-Function: Compares two ReceiverMode instances for inequality.
+Function: Compares two `ReceiverMode` instances for inequality.
 
 Parameters:
 
-- other: ReceiverMode - The other ReceiverMode to compare with.
+- `other: ReceiverMode` - The other `ReceiverMode` to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the ReceiverModes are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the `ReceiverModes` are not equal, `false` otherwise.
 
 ## enum TypeModel
 
-```Cangjie
+```cangjie
 public enum TypeModel <: ToString & Equatable<TypeModel> {
     | IntType
     | FloatType
@@ -94,11 +94,11 @@ Function: Represents type information for serialization and metadata generation.
 public override func toString(): String
 ```
 
-Function: Converts the TypeModel to a string representation.
+Function: Converts the `TypeModel` to a string representation.
 
 Return Value:
 
-- String - A string representation of the TypeModel.
+- `String` - A string representation of the `TypeModel`.
 
 ### operator ==()
 
@@ -106,15 +106,15 @@ Return Value:
 public override operator func ==(other: TypeModel): Bool
 ```
 
-Function: Compares two TypeModel instances for equality.
+Function: Compares two `TypeModel` instances for equality.
 
 Parameters:
 
-- other: TypeModel - The other TypeModel to compare with.
+- `other: TypeModel` - The other `TypeModel` to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the TypeModels are equal, `false` otherwise.
+- `Bool` - Returns `true` if the `TypeModels` are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -122,12 +122,12 @@ Return Value:
 public override operator func !=(other: TypeModel): Bool
 ```
 
-Function: Compares two TypeModel instances for inequality.
+Function: Compares two `TypeModel` instances for inequality.
 
 Parameters:
 
-- other: TypeModel - The other TypeModel to compare with.
+- `other: TypeModel` - The other `TypeModel` to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the TypeModels are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the `TypeModels` are not equal, `false` otherwise.

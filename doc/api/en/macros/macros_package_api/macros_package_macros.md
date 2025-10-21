@@ -1,5 +1,34 @@
 # Macros
 
+## @Actor macro
+
+```cangjie
+public macro Actor(input: Tokens): Tokens
+
+public macro Actor(options: Tokens, input: Tokens): Tokens
+```
+
+Function: Transform a class into an actor.
+
+> **Description:**
+>
+> The usage of the `@Actor` macro has the following limitations:
+>
+> - It can only be applied to classes.
+> - The class being annotated cannot be `abstract`, `open`, or `sealed`.
+
+Violating these limitations will result in a compilation error during macro expansion.
+
+Options: The `@Actor` macro accepts a list of options in the form `opt1: value1, opt2: value2`. For example:
+
+```cangjie
+@Actor[option1: value1, option2: value2]
+```
+
+Currently, the only available option is `enableReceiverPriority: value` — this specifies whether to enable priority between receiver functions. The value provided must be a boolean literal, either `true` or `false`. If this option is not specified, it defaults to `false`.
+
+Each option can only appear once; otherwise, an error will be thrown during macro expansion.
+
 ## @ActorInterface macro
 
 ```cangjie
@@ -33,35 +62,6 @@ Available options:
 - `distributed: value` - Specifies whether this is a distributed actor interface. Must be a boolean literal (`true` or `false`). Defaults to `false`.
 - `description: value` - A human-readable description of the actor interface. Must be a string literal.
 - `customInfo: value` - Custom metadata in JSON format. Must be a valid JSON string.
-
-Each option can only appear once; otherwise, an error will be thrown during macro expansion.
-
-## @Actor macro
-
-```cangjie
-public macro Actor(input: Tokens): Tokens
-
-public macro Actor(options: Tokens, input: Tokens): Tokens
-```
-
-Function: Transform a class into an actor.
-
-> **Description:**
->
-> The usage of the `@Actor` macro has the following limitations:
->
-> - It can only be applied to classes.
-> - The class being annotated cannot be `abstract`, `open`, or `sealed`.
-
-Violating these limitations will result in a compilation error during macro expansion.
-
-Options: The `@Actor` macro accepts a list of options in the form `opt1: value1, opt2: value2`. For example:
-
-```cangjie
-@Actor[option1: value1, option2: value2]
-```
-
-Currently, the only available option is `enableReceiverPriority: value` — this specifies whether to enable priority between receiver functions. The value provided must be a boolean literal, either `true` or `false`. If this option is not specified, it defaults to `false`.
 
 Each option can only appear once; otherwise, an error will be thrown during macro expansion.
 

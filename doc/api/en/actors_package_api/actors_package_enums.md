@@ -8,4 +8,4 @@ public enum Tell {
 }
 ```
 
-Function: Single valued enumeration to call a `@Receiver` while bypassing the `ActorFuture` mechanism. `tell: True` should be passed to the `@Receiver` as a named argument.
+Function: Single valued enumeration to call a [@Receiver](../macros/macros_package_api/macros_package_macros.md#receiver-macro) while bypassing the [ActorFuture](./actors_package_classes.md#class-actorfuture) mechanism. `tell: True` should be passed to the [@Receiver](../macros/macros_package_api/macros_package_macros.md#receiver-macro) as a named argument.

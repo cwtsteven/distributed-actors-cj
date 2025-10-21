@@ -5,10 +5,8 @@
 The `actors.distributed` package extends the core actor programming model to support distributed systems where actors can communicate across network boundaries. This package provides the infrastructure for remote actor communication, metadata management, and distributed future handling.
 
 Key features include:
-- **Distributed Actor Communication**: Remote actor discovery and communication
-- **Metadata Management**: Type-safe metadata for actor interfaces and receiver functions
+- **Distributed Actor Communication**: Abstraction for remote actor communication
 - **Distributed Futures**: Asynchronous result handling for remote operations
-- **Exception Handling**: Comprehensive error handling for distributed operations
 - **Serialization Support**: Built-in support for data serialization across network boundaries
 
 This package enables building scalable distributed systems where actors can be deployed across multiple nodes while maintaining the same programming model as local actors.

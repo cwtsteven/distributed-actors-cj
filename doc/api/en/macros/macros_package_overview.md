@@ -5,11 +5,9 @@
 The `actors.macros` package provides compile-time macros for declaring actors, actor interfaces, and receiver functions. These macros transform standard Cangjie code into actor-based implementations, supporting both local and distributed actor programming models with comprehensive configuration options.
 
 Key features include:
-- **Actor Class Generation**: Transform classes into actors with automatic dispatcher integration
-- **Actor Interface Generation**: Create actor interfaces for both local and distributed communication
+- **Actor Class Generation**: Transform classes into actors
+- **Actor Interface Generation**: Create actor interfaces
 - **Receiver Function Generation**: Convert methods into actor receiver functions with ask/tell patterns
-- **Distributed Support**: Generate distributed actor interfaces with serialization support
-- **Priority Configuration**: Support for priority-based receiver function execution
 - **Metadata Generation**: Automatic generation of actor metadata for distributed systems
 
 This package enables developers to use a declarative approach to actor programming, where standard classes and interfaces are transformed into actor implementations through compile-time macro expansion.

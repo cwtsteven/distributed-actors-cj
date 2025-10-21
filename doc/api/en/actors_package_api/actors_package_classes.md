@@ -1,6 +1,6 @@
 # Classes
 
-## class ActorFuture
+## class ActorFuture\<T>
 
 ```cangjie
 public class ActorFuture<T>
@@ -18,7 +18,7 @@ Function: Blocks the current thread until the closure completes. If the closure 
 
 Return Value:
 
-- T - The computed result of the corresponding closure.
+- `T` - The computed result of the corresponding closure.
 
 ### func get(Duration)
 
@@ -30,11 +30,11 @@ Function: Blocks the current thread until either the specified timeout has expir
 
 Parameters:
 
-- timeout: Duration - The maximum time to wait.
+- `timeout: Duration` - The maximum time to wait.
 
 Return Value:
 
-- Option\<T> - Returns `None` if the result is not ready within the specified timeout, otherwise returns the result value.
+- `Option<T>` - Returns `None` if the result is not ready within the specified timeout, otherwise returns the result value.
 
 ### func tryGet()
 
@@ -46,7 +46,7 @@ Function: If the result is ready, it immediately returns the result; otherwise, 
 
 Return Value:
 
-- Option\<T> - If the result is not yet ready, it returns `None`; otherwise, it returns the result value.
+- `Option<T>` - If the result is not yet ready, it returns `None`; otherwise, it returns the result value.
 
 
 ## class SequentialDispatcher
@@ -71,7 +71,7 @@ Function: Creates a `SequentialDispatcher` instance and starts a thread for the 
 
 Parameters:
 
-- enableReceiverPriority!: Bool - When set to `true`, it enables the priority feature, allowing closures with higher priority to be executed first. Defaults to `false`.
+- `enableReceiverPriority!: Bool` - When set to `true`, it enables the priority feature, allowing closures with higher priority to be executed first. Defaults to `false`.
 
 ### func post\<T>(() -> T, ReceiverConfig)
 
@@ -83,8 +83,8 @@ Function: Submits a closure to the dispatcher, which will be queued and executed
 
 Parameters:
 
-- f: () -> T - The closure submitted to the actor.
-- config!: ReceiverConfig - The configuration for the submitted task, defaults to ReceiverConfig.default.
+- `f: () -> T` - The closure submitted to the actor.
+- `config!: ReceiverConfig` - The configuration for the submitted task, defaults to ReceiverConfig.default.
 
 Return Value:
 
@@ -100,7 +100,7 @@ Function: Submits a closure to the dispatcher without expecting a return value (
 
 Parameters:
 
-- f: () -> Unit - The closure submitted to the actor.
-- config!: ReceiverConfig - The configuration for the submitted task, defaults to ReceiverConfig.default.
+- `f: () -> Unit` - The closure submitted to the actor.
+- `config!: ReceiverConfig` - The configuration for the submitted task, defaults to ReceiverConfig.default.
 
 

@@ -11,7 +11,7 @@ public struct ActorInfo <: ToString {
 }
 ```
 
-Function: Information about an actor including its name and metadata. This struct contains the actor's name and its metadata, used by actor systems to provide information about registered actors.
+Function: This struct contains the actor's name and its metadata.
 
 ### init(String, Metadata)
 
@@ -22,12 +22,12 @@ public ActorInfo(
 )
 ```
 
-Function: Creates an ActorInfo with the specified name and metadata.
+Function: Creates an `ActorInfo` with the specified name and metadata.
 
 Parameters:
 
-- name!: String - The name of the actor.
-- metadata!: Metadata - The metadata describing the actor interface.
+- `name!: String` - The name of the actor.
+- `metadata!: Metadata` - The metadata describing the actor interface.
 
 ### func toString()
 
@@ -35,152 +35,11 @@ Parameters:
 public override func toString(): String
 ```
 
-Function: Converts the ActorInfo to a string representation.
+Function: Converts the `ActorInfo` to a string representation.
 
 Return Value:
 
-- String - A string representation of the ActorInfo.
-
-## struct Metadata
-
-```cangjie
-public struct Metadata <: ToString {
-  public Metadata(
-    public let receivers!: Array<ReceiverInfo>,
-    public let description!: String,
-    public let customInfo!: JsonObject
-  )
-}
-```
-
-Function: Contains metadata about an actor interface, including receiver information, description, and custom data. This is used by distributed actor systems to understand the capabilities of remote actors.
-
-### init(Array<ReceiverInfo>, String, JsonObject)
-
-```cangjie
-public Metadata(
-  public let receivers!: Array<ReceiverInfo>,
-  public let description!: String,
-  public let customInfo!: JsonObject
-)
-```
-
-Function: Creates a Metadata instance with the specified receiver information, description, and custom data.
-
-Parameters:
-
-- receivers!: Array<ReceiverInfo> - Information about all receiver functions in the actor interface.
-- description!: String - A human-readable description of the actor interface.
-- customInfo!: JsonObject - Custom metadata in JSON format.
-
-### func toString()
-
-```cangjie
-public override func toString(): String
-```
-
-Function: Converts the Metadata to a string representation.
-
-Return Value:
-
-- String - A string representation of the Metadata.
-
-## struct ReceiverInfo
-
-```cangjie
-public struct ReceiverInfo <: ToString {
-  public ReceiverInfo(
-    public let description!: String,
-    public let customInfo!: JsonObject,
-    public let methodName!: String,
-    public let paramSchema!: Array<ReceiverParameter>,
-    public let retTypeModel!: TypeModel,
-    public let mode!: ReceiverMode
-  )
-}
-```
-
-Function: Information about a specific receiver function, including parameter schemas, return types, and metadata.
-
-### init(String, JsonObject, String, Array<ReceiverParameter>, TypeModel, ReceiverMode)
-
-```cangjie
-public ReceiverInfo(
-  public let description!: String,
-  public let customInfo!: JsonObject,
-  public let methodName!: String,
-  public let paramSchema!: Array<ReceiverParameter>,
-  public let retTypeModel!: TypeModel,
-  public let mode!: ReceiverMode
-)
-```
-
-Function: Creates a ReceiverInfo instance with the specified function details.
-
-Parameters:
-
-- description!: String - A human-readable description of the receiver function.
-- customInfo!: JsonObject - Custom metadata for the receiver function.
-- methodName!: String - The name of the receiver function.
-- paramSchema!: Array<ReceiverParameter> - Schema information for function parameters.
-- retTypeModel!: TypeModel - Type information for the return value.
-- mode!: ReceiverMode - The calling mode for the receiver function.
-
-### func toString()
-
-```cangjie
-public override func toString(): String
-```
-
-Function: Converts the ReceiverInfo to a string representation.
-
-Return Value:
-
-- String - A string representation of the ReceiverInfo.
-
-## struct ReceiverParameter
-
-```cangjie
-public struct ReceiverParameter <: ToString {
-  public ReceiverParameter(
-    public let name!: String,
-    public let typeModel!: TypeModel,
-    public let description!: String
-  )
-}
-```
-
-Function: Information about a parameter in a receiver function, including its name, type, and description.
-
-### init(String, TypeModel, String)
-
-```cangjie
-public ReceiverParameter(
-  public let name!: String,
-  public let typeModel!: TypeModel,
-  public let description!: String
-)
-```
-
-Function: Creates a ReceiverParameter with the specified details.
-
-Parameters:
-
-- name!: String - The name of the parameter.
-- typeModel!: TypeModel - The type information for the parameter.
-- description!: String - A description of the parameter.
-
-### func toString()
-
-```cangjie
-public override func toString(): String
-```
-
-Function: Converts the ReceiverParameter to a string representation.
-
-Return Value:
-
-- String - A string representation of the ReceiverParameter.
+- String - A string representation of the `ActorInfo`.
 
 ## struct FieldModel
 
@@ -206,13 +65,13 @@ public FieldModel(
 )
 ```
 
-Function: Creates a FieldModel with the specified details.
+Function: Creates a `FieldModel` with the specified details.
 
 Parameters:
 
-- name!: String - The name of the field.
-- description!: String - A description of the field.
-- typeModel!: TypeModel - The type information for the field.
+- `name!: String` - The name of the field.
+- `description!: String` - A description of the field.
+- `typeModel!: TypeModel` - The type information for the field.
 
 ### func toString()
 
@@ -220,11 +79,11 @@ Parameters:
 public override func toString(): String
 ```
 
-Function: Converts the FieldModel to a string representation.
+Function: Converts the `FieldModel` to a string representation.
 
 Return Value:
 
-- String - A string representation of the FieldModel.
+- `String` - A string representation of the `FieldModel`.
 
 ### operator ==()
 
@@ -232,15 +91,15 @@ Return Value:
 public override operator func ==(other: FieldModel): Bool
 ```
 
-Function: Compares two FieldModel instances for equality.
+Function: Compares two `FieldModel` instances for equality.
 
 Parameters:
 
-- other: FieldModel - The other FieldModel to compare with.
+- `other: FieldModel` - The other `FieldModel` to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the FieldModels are equal, `false` otherwise.
+- `Bool` - Returns `true` if the FieldModels are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -248,15 +107,15 @@ Return Value:
 public override operator func !=(other: FieldModel): Bool
 ```
 
-Function: Compares two FieldModel instances for inequality.
+Function: Compares two `FieldModel` instances for inequality.
 
 Parameters:
 
-- other: FieldModel - The other FieldModel to compare with.
+- `other: FieldModel` - The other `FieldModel` to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the FieldModels are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the `FieldModels` are not equal, `false` otherwise.
 
 ## struct InvokeInfo
 
@@ -286,12 +145,154 @@ public InvokeInfo(
 )
 ```
 
-Function: Creates an InvokeInfo with the specified call details.
+
+Function: Creates an `InvokeInfo` with the specified call details.
 
 Parameters:
 
-- name!: String - The name of the target actor.
-- receiverName!: String - The name of the receiver function to call.
-- args!: Array<DataModel> - Serialized arguments for the receiver function.
-- config!: ReceiverConfig - Configuration for the call.
-- fut!: ?DistributedFuture - Optional future to fulfill with the result.
+- `name!: String` - The name of the target actor.
+- `receiverName!: String` - The name of the receiver function to call.
+- `args!: Array<DataModel>` - Serialized arguments for the receiver function.
+- `config!: ReceiverConfig` - Configuration for the call.
+- `fut!: ?DistributedFuture` - Optional future to fulfill with the result.
+
+## struct Metadata
+
+```cangjie
+public struct Metadata <: ToString {
+  public Metadata(
+    public let receivers!: Array<ReceiverInfo>,
+    public let description!: String,
+    public let customInfo!: JsonObject
+  )
+}
+```
+
+Function: Contains metadata about an actor interface, including receiver information, description, and custom data.
+
+### init(Array<ReceiverInfo>, String, JsonObject)
+
+```cangjie
+public Metadata(
+  public let receivers!: Array<ReceiverInfo>,
+  public let description!: String,
+  public let customInfo!: JsonObject
+)
+```
+
+Function: Creates a `Metadata` instance with the specified receiver information, description, and custom data.
+
+Parameters:
+
+- `receivers!: Array<ReceiverInfo>` - Information about all receiver functions in the actor interface.
+- `description!: String` - A human-readable description of the actor interface.
+- `customInfo!: JsonObject` - Custom metadata in JSON format.
+
+### func toString()
+
+```cangjie
+public override func toString(): String
+```
+
+Function: Converts the `Metadata` to a string representation.
+
+Return Value:
+
+- String - A string representation of the `Metadata`.
+
+## struct ReceiverInfo
+
+```cangjie
+public struct ReceiverInfo <: ToString {
+  public ReceiverInfo(
+    public let description!: String,
+    public let customInfo!: JsonObject,
+    public let methodName!: String,
+    public let paramSchema!: Array<ReceiverParameter>,
+    public let retTypeModel!: TypeModel,
+    public let mode!: ReceiverMode
+  )
+}
+```
+
+Function: Information about a specific receiver function, including description, custom info, method name, parameter schema, return type model, and the receciver mode (tell or ask).
+
+### init(String, JsonObject, String, Array<ReceiverParameter>, TypeModel, ReceiverMode)
+
+```cangjie
+public ReceiverInfo(
+  public let description!: String,
+  public let customInfo!: JsonObject,
+  public let methodName!: String,
+  public let paramSchema!: Array<ReceiverParameter>,
+  public let retTypeModel!: TypeModel,
+  public let mode!: ReceiverMode
+)
+```
+
+Function: Creates a `ReceiverInfo` instance with the specified function details.
+
+Parameters:
+
+- `description!: String` - A human-readable description of the receiver function.
+- `customInfo!: JsonObject` - Custom metadata for the receiver function.
+- `methodName!: String` - The name of the receiver function.
+- `paramSchema!: Array<ReceiverParameter>` - Schema information for function parameters.
+- `retTypeModel!: TypeModel` - Type information for the return value.
+- `mode!: ReceiverMode` - The calling mode for the receiver function (tell or ask).
+
+### func toString()
+
+```cangjie
+public override func toString(): String
+```
+
+Function: Converts the `ReceiverInfo` to a string representation.
+
+Return Value:
+
+- `String` - A string representation of the `ReceiverInfo`.
+
+## struct ReceiverParameter
+
+```cangjie
+public struct ReceiverParameter <: ToString {
+  public ReceiverParameter(
+    public let name!: String,
+    public let typeModel!: TypeModel,
+    public let description!: String
+  )
+}
+```
+
+Function: Information about a parameter in a receiver function, including its name, type, and description.
+
+### init(String, TypeModel, String)
+
+```cangjie
+public ReceiverParameter(
+  public let name!: String,
+  public let typeModel!: TypeModel,
+  public let description!: String
+)
+```
+
+Function: Creates a `ReceiverParameter` with the specified details.
+
+Parameters:
+
+- `name!: String` - The name of the parameter.
+- `typeModel!: TypeModel` - The type information for the parameter.
+- `description!: String` - A description of the parameter.
+
+### func toString()
+
+```cangjie
+public override func toString(): String
+```
+
+Function: Converts the `ReceiverParameter` to a string representation.
+
+Return Value:
+
+- `String` - A string representation of the `ReceiverParameter`.

@@ -1,5 +1,27 @@
 # Classes
 
+## class ActorNotFoundException
+
+```cangjie
+public class ActorNotFoundException <: Exception {
+  public init(name: String)
+}
+```
+
+Function: Exception thrown when an actor with the specified name cannot be found in the actor system.
+
+### init(String)
+
+```cangjie
+public init(name: String)
+```
+
+Function: Creates an `ActorNotFoundException` with a message indicating the actor name that could not be found.
+
+Parameters:
+
+- `name: String` - The name of the actor that could not be found.
+
 ## class ActorProxy
 
 ```cangjie
@@ -11,7 +33,7 @@ public class ActorProxy {
 }
 ```
 
-Function: Proxy class for communicating with remote actors in a distributed system. The ActorProxy allows clients to send messages and make calls to remote actors without directly managing the communication details.
+Function: Proxy class for communicating with remote actors in a distributed system. The `ActorProxy` allows clients to send messages and make calls to remote actors without directly managing the communication details.
 
 ### init(String, ActorClient)
 
@@ -22,12 +44,12 @@ public ActorProxy(
 )
 ```
 
-Function: Creates an ActorProxy for communicating with a specific actor in the given actor system.
+Function: Creates an `ActorProxy` for communicating with a specific actor in the given actor system.
 
 Parameters:
 
-- name: String - The name of the remote actor to communicate with.
-- client: ActorClient - The actor client that manages the remote actor.
+- `name: String` - The name of the remote actor to communicate with.
+- `client: ActorClient` - The actor client that manages the remote actor.
 
 ### func tell()
 
@@ -39,9 +61,9 @@ Function: Sends a message to a remote actor's receiver function without expectin
 
 Parameters:
 
-- receiverName: String - The name of the receiver function to call.
-- args: Array<DataModel> - Serialized arguments for the receiver function.
-- config!: ReceiverConfig - Configuration for the call, defaults to ReceiverConfig.default.
+- `receiverName: String` - The name of the receiver function to call.
+- `args: Array<DataModel>` - Serialized arguments for the receiver function.
+- `config!: ReceiverConfig` - Configuration for the call, defaults to `ReceiverConfig.default`.
 
 ### func ask()
 
@@ -53,13 +75,35 @@ Function: Makes a call to a remote actor's receiver function and returns a futur
 
 Parameters:
 
-- receiverName: String - The name of the receiver function to call.
-- args: Array<DataModel> - Serialized arguments for the receiver function.
-- config!: ReceiverConfig - Configuration for the call, defaults to ReceiverConfig.default.
+- `receiverName: String` - The name of the receiver function to call.
+- `args: Array<DataModel>` - Serialized arguments for the receiver function.
+- `config!: ReceiverConfig` - Configuration for the call, defaults to `ReceiverConfig.default`.
 
 Return Value:
 
-- DistributedFuture - A future that will contain the serialized result of the remote call.
+- `DistributedFuture` - A future that will contain the serialized result of the remote call.
+
+## class ActorSystemException
+
+```cangjie
+public class ActorSystemException <: Exception {
+  public init(msg: String)
+}
+```
+
+Function: General exception for actor system related errors with a custom message.
+
+### init(String)
+
+```cangjie
+public init(msg: String)
+```
+
+Function: Creates an `ActorSystemException` with a custom error message.
+
+Parameters:
+
+- `msg: String` - The custom error message describing the actor system error.
 
 ## class DistributedFuture
 
@@ -79,7 +123,7 @@ Function: Blocks the current thread until the result is ready and returns the se
 
 Return Value:
 
-- DataModel - The serialized result of the operation.
+- `DataModel` - The serialized result of the operation.
 
 ### func get(Duration)
 
@@ -91,11 +135,11 @@ Function: Blocks the current thread until either the specified timeout has expir
 
 Parameters:
 
-- timeout: Duration - The maximum time to wait.
+- `timeout: Duration` - The maximum time to wait.
 
 Return Value:
 
-- Option<DataModel> - Returns `None` if the result is not ready within the specified timeout, otherwise returns the serialized result.
+- `Option<DataModel>` - Returns `None` if the result is not ready within the specified timeout, otherwise returns the serialized result.
 
 ### func tryGet()
 
@@ -107,7 +151,7 @@ Function: If the result is ready, it immediately returns the serialized result; 
 
 Return Value:
 
-- Option<DataModel> - If the result is not yet ready, it returns `None`; otherwise, it returns the serialized result.
+- `Option<DataModel>` - If the result is not yet ready, it returns `None`; otherwise, it returns the serialized result.
 
 ### func fulfill()
 
@@ -119,33 +163,11 @@ Function: Fulfills the future with a serialized result value.
 
 Parameters:
 
-- dataModel: DataModel - The serialized result value to fulfill the future with.
+- `dataModel: DataModel` - The serialized result value to fulfill the future with.
 
 Return Value:
 
-- Bool - Returns `true` if the future was successfully fulfilled, `false` if it was already fulfilled.
-
-## class ActorNotFoundException
-
-```cangjie
-public class ActorNotFoundException <: Exception {
-  public init(name: String)
-}
-```
-
-Function: Exception thrown when an actor with the specified name cannot be found in the actor system.
-
-### init(String)
-
-```cangjie
-public init(name: String)
-```
-
-Function: Creates an ActorNotFoundException with a message indicating the actor name that could not be found.
-
-Parameters:
-
-- name: String - The name of the actor that could not be found.
+- `Bool` - Returns `true` if the future was successfully fulfilled, `false` if it was already fulfilled.
 
 ## class ReceiverNotFoundException
 
@@ -163,12 +185,12 @@ Function: Exception thrown when a receiver function cannot be found in the speci
 public init(name: String, receiverName: String)
 ```
 
-Function: Creates a ReceiverNotFoundException with a message indicating the actor interface and receiver that could not be found.
+Function: Creates a `ReceiverNotFoundException` with a message indicating the actor interface and receiver that could not be found.
 
 Parameters:
 
-- name: String - The name of the actor interface.
-- receiverName: String - The name of the receiver function that could not be found.
+- `name: String` - The name of the actor interface.
+- `receiverName: String` - The name of the receiver function that could not be found.
 
 ## class RemoteException
 
@@ -186,29 +208,7 @@ Function: Exception thrown when a remote connection has failed during distribute
 public init()
 ```
 
-Function: Creates a RemoteException with a default message indicating that the remote connection has failed.
-
-## class ActorSystemException
-
-```cangjie
-public class ActorSystemException <: Exception {
-  public init(msg: String)
-}
-```
-
-Function: General exception for actor system related errors with a custom message.
-
-### init(String)
-
-```cangjie
-public init(msg: String)
-```
-
-Function: Creates an ActorSystemException with a custom error message.
-
-Parameters:
-
-- msg: String - The custom error message describing the actor system error.
+Function: Creates a `RemoteException` with a default message indicating that the remote connection has failed.
 
 ## class RemoteReceiverException
 
@@ -229,11 +229,11 @@ Function: Exception that wraps non-serializable exceptions or errors thrown from
 public init(e: Exception)
 ```
 
-Function: Creates a RemoteReceiverException from an Exception, capturing its stack trace.
+Function: Creates a `RemoteReceiverException` from an `Exception`, capturing its stack trace.
 
 Parameters:
 
-- e: Exception - The exception to wrap.
+- `e: Exception` - The exception to wrap.
 
 ### init(Error)
 
@@ -241,11 +241,11 @@ Parameters:
 public init(e: Error)
 ```
 
-Function: Creates a RemoteReceiverException from an Error, capturing its stack trace.
+Function: Creates a `RemoteReceiverException` from an `Error`, capturing its stack trace.
 
 Parameters:
 
-- e: Error - The error to wrap.
+- `e: Error` - The error to wrap.
 
 ### func serialize()
 
@@ -257,7 +257,7 @@ Function: Serializes the RemoteReceiverException for network transmission.
 
 Return Value:
 
-- DataModel - The serialized representation of the exception.
+- `DataModel` - The serialized representation of the exception.
 
 ### func deserialize()
 
@@ -269,8 +269,8 @@ Function: Deserializes a RemoteReceiverException from its DataModel representati
 
 Parameters:
 
-- dm: DataModel - The serialized exception data.
+- `dm: DataModel` - The serialized exception data.
 
 Return Value:
 
-- RemoteReceiverException - The deserialized exception instance.
+- `RemoteReceiverException` - The deserialized exception instance.
