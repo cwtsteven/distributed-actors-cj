@@ -218,10 +218,6 @@ actors                   # Core actor programming model and local actor system
 - **Tool Generation**: Automatic generation of MCP tools from actor receivers
 - **Actor Tool Manager**: Manages multiple actor clients and exposes their receiver functions as MCP tools
 
-## License
-
-// TODO
-
 ## Roadmap
 
 - [ ] Typed actor proxy
