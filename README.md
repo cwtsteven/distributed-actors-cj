@@ -1,56 +1,113 @@
-# Distributed Actors Framework
+<div align="center">
+<h1>distributed-actors-cj</h1>
+</div>
 
-A comprehensive distributed actors framework for the Cangjie programming language, providing actor-based concurrency and distributed computing capabilities with support for local and remote actor communication.
+<p align="center">
+<img alt="" src="https://img.shields.io/badge/release-v1.0.0-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/cjc-v0.53.18-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/cjcov-0.0%25-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/state-孵化/毕业-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/domain-OHOS/Cloud-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/points- ？/100-brightgreen" style="display: inline-block;" />
+</p>
 
-## Features
+## 介绍
 
-- **Actor Programming Model**: Active object abstractions with asynchronous method calls
-- **Distributed Actors**: Declarative syntax for defining distributed actor interfaces and implementations
-- **TCP Actor System**: Production-ready TCP-based distributed actor system implementation
-- **Agent Integration**: Exposing actors as tools under MCP protocol
+一个为仓颉编程语言设计的分布式 Actor 框架，提供基于 Actor 的并发与分布式计算能力，支持本地与远程通信，并可通过 MCP 协议将 Actor 以工具形式集成到 AI 智能体中。
 
-## Requirements
+### 项目特性
 
-- **Cangjie Compiler**: Version 0.53.18 (not compatible with version 1.0.0+)
-- **CangjieMagic**: For AI agent integration features used in `actors.distributed.mcp` package
+- **Actor 编程模型**：基于异步方法调用的主动对象抽象
+- **分布式 Actor**：用于定义分布式 Actor 接口与实现的声明式语法
+- **TCP Actor 系统**：基于 TCP 的分布式 Actor 系统实现
+- **智能体集成**：通过 MCP 协议将 Actor 以工具形式提供给 AI 智能体使用
 
-## Installation
+### 项目计划
 
-### Using Git Dependency (Recommended)
+- [ ] 类型安全的 Actor 代理
+- [ ] 消息传递语义（至少一次 vs 最多一次）
+- [ ] 失败消息传递的重试机制
+- [ ] 增强异常与错误处理
 
-Add the following to your `cjpm.toml`:
+
+## 项目架构
+
+### 源码目录
+
+```shell
+actors                   # 核心 Actor 编程模型与本地 Actor 系统
+├── ActorFuture          # 异步结果处理
+├── SequentialDispatcher # 线程安全的任务调度器
+│
+├── actors.distributed      # 分布式 Actor 接口与元数据
+│   ├── ActorHost           # Actor 注册接口
+│   ├── ActorClient         # 远程 Actor 访问接口
+│   ├── ActorProxy          # 远程 Actor 的客户端代理
+│   ├── DistributedFuture   # 分布式操作结果
+│   │
+│   └── actors.distributed.mcp  # Model Context Protocol (MCP) 集成
+│       ├── ActorMCPClient      # 用于 AI 智能体集成的 MCP 客户端
+│       └── ReceiverTool        # Actor 接收器的 MCP 工具封装
+│
+├── actors.macros          # 编译期 Actor 与接口生成
+│   ├── @Actor             # 将类转换为 Actor
+│   ├── @ActorInterface    # 将接口转换为 Actor 接口
+│   └── @Receiver          # 将方法转换为接收函数
+│
+├── actors.tcp_actor_system # 基于 TCP 的分布式 Actor 实现
+    ├── TCPActorHost        # 基于 TCP 的 Actor 主机
+    ├── TCPActorClient      # 基于 TCP 的 Actor 客户端
+    └── TCPActorSystem      # TCP Actor 系统的主配置
+```
+
+### 接口说明
+
+有关详细的 API 参考，请参阅 [API 文档](doc-zh/apis.md).
+
+## 使用说明
+
+### 使用 Git 依赖（推荐）
+
+在你的 cjpm.toml 中添加如下内容：
 
 ```toml
 [dependencies]
-  actors = { git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git", branch = "main", version = "1.0.0" }
-  ```
+  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "1.0.0" }
+```
 
-## Building
+### 编译构建
 
-### Prerequisites
-
-1. Follow the instructions on the [Cangjie language homepage](https://cangjie-lang.cn/) to set up the correct environment
-2. Ensure you have the required Cangjie compiler version (0.53.18)
-
-### Build Commands
-
-```bash
-# Build the package and all examples
+```shell
+# 构建包及所有示例
 make
+```
 
-# Run all tests
+### 测试
+
+```shell
+# 运行所有测试
 make test
 ```
 
-### Test Status
+大多数测试应能通过。已知未通过的测试：
 
-Most tests should pass. Known failing tests:
 - `testGarbageCollection`
 - `testForkJoinGarbageCollection`
 
-## Quick Start
+这些问题已在更新版本的仓颉编译器中得到修复，但本库尚未支持该版本。
 
-### Basic Actor Example
+### 教程
+
+完整教程可见于 [教程](doc-zh/tutorial.md)。
+
+### 功能示例
+
+有关更详细的示例，请参考
+
+- **[示例](examples/)**：演示各项功能的示例
+- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**：展示在 HarmonyOS 上使用分布式 Actor 和智能体集成的 AI 应用示例
+
+#### 基本 Actor
 
 ```cangjie
 import actors.*
@@ -79,7 +136,13 @@ main() {
 }
 ```
 
-### Distributed Actor Example
+执行结果如下：
+
+```shell
+1
+```
+
+#### 分布式 Actor
 
 ```cangjie
 import std.collection.*
@@ -133,7 +196,13 @@ main() {
 }
 ```
 
-### AI Agent Integration Example
+执行结果如下：
+
+```shell
+Transfer completed
+```
+
+#### AI 智能体整合
 
 ```cangjie
 import magic.prelude.*
@@ -164,69 +233,20 @@ main() {
 }
 ```
 
-## Package Structure
+## 约束与限制
 
-The framework is organized into a hierarchical package structure:
+目前代码仅在以下版本能够正确编译执行：
 
-```
-actors                   # Core actor programming model and local actor system
-├── ActorFuture          # Asynchronous result handling
-├── SequentialDispatcher # Thread-safe task execution
-│
-├── actors.distributed      # Distributed actor interfaces and metadata
-│   ├── ActorHost           # Actor registration interface
-│   ├── ActorClient         # Remote actor access interface
-│   ├── ActorProxy          # Client-side proxy for remote actors
-│   ├── DistributedFuture   # Distributed operation results
-│   │
-│   └── actors.distributed.mcp  # Model Context Protocol integration
-│       ├── ActorMCPClient      # MCP client for AI agent integration
-│       └── ReceiverTool        # MCP tool wrapper for actor receivers
-│
-├── actors.macros          # Compile-time actor and interface generation
-│   ├── @Actor             # Transform classes into actors
-│   ├── @ActorInterface    # Transform interfaces into actor interfaces
-│   └── @Receiver          # Transform methods into receiver functions
-│
-├── actors.tcp_actor_system # TCP-based distributed actor implementation
-    ├── TCPActorHost        # TCP-based actor host
-    ├── TCPActorClient      # TCP-based actor client
-    └── TCPActorSystem      # Main TCP actor system configuration
-```
+- Cangjie 0.53.18（通用版）
+- DevEco Studio for Windows 5.0.13.200 和 DevEco Studio Cangjie Plugin Canary for Windows 5.0.13.200（鸿蒙版）
 
+如果使用了其他版本的 Cangjie SDK，可能需要直接修改项目源代码进行适配。
 
-## Documentation
+## 开源协议
 
-- **[Tutorial](doc/tutorial.md)**: Comprehensive guide to using the distributed actors framework
-- **[API Documentation](doc/apis.md)**: Complete API reference for all packages
-- **[Examples](examples/)**: Working examples demonstrating various features
-- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**: Example AI-powered applications demonstrating distributed actors with agent integration on HarmonyOS
+[MIT License](./LICENSE)
 
-## Key Concepts
+## 参与贡献
 
-### Actor Model
-- **Actors**: Encapsulated units of computation that communicate via asynchronous method calls
-- **Receivers**: Asynchronous methods that can be called on actors, supporting both ask (synchronous) and tell (fire-and-forget) patterns
-- **Futures**: Asynchronous result handling for actor operations
+欢迎给我们提交PR，欢迎给我们提交Issue，欢迎参与任何形式的贡献。
 
-### Distributed Actors
-- **Actor Host**: Manages actor registration and handles incoming requests
-- **Actor Client**: Provides remote access to actors hosted elsewhere
-- **Actor Proxy**: Client-side representation of remote actors
-
-### Agent Integration
-- **Tool Generation**: Automatic generation of MCP tools from actor receivers
-- **Actor Tool Manager**: Manages multiple actor clients and exposes their receiver functions as MCP tools
-
-## Roadmap
-
-- [ ] Typed actor proxy
-- [ ] Message delivery semantics (at-least-once vs at-most-once)
-- [ ] Retry mechanisms for failed message delivery
-- [ ] Move distributed macros to a separate package
-- [ ] Enhanced exception and error handling
-- [ ] Performance optimizations for large-scale deployments
-
-## Support
-
-For questions, issues, or contributions, please refer to the project repository or documentation.

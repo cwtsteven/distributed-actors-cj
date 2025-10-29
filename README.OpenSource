@@ -1,0 +1,11 @@
+[
+    {
+        "Name": " CangjieMagic ",
+        "License":  "MIT License ",
+        "License File": " LICENSE ",
+        "Version Number": " harmony_os_edition ",
+        "Owner": " Cangjie-TPC "
+        "Upstream URL": "https://gitcode.com/Cangjie-TPC/CangjieMagic/tree/harmony_os_edition",
+        "Description": " 基于仓颉编程语言构建的 LLM Agent DSL，其主要特点包括：声明式 DSL、支持 MCP 协议，支持任务智能规划等。"
+    }
+]
