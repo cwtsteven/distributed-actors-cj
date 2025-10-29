@@ -58,7 +58,7 @@ Correctly using the Actor model can make concurrent programming simpler and more
 
 Using the bank account example above, to avoid thread safety issues, we can design an *actor* specifically for handling account operations using the Actor model.
 
-First, we can annotate the `Account` class with the [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-macro) macro to mark it as an actor. Then, we use the [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-macro) macro to mark the `deposit`, `withdraw`, and `getBalance` functions:
+First, we can annotate the `Account` class with the [@Actor](./api/macros/macros_package_api/macros_package_macros.md#actor-macro) macro to mark it as an actor. Then, we use the [@Receiver](./api/macros/macros_package_api/macros_package_macros.md#receiver-macro) macro to mark the `deposit`, `withdraw`, and `getBalance` functions:
 
 
 ```cangjie
@@ -89,7 +89,7 @@ public class Account {
 }
 ```
 
-For the rules and limitations of the [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-macro) and [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-macro) macros, please refer to the corresponding documentation.
+For the rules and limitations of the [@Actor](./api/macros/macros_package_api/macros_package_macros.md#actor-macro) and [@Receiver](./api/macros/macros_package_api/macros_package_macros.md#receiver-macro) macros, please refer to the corresponding documentation.
 
 We can create an instance of the `Account` class by calling its constructor, for example:
 
@@ -101,7 +101,7 @@ When creating an `Account` instance, the system will also automatically create a
 
 ## Receivers
 
-Unlike regular functions, the invocation of a receiver is asynchronous and it returns an [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) object. This object allows you to wait for the completion of the receiver and obtain the result, where `T` is the return type of the receiver. For example, calling `getBalance` will return an [ActorFuture\<Float64>](./actors_package_api/actors_package_classes.md#class-actorfuture) object:
+Unlike regular functions, the invocation of a receiver is asynchronous and it returns an [ActorFuture\<T>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) object. This object allows you to wait for the completion of the receiver and obtain the result, where `T` is the return type of the receiver. For example, calling `getBalance` will return an [ActorFuture\<Float64>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) object:
 
 ```cangjie
 let fut: ActorFuture<Float64> = stevenAccount.getBalance()
@@ -109,7 +109,7 @@ let fut: ActorFuture<Float64> = stevenAccount.getBalance()
 
 When a receiver is called, the call is added to a queue and executed sequentially on the actor's dedicated thread.
 
-Subsequently, we can block the current Cangjie thread by calling the `get` function of the [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) object, which will wait until the `steven.getBalance()` receiver completes and returns a value of type `T`.
+Subsequently, we can block the current Cangjie thread by calling the `get` function of the [ActorFuture\<T>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) object, which will wait until the `steven.getBalance()` receiver completes and returns a value of type `T`.
 
 ```cangjie
 let stevenBalance: Float64 = fut.get()
@@ -194,7 +194,7 @@ account.deposit(1000.0)
 
 ## Exceptions Thrown by Receivers
 
-Any uncaught exceptions or errors thrown by a receiver will propagate to the corresponding [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) object, similar to how `spawn` handles them.
+Any uncaught exceptions or errors thrown by a receiver will propagate to the corresponding [ActorFuture\<T>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) object, similar to how `spawn` handles them.
 
 Continuing with the `Account` example, if the `balance` in the `withdraw(amount)` function is insufficient, it will throw a `BalanceNotEnoughException`:
 
@@ -208,7 +208,7 @@ public func withdraw(amount: Float64): Unit {
 }
 ```
 
-The thrown exception will be passed to the corresponding [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture) object, and when its `get` function is called, the same exception will be thrown. That is in the following example:
+The thrown exception will be passed to the corresponding [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture) object, and when its `get` function is called, the same exception will be thrown. That is in the following example:
 
 ```cangjie
 let account = Account("Hamid", 0.0)
@@ -376,9 +376,9 @@ Calling `this.bar()` will add the receiver to the end of the queue. However, blo
 
 ## Calling Receivers in Tell mode
 
-As discussed previously, receivers return an [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture) that allows the caller to wait for the receiver call to return and to obtain the returned value. We say that these calls are in "Ask" mode, given that the caller expects the actor to reply in the form of a completed [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture).
+As discussed previously, receivers return an [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture) that allows the caller to wait for the receiver call to return and to obtain the returned value. We say that these calls are in "Ask" mode, given that the caller expects the actor to reply in the form of a completed [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture).
 
-However, in some scenarios, the caller may not need to synchronize with the actor nor need the result of the receiver. In this context, one might want to avoid the overhead introduced by creating an [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture), and call the receiver in "Tell" mode. Calling a receiver in "Tell" mode does not create any [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture), returns `Unit`, and requires an additional parameter named `tell` that only accepts the value `Tell.True`:
+However, in some scenarios, the caller may not need to synchronize with the actor nor need the result of the receiver. In this context, one might want to avoid the overhead introduced by creating an [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture), and call the receiver in "Tell" mode. Calling a receiver in "Tell" mode does not create any [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture), returns `Unit`, and requires an additional parameter named `tell` that only accepts the value `Tell.True`:
 
 ```cangjie
 func foo(account: Account) {
@@ -553,7 +553,7 @@ The actor model can be extended to work across multiple nodes (processes, machin
 
 ## Actor Interfaces
 
-To create distributed actors, you first need to define an *actor interface* using the [@ActorInterface](./macros/macros_package_api/macros_package_macros.md#actorinterface-macro) macro. This interface defines the contract that distributed actors must implement.
+To create distributed actors, you first need to define an *actor interface* using the [@ActorInterface](./api/macros/macros_package_api/macros_package_macros.md#actorinterface-macro) macro. This interface defines the contract that distributed actors must implement.
 
 ```cangjie
 @ActorInterface[distributed: true]
@@ -573,7 +573,7 @@ The `distributed: true` option indicates that this is a distributed actor interf
 
 ## Implementing Distributed Actors
 
-Once you have an actor interface, you can implement it using the [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-macro) macro:
+Once you have an actor interface, you can implement it using the [@Actor](./api/macros/macros_package_api/macros_package_macros.md#actor-macro) macro:
 
 ```cangjie
 @Actor

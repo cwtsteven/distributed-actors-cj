@@ -58,7 +58,7 @@ spawn {
 
 使用上面的银行账户示例，为了避免线程安全问题，我们可以使用 Actor 模型设计一个专门处理账户操作的 *actor*。
 
-首先，我们可以使用 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-宏) 宏来注解 `Account` 类，将其标记为 actor。然后，我们使用 [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-宏) 宏来标记 `deposit`、`withdraw` 和 `getBalance` 函数：
+首先，我们可以使用 [@Actor](./api/macros/macros_package_api/macros_package_macros.md#actor-宏) 宏来注解 `Account` 类，将其标记为 actor。然后，我们使用 [@Receiver](./api/macros/macros_package_api/macros_package_macros.md#receiver-宏) 宏来标记 `deposit`、`withdraw` 和 `getBalance` 函数：
 
 
 ```cangjie
@@ -89,7 +89,7 @@ public class Account {
 }
 ```
 
-关于 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-宏) 和 [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-宏) 宏的规则和限制，请参考相应的文档。
+关于 [@Actor](./api/macros/macros_package_api/macros_package_macros.md#actor-宏) 和 [@Receiver](./api/macros/macros_package_api/macros_package_macros.md#receiver-宏) 宏的规则和限制，请参考相应的文档。
 
 我们可以通过调用其构造函数来创建 `Account` 类的实例，例如：
 
@@ -101,7 +101,7 @@ let stevenAccount: Account = Account("Steven", 0.0)
 
 ## Receiver
 
-与普通函数不同，receiver 的调用是异步的，它返回一个 [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) 对象。这个对象允许您等待 receiver 的完成并获取结果，其中 `T` 是 receiver 的返回类型。例如，调用 `getBalance` 将返回一个 [ActorFuture\<Float64>](./actors_package_api/actors_package_classes.md#class-actorfuture) 对象：
+与普通函数不同，receiver 的调用是异步的，它返回一个 [ActorFuture\<T>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 对象。这个对象允许您等待 receiver 的完成并获取结果，其中 `T` 是 receiver 的返回类型。例如，调用 `getBalance` 将返回一个 [ActorFuture\<Float64>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 对象：
 
 ```cangjie
 let fut: ActorFuture<Float64> = stevenAccount.getBalance()
@@ -109,7 +109,7 @@ let fut: ActorFuture<Float64> = stevenAccount.getBalance()
 
 当调用 receiver 时，调用被添加到队列中，并在 actor 的专用线程上顺序执行。
 
-随后，我们可以通过调用 [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) 对象的 `get` 函数来阻塞当前的 Cangjie 线程，这将等待直到 `steven.getBalance()` receiver 完成并返回类型为 `T` 的值。
+随后，我们可以通过调用 [ActorFuture\<T>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 对象的 `get` 函数来阻塞当前的 Cangjie 线程，这将等待直到 `steven.getBalance()` receiver 完成并返回类型为 `T` 的值。
 
 ```cangjie
 let stevenBalance: Float64 = fut.get()
@@ -194,7 +194,7 @@ account.deposit(1000.0)
 
 ## Receiver 抛出的异常
 
-Receiver 抛出的任何未捕获的异常或错误都会传播到相应的 [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) 对象，类似于 `spawn` 处理它们的方式。
+Receiver 抛出的任何未捕获的异常或错误都会传播到相应的 [ActorFuture\<T>](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 对象，类似于 `spawn` 处理它们的方式。
 
 继续使用 `Account` 示例，如果 `withdraw(amount)` 函数中的 `balance` 不足，它将抛出 `BalanceNotEnoughException`：
 
@@ -208,7 +208,7 @@ public func withdraw(amount: Float64): Unit {
 }
 ```
 
-抛出的异常将被传递给相应的 [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture) 对象，当调用其 `get` 函数时，将抛出相同的异常。即在以下示例中：
+抛出的异常将被传递给相应的 [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 对象，当调用其 `get` 函数时，将抛出相同的异常。即在以下示例中：
 
 ```cangjie
 let account = Account("Hamid", 0.0)
@@ -376,9 +376,9 @@ class MyActor {
 
 ## 在 Tell 模式下调用 Receiver
 
-如前所述，receiver 返回一个 [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture)，允许调用者等待 receiver 调用返回并获取返回值。我们说这些调用处于"Ask"模式，因为调用者期望 actor 以完成的 [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture) 形式回复。
+如前所述，receiver 返回一个 [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture)，允许调用者等待 receiver 调用返回并获取返回值。我们说这些调用处于"Ask"模式，因为调用者期望 actor 以完成的 [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 形式回复。
 
-但是，在某些场景中，调用者可能不需要与 actor 同步，也不需要 receiver 的结果。在这种情况下，可能希望避免创建 [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture) 带来的开销，并在"Tell"模式下调用 receiver。在"Tell"模式下调用 receiver 不会创建任何 [ActorFuture](./actors_package_api/actors_package_classes.md#class-actorfuture)，返回 `Unit`，并需要一个名为 `tell` 的额外参数，该参数只接受值 `Tell.True`：
+但是，在某些场景中，调用者可能不需要与 actor 同步，也不需要 receiver 的结果。在这种情况下，可能希望避免创建 [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture) 带来的开销，并在"Tell"模式下调用 receiver。在"Tell"模式下调用 receiver 不会创建任何 [ActorFuture](./api/actors_package_api/actors_package_classes.md#class-actorfuture)，返回 `Unit`，并需要一个名为 `tell` 的额外参数，该参数只接受值 `Tell.True`：
 
 ```cangjie
 func foo(account: Account) {
@@ -552,7 +552,7 @@ Actor 模型可以扩展到在分布式系统的多个节点（进程、机器�
 
 ## Actor 接口
 
-要创建分布式 actor，您首先需要使用 [@ActorInterface](./macros/macros_package_api/macros_package_macros.md#actorinterface-macro) 宏定义 *actor 接口*。此接口定义了分布式 actor 必须实现的契约。
+要创建分布式 actor，您首先需要使用 [@ActorInterface](./api/macros/macros_package_api/macros_package_macros.md#actorinterface-macro) 宏定义 *actor 接口*。此接口定义了分布式 actor 必须实现的契约。
 
 ```cangjie
 @ActorInterface[distributed: true]
@@ -572,7 +572,7 @@ public interface BankService {
 
 ## 实现分布式 Actor
 
-一旦您有了 actor 接口，您可以使用 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-宏) 宏来实现它：
+一旦您有了 actor 接口，您可以使用 [@Actor](./api/macros/macros_package_api/macros_package_macros.md#actor-宏) 宏来实现它：
 
 ```cangjie
 @Actor
