@@ -58,7 +58,7 @@ spawn {
 
 使用上面的银行账户示例，为了避免线程安全问题，我们可以使用 Actor 模型设计一个专门处理账户操作的 *actor*。
 
-首先，我们可以使用 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-macro) 宏来注解 `Account` 类，将其标记为 actor。然后，我们使用 [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-macro) 宏来标记 `deposit`、`withdraw` 和 `getBalance` 函数：
+首先，我们可以使用 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-宏) 宏来注解 `Account` 类，将其标记为 actor。然后，我们使用 [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-宏) 宏来标记 `deposit`、`withdraw` 和 `getBalance` 函数：
 
 
 ```cangjie
@@ -89,7 +89,7 @@ public class Account {
 }
 ```
 
-关于 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-macro) 和 [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-macro) 宏的规则和限制，请参考相应的文档。
+关于 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-宏) 和 [@Receiver](./macros/macros_package_api/macros_package_macros.md#receiver-宏) 宏的规则和限制，请参考相应的文档。
 
 我们可以通过调用其构造函数来创建 `Account` 类的实例，例如：
 
@@ -572,7 +572,7 @@ public interface BankService {
 
 ## 实现分布式 Actor
 
-一旦您有了 actor 接口，您可以使用 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-macro) 宏来实现它：
+一旦您有了 actor 接口，您可以使用 [@Actor](./macros/macros_package_api/macros_package_macros.md#actor-宏) 宏来实现它：
 
 ```cangjie
 @Actor

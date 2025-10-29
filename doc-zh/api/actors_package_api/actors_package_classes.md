@@ -58,7 +58,7 @@ public class SequentialDispatcher {
 
 功能：一个 `SequentialDispatcher` 实例代表 Cangjie 系统中的一个线程。用户可以向该实例提交闭包，这些闭包将被排队并在该线程上执行。
 
-通常无需直接使用该类，推荐通过 [@Actor](../macros/macros_package_api/macros_package_macros.md#actor-macro) 宏。
+通常无需直接使用该类，推荐通过 [@Actor](../macros/macros_package_api/macros_package_macros.md#actor-宏) 宏。
 
 ### init(Bool)
 

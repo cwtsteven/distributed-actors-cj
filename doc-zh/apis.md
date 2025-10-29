@@ -109,7 +109,7 @@
 | 宏名 | 描述 |
 |------------|-------------|
 | **[@ActorInterface](api/macros/macros_package_api/macros_package_macros.md#actorinterface-macro)** | 将接口转换为 actor 接口 |
-| **[@Actor](api/macros/macros_package_api/macros_package_macros.md#actor-macro)** | 将类转换为 actor |
-| **[@Receiver](api/macros/macros_package_api/macros_package_macros.md#receiver-macro)** | 将方法转换为 receiver 函数 |
+| **[@Actor](api/macros/macros_package_api/macros_package_macros.md#actor-宏)** | 将类转换为 actor |
+| **[@Receiver](api/macros/macros_package_api/macros_package_macros.md#receiver-宏)** | 将方法转换为 receiver 函数 |
 
 

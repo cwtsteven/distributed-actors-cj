@@ -18,6 +18,6 @@
 
 | 宏 | 功能 |
 | --- | --- |
-| [@Actor](./macros_package_api/macros_package_macros.md#actor-macro) | 将类转换为 Actor，并自动集成调度器与生成 Receiver 函数。 |
+| [@Actor](./macros_package_api/macros_package_macros.md#actor-宏) | 将类转换为 Actor，并自动集成调度器与生成 Receiver 函数。 |
 | [@ActorInterface](./macros_package_api/macros_package_macros.md#actorinterface-macro) | 将接口转换为可用于本地与分布式通信的 Actor 接口。 |
-| [@Receiver](./macros_package_api/macros_package_macros.md#receiver-macro) | 将方法转换为可被其他 Actor 调用的 Receiver 函数，支持 Ask/Tell 模式。 |
+| [@Receiver](./macros_package_api/macros_package_macros.md#receiver-宏) | 将方法转换为可被其他 Actor 调用的 Receiver 函数，支持 Ask/Tell 模式。 |
