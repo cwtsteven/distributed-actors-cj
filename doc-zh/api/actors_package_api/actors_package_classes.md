@@ -1,6 +1,6 @@
 # 类
 
-## class ActorFuture<T>
+## `class ActorFuture<T>`
 
 ```cangjie
 public class ActorFuture<T>
