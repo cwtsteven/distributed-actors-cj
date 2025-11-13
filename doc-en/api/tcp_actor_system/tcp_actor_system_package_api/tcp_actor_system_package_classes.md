@@ -69,7 +69,7 @@ Function: Removes an actor from the TCP actor host.
 
 Parameters:
 
-- name: String - The name of the actor to deregister.
+- `name: String` - The name of the actor to deregister.
 
 Return Value:
 
