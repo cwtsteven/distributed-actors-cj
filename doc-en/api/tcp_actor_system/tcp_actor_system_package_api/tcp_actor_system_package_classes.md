@@ -89,7 +89,7 @@ Return Value:
 
 Exceptions:
 
-- SocketException - If the server socket fails to bind.
+- SocketException - Thrown if the server socket fails to bind.
 
 ### func close()
 
@@ -145,7 +145,7 @@ Parameters:
 
 Return Value:
 
-- Option<ActorInfo> - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
+- `Option<ActorInfo>` - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
 
 ### func findAll()
 
@@ -157,7 +157,7 @@ Function: Finds all actors registered in the TCP actor host.
 
 Return Value:
 
-- Array<ActorInfo> - An array containing information about all registered actors.
+- `Array<ActorInfo>` - An array containing information about all registered actors.
 
 ### func remoteCall()
 
