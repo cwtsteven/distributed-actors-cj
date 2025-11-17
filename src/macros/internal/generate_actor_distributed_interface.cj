@@ -288,19 +288,34 @@ private func buildParamSchema(fd: FuncDecl): Tokens {
 
 private func getTypeModel(typeNode: TypeNode): Tokens {
     match (typeNode) {
-        case ty: RefType => getTypeModelByName(ty.identifier.value)
-        case ty: PrimitiveType => getTypeModelByName(ty.keyword.value)
+        case ty: RefType =>
+            let typeName = getTypeName(ty)
+            quote($(Token(IDENTIFIER, typeName)).typeModel())
+        case ty: PrimitiveType =>
+            let typeName = getTypeName(ty)
+            quote($(Token(IDENTIFIER, typeName)).typeModel())
         case _ => throw Exception("Unsupported type")
     }
 }
 
-private func getTypeModelByName(typeName: String): Tokens {
-    match (typeName) {
-        case "Int64" => quote(IntType)
-        case "Float64" => quote(FloatType)
-        case "Bool" => quote(BoolType)
-        case "String" => quote(StringType)
-        case "Unit" => quote(UnitType)
-        case _ => throw Exception("Unsupported type: ${typeName}")
+private func getTypeName(ty: TypeNode): String {
+    match (ty) {
+        case ty: RefType =>
+            var typeName = ty.identifier.value
+            if (ty.typeArguments.size > 0) {
+                typeName += "<"
+            }
+            for (i in 0..ty.typeArguments.size) {
+                typeName += getTypeName(ty.typeArguments[i])
+                if (i < ty.typeArguments.size - 1) {
+                    typeName += ", "
+                }
+            }
+            if (ty.typeArguments.size > 0) {
+                typeName += ">"
+            }
+            typeName
+        case ty: PrimitiveType => ty.keyword.value
+        case _ => throw Exception("Unsupported type")
     }
 }
