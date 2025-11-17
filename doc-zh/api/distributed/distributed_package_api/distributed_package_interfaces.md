@@ -192,3 +192,27 @@ static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializab
 返回值：
 
 - `LocalWaitable` — 提供该 ActorFuture 序列化结果的 `LocalWaitable`。
+
+## interface TypeSerializable
+
+```cangjie
+public interface TypeSerializable
+```
+
+功能：用于声明可在分布式环境中序列化的类型的标记接口，类型通过返回 `TypeModel` 描述自身的类型结构。
+
+### func typeModel()
+
+```cangjie
+static func typeModel(): TypeModel
+```
+
+功能：返回该类型的静态 `TypeModel` 描述。实现应保持返回的模型与真实编码格式一致。
+
+返回值：
+
+- `TypeModel` — 用于生成元数据与 Receiver 校验的结构描述。
+
+说明：
+
+- 框架已为整数（`Int8`-`Int64`、`UInt8`-`UInt64`）、浮点数（`Float16`-`Float64`）、`Bool`、`Unit`、`String`、`Array<T>` 与 `Option<T>`（当 `T` 同样实现 `TypeSerializable` 时）提供默认实现。自定义类型需实现该接口以参与分布式元数据生成。
