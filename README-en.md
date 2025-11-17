@@ -24,7 +24,7 @@ A distributed actor framework designed for the Cangjie programming language, pro
 
 ### Roadmap
 
-- [ ] Typed distributed actor proxy
+- [x] Typed distributed actor proxy
 - [ ] Message delivery semantics (at-least-once vs at-most-once)
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Enhanced exception and error handling

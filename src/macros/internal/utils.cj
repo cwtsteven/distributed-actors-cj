@@ -15,6 +15,7 @@ const ENABLE_RECEIVER_PRIORITY_NAME = "enableReceiverPriority"
 const DISPATCH_HASH_MAP_VAR_NAME = "dispatchMap"
 const RECEIVER_INFOS_ARRAY_VAR_NAME = "receiverInfos"
 const DISTRIBUTABLE_TYPE_NAME = "Distributable"
+const PROXYABLE_TYPE_NAME = "Proxyable"
 
 const ACTOR_MACRO = "@Actor"
 const ACTOR_INTERFACE_MACRO = "@ActorInterface"
@@ -39,6 +40,8 @@ let seqDispatcherTypeToken = Token(IDENTIFIER, SEQ_DISPATCHER_NAME)
 let enableReceiverPriorityToken = Token(IDENTIFIER, ENABLE_RECEIVER_PRIORITY_NAME)
 
 let distributableTypeToken = Token(IDENTIFIER, DISTRIBUTABLE_TYPE_NAME)
+
+let proxyableTypeToken = Token(IDENTIFIER, PROXYABLE_TYPE_NAME)
 
 func deserializeFuncParams(fd: FuncDecl, isTell: Bool): Tokens {
     if (fd.funcParams.size == 0) {

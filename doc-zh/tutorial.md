@@ -602,6 +602,28 @@ let balance = Float64.deserialize(balanceFut.get())
 println("Account1 balance: ${balance}") // 输出: 500.0
 ```
 
+## 类型化代理（Typed-proxy）
+
+为了更方便地使用 actor 代理，用户可以从 actor 接口中获取类型化代理，并使用普通的 receiver 调用语法来调用其远程 receiver。例如：
+
+```cangjie
+// 创建类型化代理以与远程 actor 通信
+let bankProxy: BankService = BankService.getProxy("bank-service", actorClient)
+
+// 调用远程方法——这些调用返回 ActorFuture 对象
+let createFut: ActorFuture<Unit> = bankProxy.createAccount("account1", 1000.0)
+
+let transferFut: ActorFuture<Unit> = bankProxy.transfer("account1", "account2", 500.0)
+
+let balanceFut: ActorFuture<Float64> = bankProxy.getBalance("account1")
+
+// 等待操作完成
+createFut.get()
+transferFut.get()
+let balance = balanceFut.get()
+println("Account1 balance: ${balance}") // 输出: 500.0
+```
+
 ## 分布式 Actor 的 Tell 模式
 
 您还可以在分布式 actor 中使用 Tell 模式进行即发即忘操作：
