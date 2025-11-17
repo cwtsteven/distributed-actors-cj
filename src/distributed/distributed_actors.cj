@@ -40,7 +40,7 @@ public interface Distributable {
 /*
 * Proxy for a distributed actor
 */
-public class ActorProxy {
+public open class ActorProxy {
     /*
     * Initializes the ActorProxy
     * @param name - the name of the actor

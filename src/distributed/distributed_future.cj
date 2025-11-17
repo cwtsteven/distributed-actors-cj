@@ -76,6 +76,12 @@ public class DistributedFuture {
             true
         }
     }
+
+    public func toActorFuture<T>(): ActorFuture<T> where T <: Serializable<T> {
+        let fut = ActorFuture<T>({ => T.deserialize(this.get()) })
+        spawn { fut.execute() }
+        fut
+    }
 }
 
 public interface LocalWaitable {

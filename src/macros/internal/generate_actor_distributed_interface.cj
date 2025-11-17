@@ -68,9 +68,11 @@ protected class GenerateDistributedActorInterface {
 
                 if (rOpts.shouldAsk()) {
                     newDecls.append(newReceiver(mDecl, rOpts, behaviour: Ask))
+                    proxyClassDecl.body.decls.append(newProxyReceiver(mDecl, rOpts, behaviour: Ask))
                 }
                 if (rOpts.shouldTell()) {
                     newDecls.append(newReceiver(mDecl, rOpts, behaviour: Tell))
+                    proxyClassDecl.body.decls.append(newProxyReceiver(mDecl, rOpts, behaviour: Tell))
                 }
             })
 
@@ -79,6 +81,7 @@ protected class GenerateDistributedActorInterface {
         decl.body.decls.append(newGetMetadataFunc())
         decl.body.decls.append(newDispatchTellFunc())
         decl.body.decls.append(newDispatchAskFunc())
+        decl.body.decls.append(getProxyFunc())
 
         headDecl.toTokens() + proxyClassDecl.toTokens()
     }
@@ -196,14 +199,91 @@ protected class GenerateDistributedActorInterface {
         ))
     }
 
+    private func getProxyFunc(): FuncDecl {
+        FuncDecl(quote(
+            static func getProxy(name: String, client: ActorClient): $proxyClassIdent {
+                $proxyClassIdent(name, client)
+            }
+        ))
+    }
+
     private func generateProxyClassDecl(): ClassDecl {
         ClassDecl(quote(
-            private class $proxyClassIdent {
+            public class $proxyClassIdent <: ActorProxy & $interfaceName {
                 static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
                 static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> LocalWaitable>()
                 static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
+
+                public init(name: String, client: ActorClient) {
+                    super(name, client)
+                }
             }
         ))
+    }
+
+    private func newProxyReceiver(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, behaviour!: Behaviour): Decl {
+        let headDecl: Decl = parseDecl(mDecl.macroInputs)
+        let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+            case Some(fd) => fd
+            case None =>
+                errors.add(ReceiverMacroInvalidDecl)
+                errors.doThrow()
+        }
+
+        modifyProxyFuncDecl(rOpts, fd, behaviour)
+        headDecl
+    }
+
+    private func modifyProxyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
+        var args = quote([)
+        for (i in 0..fd.funcParams.size) {
+            let fp = fd.funcParams[i]
+            args += quote($(fp.identifier).serialize())
+            if (i < fd.funcParams.size - 1) {
+                args += quote(, )
+            }
+        }
+        args += quote(])
+
+        let defaultPriority = rOpts.getPriority()
+        fd.funcParams.append(FuncParam(quote(
+            config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
+        )))
+
+        if (let Tell <- behaviour) {
+            // Add the `tell` parameter
+            fd.funcParams.append(FuncParam(quote(
+                tell!: $tellTypeToken
+            )))
+        }
+
+        let declaredType = fd.declType
+
+        fd.declType = match (behaviour) {
+            case Ask => RefType(quote(ActorFuture<$declaredType>))
+            case Tell => PrimitiveType(quote(Unit))
+        }
+
+        fd.modifiers.append(Modifier(Token(PUBLIC)))
+        fd.block = Block()
+        fd.block.lBrace = Token(LCURL)
+        fd.block.rBrace = Token(RCURL)
+
+        match (behaviour) {
+            case Ask =>
+                fd.block.nodes.append(CallExpr(quote(
+                    this.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
+                )))
+            case Tell =>
+                let discardTellParam = VarDecl(quote(let dummy = tell))
+                // For some reason VarDecl parses "let _ = tell" as "let = tell"
+                // so we add the wildcard manually instead
+                discardTellParam.identifier = Token(WILDCARD)
+                fd.block.nodes.append(discardTellParam)
+                fd.block.nodes.append(CallExpr(quote(
+                    this.tell($(fd.identifier.value), $args, config: config)
+                )))
+        }
     }
 
     private func checkReceiverDecl(fd: FuncDecl): Unit {

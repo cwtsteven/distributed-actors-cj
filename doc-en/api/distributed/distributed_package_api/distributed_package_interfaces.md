@@ -157,6 +157,23 @@ Exceptions:
 
 - `ReceiverNotFoundException` - Thrown if the receiver function is not found.
 
+### func getProxy()
+
+```cangjie
+static func getProxy(name: String, client: ActorClient): ActorProxy
+```
+
+Function: Returns a typed proxy class generated for this distributed interface.
+
+Parameters:
+
+- `name: String` - The remote actor name registered with the distributed system.
+- `client: ActorClient` - The client instance used to reach the remote host.
+
+Return Value:
+
+- `ActorProxy` - The typed proxy that exposes methods mirroring the receivers declared on the interface.
+
 ## interface LocalWaitable
 
 ```cangjie
