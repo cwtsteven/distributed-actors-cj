@@ -39,6 +39,7 @@ This package enables building scalable distributed systems where actors can be d
 | [ActorHost](./distributed_package_api/distributed_package_interfaces.md#interface-actorhost) | Interface for actor host implementations. Provides methods for *exporting* a distributed actor. |
 | [ActorClient](./distributed_package_api/distributed_package_interfaces.md#interface-actorclient) | Interface for actor client implementations. Provides methods for *finding* a distributed actor. |
 | [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`. |
+| [TypeSerializable](./distributed_package_api/distributed_package_interfaces.md#interface-typeserializable) | Interface for types that can describe their type schema for distributed transport by returning a `TypeModel`. |
 
 ### Enumerations
 
