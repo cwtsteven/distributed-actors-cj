@@ -169,6 +169,26 @@ Return Value:
 
 - `Bool` - Returns `true` if the future was successfully fulfilled, `false` if it was already fulfilled.
 
+### func toActorFuture\<T>()
+
+```cangjie
+public func toActorFuture<T>(): ActorFuture<T> where T <: Serializable<T>
+```
+
+Function: Converts the distributed future into a local `ActorFuture`.
+
+Type Parameters:
+
+- `T` - The concrete serializable type expected from the remote call.
+
+Return Value:
+
+- `ActorFuture<T>` - A local future that will complete with the deserialized value.
+
+Exceptions:
+
+- `DataModelException` - Thrown when the type of the result of the DistributedFuture does not match with `T`.
+
 ## class ReceiverNotFoundException
 
 ```cangjie

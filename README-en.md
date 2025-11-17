@@ -24,7 +24,7 @@ A distributed actor framework designed for the Cangjie programming language, pro
 
 ### Roadmap
 
-- [ ] Typed distributed actor proxy
+- [x] Typed distributed actor proxy
 - [ ] Message delivery semantics (at-least-once vs at-most-once)
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Enhanced exception and error handling
@@ -193,6 +193,11 @@ main() {
 
     transferFut.get()
     println("Transfer completed")
+
+    let typedProxy = BankService.getProxy("bank-service", tcpClient)
+    let fut2: ActorFuture<Bool> = typedProxy.transfer("alice", "bob", 100.0)
+    fut2.get()
+    println("Second transfer completed")
 }
 ```
 
@@ -200,6 +205,7 @@ The execution result is as follows:
 
 ```shell
 Transfer completed
+Second transfer completed
 ```
 
 ### AI Agent Integration

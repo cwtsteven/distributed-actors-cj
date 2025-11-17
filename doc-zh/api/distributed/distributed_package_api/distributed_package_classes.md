@@ -169,6 +169,22 @@ public func fulfill(dataModel: DataModel): Bool
 
 - `Bool` — 成功完成返回 `true`，若已完成返回 `false`。
 
+### func toActorFuture<T>()
+
+```cangjie
+public func toActorFuture<T>(): ActorFuture<T> where T <: Serializable<T>
+```
+
+功能：将 DistributedFuture 转换为本地 `ActorFuture`。
+
+类型参数：
+
+- `T` — 期望得到的可序列化类型。
+
+返回值：
+
+- `ActorFuture<T>` — 完成后包含已反序列化结果的 ActorFuture。
+
 ## class ReceiverNotFoundException
 
 ```cangjie

@@ -157,6 +157,31 @@ func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverC
 
 - `ReceiverNotFoundException` — 未找到 receiver 函数时抛出。
 
+## interface Proxyable<T>
+
+```cangjie
+public interface Proxyable<T> where T <: Distributable
+```
+
+功能：可被代理为类型化代理的分布式 actor 接口。
+
+### func getProxy()
+
+```cangjie
+static func getProxy(name: String, client: ActorClient): T
+```
+
+功能：返回实现该接口的分布式 actor 的类型化代理实例。
+
+参数：
+
+- `name: String` — 在分布式系统中注册的远程 actor 名称。
+- `client: ActorClient` — 用于访问远程主机的客户端实例。
+
+返回值：
+
+- `T` — 与接口 receiver 对应的类型化代理，提供与接口声明一致的方法。
+
 ## interface LocalWaitable
 
 ```cangjie

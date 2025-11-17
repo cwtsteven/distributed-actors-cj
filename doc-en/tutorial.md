@@ -603,6 +603,28 @@ let balance = Float64.deserialize(balanceFut.get())
 println("Account1 balance: ${balance}") // Output: 500.0
 ```
 
+## Typed-proxy
+
+For more convenient use of actor proxy, users can get a typed-proxy from the actor interface and call its remote receivers using normal receiver call syntax. For example:
+
+```cangjie
+// Create a typed-proxy to communicate with the remote actor
+let bankProxy: BankService = BankService.getProxy("bank-service", actorClient)
+
+// Call remote methods - these return ActorFuture objects
+let createFut: ActorFuture<Unit> = bankProxy.createAccount("account1", 1000.0)
+
+let transferFut: ActorFuture<Unit> = bankProxy.transfer("account1", "account2", 500.0)
+
+let balanceFut: ActorFuture<Float64> = bankProxy.getBalance("account1")
+
+// Wait for operations to complete
+createFut.get()
+transferFut.get()
+let balance = balanceFut.get()
+println("Account1 balance: ${balance}") // Output: 500.0
+```
+
 ## Tell Mode for Distributed Actors
 
 You can also use Tell mode for fire-and-forget operations in distributed actors:

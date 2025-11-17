@@ -11,6 +11,7 @@ import serialization.serialization.*
 * Interface for actors that can be distributed
 */
 public interface Distributable {
+
     /*
     * Gets the metadata of the actor
     * @return the metadata of the actor
@@ -38,9 +39,22 @@ public interface Distributable {
 }
 
 /*
+* Interface for actors that can be proxied to a typed proxy
+*/
+public interface Proxyable<T> where T <: Distributable {
+    /*
+    * Gets a typed-proxy for the actor
+    * @param name - the name of the actor
+    * @param client - the client to use for remote communication
+    * @return a typed-proxy for the actor
+    */
+    static func getProxy(name: String, client: ActorClient): T
+}
+
+/*
 * Proxy for a distributed actor
 */
-public class ActorProxy {
+public open class ActorProxy {
     /*
     * Initializes the ActorProxy
     * @param name - the name of the actor

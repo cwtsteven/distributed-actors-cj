@@ -157,6 +157,31 @@ Exceptions:
 
 - `ReceiverNotFoundException` - Thrown if the receiver function is not found.
 
+## interface Proxyable\<T>
+
+```cangjie
+public interface Proxyable<T> where T <: Distributable
+```
+
+Function: Interface for actors that can be proxied to a typed proxy.
+
+### func getProxy()
+
+```cangjie
+static func getProxy(name: String, client: ActorClient): T
+```
+
+Function: Returns a typed proxy instance for the distributed actor that implements this interface.
+
+Parameters:
+
+- `name: String` - The remote actor name registered with the distributed system.
+- `client: ActorClient` - The client instance used to reach the remote host.
+
+Return Value:
+
+- `T` - The typed proxy that exposes methods mirroring the receivers declared on the interface.
+
 ## interface LocalWaitable
 
 ```cangjie
