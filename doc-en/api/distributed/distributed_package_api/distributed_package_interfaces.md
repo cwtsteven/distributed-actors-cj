@@ -192,3 +192,27 @@ Parameters:
 Return Value:
 
 - `LocalWaitable` - A `LocalWaitable` that provides the serialized result of the ActorFuture.
+
+## interface TypeSerializable
+
+```cangjie
+public interface TypeSerializable
+```
+
+Function: Interface for providing the type model schema of a Cangjie type.
+
+### func typeModel()
+
+```cangjie
+static func typeModel(): TypeModel
+```
+
+Function: Returns the `TypeModel` describing the structure of the type.
+
+Return Value:
+
+- `TypeModel` - The structural description of the type
+
+Notes:
+
+- Built-in conformances cover integers (`Int8`-`Int64`, `UInt8`-`UInt64`), floats (`Float16`-`Float64`), `Bool`, `Unit`, `String`, `Array<T>` and `Option<T>` whenever `T` is also `TypeSerializable`. Custom types should implement this interface to participate in distributed metadata generation.
