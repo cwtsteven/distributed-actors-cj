@@ -52,8 +52,8 @@ Function: Registers an actor instance with the TCP actor host under the specifie
 
 Parameters:
 
-- name: String - The name to register the actor under.
-- a: Distributable - The actor instance to register, must implement Distributable.
+- `name: String` - The name to register the actor under.
+- `a: Distributable` - The actor instance to register, must implement Distributable.
 
 Return Value:
 
