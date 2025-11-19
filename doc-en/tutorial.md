@@ -271,7 +271,7 @@ Exception: Balance for account Hamid is not enough.
 Balance = 0.0
 ```
 
-Later we will add a featture to allow developers to have control over the behaviour of handling excceptions and errors, for example, to stop or to restart an actor.
+Later we will add a feature to allow developers to have control over the behaviour of handling excceptions and errors, for example, to stop or to restart an actor.
 
 ## Lifecycle of an actor
 
