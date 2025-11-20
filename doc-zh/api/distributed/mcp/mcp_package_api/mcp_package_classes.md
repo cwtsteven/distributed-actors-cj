@@ -151,7 +151,7 @@ public func removeActorClient(clientId: String): Unit
 public class ReceiverTool <: Tool
 ```
 
-功能：将 Actor 的 Receiver 封装为 MCP 工具；负责 MCP 参数与 Actor 参数的转换，并管理 Receiver 的执行。
+功能：将 Actor 的 Receiver 封装为 MCP 工具；负责将 MCP 形参转换为 Actor Receiver 调用的实参，并管理 Receiver 函数的执行。
 
 ### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, ActorClient, ReceiverInfo)
 

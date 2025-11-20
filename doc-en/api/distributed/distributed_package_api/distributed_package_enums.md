@@ -14,8 +14,8 @@ Function: Represents the calling mode for receiver functions. This enum determin
 
 ### Values
 
-- `AskOnly` - The receiver function can only be called using the ask pattern (expecting a return value)
-- `TellOnly` - The receiver function can only be called using the tell pattern (fire-and-forget)
+- `AskOnly` - The receiver function can only be called using the ask mode (expecting a return value)
+- `TellOnly` - The receiver function can only be called using the tell mode (fire-and-forget)
 - `AskAndTell` - The receiver function can be called using both ask and tell patterns
 
 ### func toString()

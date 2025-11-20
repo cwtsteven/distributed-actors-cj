@@ -157,7 +157,7 @@ public func findAll(): Array<ActorInfo>
 
 返回值：
 
-- `Array<ActorInfo>` — Actor 信息数组。
+- `Array<ActorInfo>` — 所有已注册 Actor 的信息数组。
 
 ### func remoteCall()
 
