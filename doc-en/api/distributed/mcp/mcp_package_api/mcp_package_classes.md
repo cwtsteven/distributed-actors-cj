@@ -78,7 +78,7 @@ Parameters:
 
 Return Value:
 
-- Option<Tool> - Some(tool) if found, None otherwise.
+- `Option<Tool>` - Some(tool) if found, None otherwise.
 
 ### func getTools()
 
@@ -151,7 +151,7 @@ Exceptions:
 public class ReceiverTool <: Tool
 ```
 
-Function: MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. This class handles the conversion between MCP arguments and actor parameters, and manages the execution of actor receiver functions.
+Function: MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. This class handles the conversion from MCP tool parameters into arguments of the respective actor call, and manages the execution of actor receiver functions.
 
 ### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, ActorClient, ReceiverInfo)
 

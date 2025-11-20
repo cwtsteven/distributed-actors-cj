@@ -85,7 +85,7 @@ Parameters:
 
 Return Value:
 
-- Option<ActorInfo> - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
+- `Option<ActorInfo>` - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
 
 ### func findAll()
 

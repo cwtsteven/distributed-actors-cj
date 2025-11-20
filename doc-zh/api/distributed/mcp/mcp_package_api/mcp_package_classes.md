@@ -179,7 +179,7 @@ public init(
 - `examples!: Array<String>` — 示例用法。
 - `extra!: HashMap<String, String>` — 额外元数据。
 - `client!: ActorClient` — 用于通信的 Actor 客户端。
-- `info!: ReceiverInfo` — Receiver 的元信息。
+- `info!: ReceiverInfo` — Receiver 的元信息，包含类型，返回值类型等。
 
 ### prop name
 

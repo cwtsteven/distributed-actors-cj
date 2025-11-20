@@ -57,7 +57,7 @@ Parameters:
 public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit
 ```
 
-Function: Sends a message to a remote actor's receiver function without expecting a return value (Tell mode).
+Function: Calling a remote actor's receiver function without expecting a return value (Tell mode).
 
 Parameters:
 
@@ -111,7 +111,7 @@ Parameters:
 public class DistributedFuture
 ```
 
-Function: A future implementation for distributed actor communication that handles serialized data models. This class is used internally by distributed actor systems to manage remote operation results.
+Function: An implementation of *future* fore representing the pending result if calling receivers on a remote Actor. Provides nethods for getting serialized return value.
 
 ### func get()
 

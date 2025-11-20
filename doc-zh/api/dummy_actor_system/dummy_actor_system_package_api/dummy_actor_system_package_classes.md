@@ -105,7 +105,7 @@ public func findAll(): Array<ActorInfo>
 public func remoteCall(invokeInfo: InvokeInfo): Unit
 ```
 
-功能：调用 Actor 的 Receiver，并以结果完成提供的 Future。
+功能：远程调用 Actor 的 Receiver，并以结果完成提供的 Future。
 
 参数：
 
