@@ -39,7 +39,7 @@ public override func toString(): String
 
 返回值：
 
-- `String` — 字符串表示。
+- `String` — `ActorInfo`的字符串表示。
 
 ## struct FieldModel
 
@@ -83,7 +83,7 @@ public override func toString(): String
 
 返回值：
 
-- `String` — 字符串表示。
+- `String` — `FieldModel`的字符串表示。
 
 ### operator ==()
 
@@ -197,7 +197,7 @@ public override func toString(): String
 
 返回值：
 
-- `String` — 字符串表示。
+- `String` — `Metadata`的字符串表示。
 
 ## struct ReceiverInfo
 
@@ -250,7 +250,7 @@ public override func toString(): String
 
 返回值：
 
-- `String` — 字符串表示。
+- `String` — `ReceiverInfo` 的字符串表示。
 
 ## struct ReceiverParameter
 
@@ -294,4 +294,4 @@ public override func toString(): String
 
 返回值：
 
-- `String` — 字符串表示。
+- `String` —  `ReceiverParameter` 的字符串表示。
