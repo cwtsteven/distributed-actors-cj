@@ -1,6 +1,6 @@
 # 类
 
-## class ActorFuture<T>
+## class ActorFuture\<T>
 
 ```cangjie
 public class ActorFuture<T>
@@ -78,7 +78,7 @@ public init(enableReceiverPriority!: Bool = false)
 public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T>
 ```
 
-功能：向调度器提交闭包，闭包将在调度器线程上排队并执行。返回 [ActorFuture<T>](actors_package_classes.md#class-actorfuture) 作为待处理结果。若构造时启用了 `enableReceiverPriority`，高优先级闭包将被优先执行；否则 `priority` 值无效。
+功能：向调度器提交闭包，闭包将在调度器线程上排队并执行。返回 [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) 作为待处理结果。若构造时启用了 `enableReceiverPriority`，高优先级闭包将被优先执行；否则 `priority` 值无效。
 
 参数：
 
@@ -87,7 +87,7 @@ public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default
 
 返回值：
 
-- [ActorFuture<T>](actors_package_classes.md#class-actorfuture) — 用于获取闭包计算结果。
+- [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) — 用于获取闭包计算结果。
 
 ### func tell(() -> Unit, ReceiverConfig)
 

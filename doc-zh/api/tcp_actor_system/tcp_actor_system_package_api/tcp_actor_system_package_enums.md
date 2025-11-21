@@ -100,7 +100,7 @@ public override func toString(): String
 
 返回值：
 
-- `String` — 字符串表示。
+- `String` — `TCPActorSystemError`的字符串表示。
 
 ### operator ==()
 

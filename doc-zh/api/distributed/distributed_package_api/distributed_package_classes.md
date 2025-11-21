@@ -111,7 +111,7 @@ public init(msg: String)
 public class DistributedFuture
 ```
 
-功能：分布式 Actor 通信的 Future，实现序列化数据模型的结果处理；用于管理远程操作的结果。
+功能：一个future的实现用于表示在远程Actor上调用Receiver时的待处理结果。提供获取序列化返回值的方法。
 
 ### func get()
 

@@ -98,10 +98,10 @@ Options: The `@Receiver` macro accepts a list of options in the form of `opt1: v
 Available options:
 
 - `priority: value` - Specifies the default priority level for the receiving function. The provided value must be an integer literal between 1 and 10; otherwise, an error will be thrown during macro expansion. This option is only available when the outer `@Actor` macro has the `enableReceiverPriority: true` option.
-- `mode: value` - Specifies whether the annotated function should be modified with 'Ask' or 'Tell' behaviour. A function modified with `Ask` behaviour returns an `ActorFuture` which allows the caller to obtain the return value of the function and/or wait for the function call to finish. A function modified with `Tell` behaviour returns `Unit` and gives no way for the caller to obtain the return value or synchronize with the actor thread. If the `Tell` receiver function is generated, it will have the same identifier as the `Ask` receiver function, but will expect an additional parameter named `tell`, for which the [`Tell.True`](../../actors_package_api/actors_package_enums.md#enum-tell) value must be supplied. The supplied value to the `mode` option must be one of the following:
-    - `AskOnly`: only generates a receiver function that can be called in `Ask` mode.
-    - `TellOnly`: only generates a receiver function that can be called in `Tell` mode.
-    - `AskAndTell`: generates both receiver functions.
+- `mode: value` - Specifies whether the annotated function should be modified with 'Ask' or 'Tell' behaviour. The supplied value to the `mode` option must be one of the following:
+    - `AskOnly`: only generates a receiver function that can be called in `Ask` mode, which returns an `ActorFuture` which allows the caller to obtain the return value of the function and/or wait for the function call to finish.
+    - `TellOnly`: only generates a receiver function that can be called in `Tell` mode, which returns `Unit` and gives no way for the caller to obtain the return value or synchronize with the actor thread.
+    - `AskAndTell`: generates both receiver functions. If the `Tell` receiver function is generated, it will have the same identifier as the `Ask` receiver function, but will expect an additional parameter named `tell`, for which the [`Tell.True`](../../actors_package_api/actors_package_enums.md#enum-tell) value must be supplied.
 - `description: value` - A human-readable description of the receiver function. Must be a string literal.
 - `customInfo: value` - Custom metadata for the receiver function in JSON format. Must be a valid JSON string.
 

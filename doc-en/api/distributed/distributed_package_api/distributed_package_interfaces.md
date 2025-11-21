@@ -133,7 +133,7 @@ Parameters:
 
 Exceptions:
 
-- `ReceiverNotFoundException` - If the receiver function is not found.
+- `ReceiverNotFoundException` - Thrown if the receiver function is not found.
 
 ### func dispatchAsk()
 
@@ -155,7 +155,7 @@ Return Value:
 
 Exceptions:
 
-- `ReceiverNotFoundException` - If the receiver function is not found.
+- `ReceiverNotFoundException` - Thrown if the receiver function is not found.
 
 ## interface LocalWaitable
 

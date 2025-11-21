@@ -50,7 +50,7 @@ func findAll(): Array<ActorInfo>
 func remoteCall(invokeInfo: InvokeInfo): Unit
 ```
 
-功能：调用 Actor 的 Receiver，并将结果填充到提供的 Future 中。
+功能：远程调用 Actor 的 Receiver，并将结果填充到提供的 Future 中。
 
 参数：
 
@@ -103,7 +103,7 @@ func deregister(name: String): Bool
 public interface Distributable
 ```
 
-功能：分布式 Actor 接口需实现的接口，提供远程调用与元数据访问所需方法。
+功能：分布式 Actor 接口为提供远程通信能力而需实现的接口，提供远程调用与元数据访问所需方法。
 
 ### func getMetadata()
 
@@ -151,7 +151,7 @@ func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverC
 
 返回值：
 
-- `LocalWaitable` — 可用于获取结果的 waitable 对象。
+- `LocalWaitable` — 可用于获取结果的可等待的对象。
 
 异常：
 

@@ -52,8 +52,8 @@ Function: Registers an actor instance with the TCP actor host under the specifie
 
 Parameters:
 
-- name: String - The name to register the actor under.
-- a: Distributable - The actor instance to register, must implement Distributable.
+- `name: String` - The name to register the actor under.
+- `a: Distributable` - The actor instance to register.
 
 Return Value:
 
@@ -85,11 +85,11 @@ Function: Creates a new thread to serve requests and starts accepting client con
 
 Return Value:
 
-- Future<Unit> - A future handle to the server thread.
+- `Future<Unit>` - A future handle to the server thread.
 
 Exceptions:
 
-- SocketException - If the server socket fails to bind.
+- SocketException - Thrown if the server socket fails to bind.
 
 ### func close()
 
@@ -145,7 +145,7 @@ Parameters:
 
 Return Value:
 
-- Option<ActorInfo> - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
+- `Option<ActorInfo>` - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
 
 ### func findAll()
 
@@ -157,7 +157,7 @@ Function: Finds all actors registered in the TCP actor host.
 
 Return Value:
 
-- Array<ActorInfo> - An array containing information about all registered actors.
+- `Array<ActorInfo>` - An array containing information about all registered actors.
 
 ### func remoteCall()
 

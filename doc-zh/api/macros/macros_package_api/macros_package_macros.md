@@ -57,8 +57,8 @@ public macro ActorInterface(options: Tokens, input: Tokens): Tokens
 >
 > 可用选项：
 >
-> - `distributed: value` — 是否为分布式 Actor 接口。布尔字面量（`true` 或 `false`），默认 `false`；
-> - `description: value` — 人类可读的接口描述。字符串字面量；
+> - `distributed: value` — 是否为分布式 Actor 接口。必须为布尔字面量（`true` 或 `false`），默认 `false`；
+> - `description: value` — 人类可读的接口描述。必须为字符串字面量；
 > - `customInfo: value` — JSON 格式的自定义元数据。必须为合法 JSON 字符串；
 >
 > 每个选项最多出现一次，否则宏展开时报错。
@@ -95,7 +95,7 @@ public macro Receiver(options: Tokens, input: Tokens): Tokens
 >
 > 可用选项：
 >
-> - `priority: value` — 指定 Receiver 的默认优先级，仅当外层 `@Actor` 启用 `enableReceiverPriority: true` 时有效。取值需为 1 到 10 的整数字面量；
+> - `priority: value` — 指定 Receiver 的默认优先级，仅当外层 `@Actor` 启用 `enableReceiverPriority: true` 时有效。取值需为 1 到 10 的整数字面量，否则宏展开时报错；
 > - `mode: value` — 指定函数的 Ask/Tell 行为：
 >   - `AskOnly`：仅生成 Ask 模式的 Receiver（返回 `ActorFuture`，可等待/获取返回值）；
 >   - `TellOnly`：仅生成 Tell 模式的 Receiver（返回 `Unit`，不可等待/获取返回值）；

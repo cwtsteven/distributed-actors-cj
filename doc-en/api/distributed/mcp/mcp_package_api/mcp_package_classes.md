@@ -78,7 +78,7 @@ Parameters:
 
 Return Value:
 
-- Option<Tool> - Some(tool) if found, None otherwise.
+- `Option<Tool>` - Some(tool) if found, None otherwise.
 
 ### func getTools()
 
@@ -90,7 +90,7 @@ Function: Gets all available tools in the tool manager.
 
 Return Value:
 
-- Array<Tool> - An array of all available tools.
+- `Array<Tool>` - An array of all available tools.
 
 ### func filterTool()
 
@@ -107,7 +107,7 @@ Parameters:
 
 Return Value:
 
-- Array<Tool> - An array of filtered tools.
+- `Array<Tool>` - An array of filtered tools.
 
 ### prop enableFilter
 
@@ -143,7 +143,7 @@ Parameters:
 
 Exceptions:
 
-- ActorMCPException - If the client is not found.
+- ActorMCPException - Thrown if the client is not found.
 
 ## class ReceiverTool
 
@@ -151,7 +151,7 @@ Exceptions:
 public class ReceiverTool <: Tool
 ```
 
-Function: MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. This class handles the conversion between MCP arguments and actor parameters, and manages the execution of actor receiver functions.
+Function: MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. This class handles the conversion from MCP tool parameters into arguments of the respective actor call, and manages the execution of actor receiver functions.
 
 ### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, ActorClient, ReceiverInfo)
 
@@ -174,10 +174,10 @@ Parameters:
 
 - name!: String - The name of the tool (format: "actorName;__actors_08275892475824__;receiverName").
 - description!: String - The description of the tool.
-- parameters!: Array<ToolParameter> - The parameters for the tool.
+- parameters!: `Array<ToolParameter>` - The parameters for the tool.
 - retType!: TypeSchema - The return type schema for the tool.
-- examples!: Array<String> - Example usage strings for the tool.
-- extra!: HashMap<String, String> - Extra metadata for the tool.
+- examples!: `Array<String>` - Example usage strings for the tool.
+- extra!: `HashMap<String, String>` - Extra metadata for the tool.
 - client!: ActorClient - The actor client to use for communication.
 - info!: ReceiverInfo - The receiver information for the actor function.
 
@@ -263,7 +263,7 @@ Return Value:
 
 Exceptions:
 
-- ActorMCPException - If the tool name format is invalid or required arguments are missing.
+- ActorMCPException - Thrown if the tool name format is invalid or required arguments are missing.
 
 ### func toString()
 
