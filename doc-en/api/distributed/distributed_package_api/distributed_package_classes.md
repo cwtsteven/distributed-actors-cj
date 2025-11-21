@@ -111,7 +111,7 @@ Parameters:
 public class DistributedFuture
 ```
 
-Function: An implementation of *future* fore representing the pending result if calling receivers on a remote Actor. Provides nethods for getting serialized return value.
+Function: An implementation of *future* for representing the pending result of calling receivers on a remote Actor. Provides methods for getting serialized return value.
 
 ### func get()
 
