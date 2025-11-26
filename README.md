@@ -24,7 +24,7 @@
 
 ### 项目计划
 
-- [ ] 类型安全的 Actor 代理
+- [x] 类型安全的 Actor 代理
 - [ ] 消息传递语义（至少一次 vs 最多一次）
 - [ ] 失败消息传递的重试机制
 - [ ] 增强异常与错误处理
@@ -194,6 +194,11 @@ main() {
 
     transferFut.get()
     println("Transfer completed")
+
+    let typedProxy = BankService.getProxy("bank-service", tcpClient)
+    let fut2: ActorFuture<Bool> = typedProxy.transfer("alice", "bob", 100.0)
+    fut2.get()
+    println("Second transfer completed")
 }
 ```
 
@@ -201,6 +206,7 @@ main() {
 
 ```shell
 Transfer completed
+Second transfer completed
 ```
 
 #### AI 智能体整合
