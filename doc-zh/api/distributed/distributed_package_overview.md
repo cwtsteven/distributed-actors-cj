@@ -39,6 +39,7 @@
 | [ActorHost](./distributed_package_api/distributed_package_interfaces.md#interface-actorhost) | actor host 实现的接口，提供用于 *导出* 分布式 actor 的方法。 |
 | [ActorClient](./distributed_package_api/distributed_package_interfaces.md#interface-actorclient) | actor client 实现的接口，提供用于 *查找* 分布式 actor 的方法。 |
 | [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | 所有本地 `ActorFuture<T>` 类型共用的接口，提供以序列化形式（`DataModel`）获取 Future 结果的方法。 |
+| [TypeSerializable](./distributed_package_api/distributed_package_interfaces.md#interface-typeserializable) | 为类型提供 `TypeModel` 类型模式描述的接口，用于分布式传输与元数据生成。 |
 
 ### 枚举
 
