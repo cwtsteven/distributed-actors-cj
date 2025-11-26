@@ -12,8 +12,8 @@
 
 | 类名 | 功能 |
 | --- | --- |
-| [ActorFuture<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) | 表示提交给 Actor 的闭包的待处理结果；提供带超时的阻塞与非阻塞结果获取方法。 |
-| [SequentialDispatcher](./actors_package_api/actors_package_classes.md#class-sequentialdispatcher) | 线程安全的调度器，在专用线程上按顺序排队并执行闭包；支持基于优先级的任务调度，通常由 Actor 系统内部使用。 |
+| [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) | 表示提交给 Actor 的闭包的待处理结果；提供带超时的阻塞与非阻塞结果获取方法。 |
+| [SequentialDispatcher](./actors_package_api/actors_package_classes.md#class-sequentialdispatcher) | 一个在专用线程上按顺序排队并执行闭包的调度器，并提供提交闭包的方法；支持基于优先级的任务调度，通常由 Actor 系统内部使用。 |
 
 ### 结构体
 

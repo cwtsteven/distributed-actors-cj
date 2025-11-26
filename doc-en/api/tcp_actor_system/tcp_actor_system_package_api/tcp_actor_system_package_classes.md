@@ -18,7 +18,7 @@ Function: A mutable property representing the logger of the TCPActorSystem. This
 
 Return Value:
 
-- Logger - The logger instance used by the TCP actor system.
+- `Logger` - The logger instance used by the TCP actor system.
 
 ## class TCPActorHost
 
@@ -40,40 +40,40 @@ Function: Initializes the TCP actor host to bind to the specified port.
 
 Parameters:
 
-- bindAt!: UInt16 - The port to bind the server to.
+- `bindAt!: UInt16` - The port to bind the server to.
 
-### func register()
+### func export()
 
 ```cangjie
-public func register(name: String, a: Distributable): Bool
+public func export(name: String, a: Distributable): Bool
 ```
 
-Function: Registers an actor instance with the TCP actor host under the specified name.
+Function: Exports an actor instance under the specified name.
 
 Parameters:
 
-- `name: String` - The name to register the actor under.
-- `a: Distributable` - The actor instance to register.
+- `name: String` - The name to export the actor under.
+- `a: Distributable` - The actor instance to export.
 
 Return Value:
 
-- Bool - Returns `true` if the actor was successfully registered, `false` if the name is already taken.
+- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
 
-### func deregister()
+### func unexport()
 
 ```cangjie
-public func deregister(name: String): Bool
+public func unexport(name: String): Bool
 ```
 
-Function: Removes an actor from the TCP actor host.
+Function: Unexport an actor from the TCP actor host.
 
 Parameters:
 
-- name: String - The name of the actor to deregister.
+- `name: String` - The name of the actor to unexport.
 
 Return Value:
 
-- Bool - Returns `true` if the actor was successfully deregistered, `false` if the actor was not found.
+- `Bool` - Returns `true` if the actor was successfully un-exported, `false` if the actor was not found.
 
 ### func serve()
 
@@ -89,7 +89,7 @@ Return Value:
 
 Exceptions:
 
-- SocketException - Thrown if the server socket fails to bind.
+- `SocketException` - Thrown if the server socket fails to bind.
 
 ### func close()
 
@@ -119,9 +119,9 @@ Function: Initializes the TCP actor client to connect to the specified host and 
 
 Parameters:
 
-- id: String - The unique identifier for this client.
-- addr: String - The address of the TCP actor host to connect to.
-- port: UInt16 - The port of the TCP actor host to connect to.
+- `id: String` - The unique identifier for this client.
+- `addr: String` - The address of the TCP actor host to connect to.
+- `port: UInt16` - The port of the TCP actor host to connect to.
 
 ### prop id
 
@@ -141,7 +141,7 @@ Function: Finds an actor by name and returns its information.
 
 Parameters:
 
-- name: String - The name of the actor to find.
+- `name: String` - The name of the actor to find.
 
 Return Value:
 
@@ -165,11 +165,11 @@ Return Value:
 public func remoteCall(invokeInfo: InvokeInfo): Unit
 ```
 
-Function: Makes a remote call to an actor's receiver function and fulfills the provided future with the result.
+Function: Makes a remote call to an actor's receiver.
 
 Parameters:
 
-- invokeInfo: InvokeInfo - The information about the remote call invocation.
+- `invokeInfo: InvokeInfo` - The information about the remote call invocation.
 
 ### func close()
 
@@ -199,7 +199,7 @@ Function: Creates a TCPActorSystemSerializationException with a custom error mes
 
 Parameters:
 
-- message: String - The custom error message describing the serialization error.
+- `message: String` - The custom error message describing the serialization error.
 
 ## class TCPActorSystemDeserializationException
 
@@ -221,4 +221,4 @@ Function: Creates a TCPActorSystemDeserializationException with a custom error m
 
 Parameters:
 
-- message: String - The custom error message describing the deserialization error.
+- `message: String` - The custom error message describing the deserialization error.

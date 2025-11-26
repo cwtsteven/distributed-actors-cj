@@ -8,7 +8,7 @@ public class ActorNotFoundException <: Exception {
 }
 ```
 
-Function: Exception thrown when an actor with the specified name cannot be found in the actor system.
+Function: Exception thrown when an actor with the specified name cannot be found.
 
 ### init(String)
 
@@ -44,12 +44,12 @@ public ActorProxy(
 )
 ```
 
-Function: Creates an `ActorProxy` for communicating with a specific actor in the given actor system.
+Function: Creates an `ActorProxy` for communicating with a specific actor in the given actor client.
 
 Parameters:
 
 - `name: String` - The name of the remote actor to communicate with.
-- `client: ActorClient` - The actor client that manages the remote actor.
+- `client: ActorClient` - The actor client that connects to the remote actor.
 
 ### func tell()
 
@@ -57,12 +57,12 @@ Parameters:
 public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit
 ```
 
-Function: Calling a remote actor's receiver function without expecting a return value (Tell mode).
+Function: Calling a remote actor's receiver without expecting a return value (`Tell` mode).
 
 Parameters:
 
-- `receiverName: String` - The name of the receiver function to call.
-- `args: Array<DataModel>` - Serialized arguments for the receiver function.
+- `receiverName: String` - The name of the receiver to call.
+- `args: Array<DataModel>` - Serialized arguments for the receiver.
 - `config!: ReceiverConfig` - Configuration for the call, defaults to `ReceiverConfig.default`.
 
 ### func ask()
@@ -71,17 +71,17 @@ Parameters:
 public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
 ```
 
-Function: Makes a call to a remote actor's receiver function and returns a future for the result (Ask mode).
+Function: Makes a call to a remote actor's receiver and returns a [DistributedFuture](distributed_package_classes.md#class-distributedfuture) representing the pending result (`Ask` mode).
 
 Parameters:
 
-- `receiverName: String` - The name of the receiver function to call.
-- `args: Array<DataModel>` - Serialized arguments for the receiver function.
+- `receiverName: String` - The name of the receiver to call.
+- `args: Array<DataModel>` - Serialized arguments for the receiver.
 - `config!: ReceiverConfig` - Configuration for the call, defaults to `ReceiverConfig.default`.
 
 Return Value:
 
-- `DistributedFuture` - A future that will contain the serialized result of the remote call.
+- [DistributedFuture](distributed_package_classes.md#class-distributedfuture) - The pending result of the remote call.
 
 ## class ActorSystemException
 
@@ -111,7 +111,7 @@ Parameters:
 public class DistributedFuture
 ```
 
-Function: An implementation of *future* for representing the pending result of calling receivers on a remote Actor. Provides methods for getting serialized return value.
+Function: Represents the pending result of remote receiver call. Provides methods for obtaining and fulfilling the serialized result.
 
 ### func get()
 
@@ -119,7 +119,7 @@ Function: An implementation of *future* for representing the pending result of c
 public func get(): DataModel
 ```
 
-Function: Blocks the current thread until the result is ready and returns the serialized result.
+Function: Blocks the current thread until the result is ready and returns the serialized result. If the receiver throws an exception or error, this method will throw the same exception or error if they can be serialized, otherwise it throws a [RemoteReceiverException](./distributed_package_classes.md#class-remotereceiverexception).
 
 Return Value:
 
@@ -131,7 +131,7 @@ Return Value:
 public func get(timeout: Duration): Option<DataModel>
 ```
 
-Function: Blocks the current thread until either the specified timeout has expired or the result is ready.
+Function: Blocks the current thread until either the specified timeout has expired or the result is ready. If the result is ready, this method will return the result; otherwise, it will return `None`. If an exception or error is thrown, this method will throw the same exception or error if they can be serialized, otherwise it throws a [RemoteReceiverException](./distributed_package_classes.md#class-remotereceiverexception). If the timeout is set to zero, it means there is no time limit, and it is essentially the same as calling `get()`.
 
 Parameters:
 
@@ -147,7 +147,7 @@ Return Value:
 public func tryGet(): Option<DataModel>
 ```
 
-Function: If the result is ready, it immediately returns the serialized result; otherwise, it returns `None`.
+Function: If the result is ready, it immediately returns the serialized result; otherwise, it returns `None`. If an exception or error is thrown, this method will throw the same exception or error if they can be serialized, otherwise it throws a [RemoteReceiverException](./distributed_package_classes.md#class-remotereceiverexception).
 
 Return Value:
 
@@ -177,7 +177,7 @@ public class ReceiverNotFoundException <: Exception {
 }
 ```
 
-Function: Exception thrown when a receiver function cannot be found in the specified actor interface.
+Function: Exception thrown when a receiver cannot be found in the specified actor interface.
 
 ### init(String, String)
 
@@ -185,7 +185,7 @@ Function: Exception thrown when a receiver function cannot be found in the speci
 public init(name: String, receiverName: String)
 ```
 
-Function: Creates a `ReceiverNotFoundException` with a message indicating the actor interface and receiver that could not be found.
+Function: Creates a `ReceiverNotFoundException` with a message indicating the receiver that could not be found.
 
 Parameters:
 
@@ -222,6 +222,9 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
 ```
 
 Function: Exception that wraps non-serializable exceptions or errors thrown from remote receiver execution. This exception is serializable and can be transmitted across the network.
+
+Implements:
+- `Serializable`
 
 ### init(Exception)
 

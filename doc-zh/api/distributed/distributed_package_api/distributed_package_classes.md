@@ -8,7 +8,7 @@ public class ActorNotFoundException <: Exception {
 }
 ```
 
-功能：当在 Actor 系统中找不到指定名称的 Actor 时抛出。
+功能：当找不到指定名称的 actor 时抛出。
 
 ### init(String)
 
@@ -20,7 +20,7 @@ public init(name: String)
 
 参数：
 
-- `name: String` — 找不到的 Actor 的名称。
+- `name: String` — 找不到的 actor 的名称。
 
 ## class ActorProxy
 
@@ -33,7 +33,7 @@ public class ActorProxy {
 }
 ```
 
-功能：在分布式系统中与远程 Actor 通信的代理。`ActorProxy` 允许客户端在无需管理底层通信的情况下向远程 Actor 发送消息或发起调用。
+功能：在分布式系统中与远程 actor 通信的代理类。`ActorProxy` 允许客户端在无需管理底层通信细节的情况下向远程 actor 发送消息或发起调用。
 
 ### init(String, ActorClient)
 
@@ -41,15 +41,15 @@ public class ActorProxy {
 public ActorProxy(
   public let name: String,
   public let client: ActorClient
-:)
+)
 ```
 
-功能：创建用于与指定 Actor 系统中某个 Actor 通信的 `ActorProxy`。
+功能：创建用于与指定 actor client 中某个 actor 通信的 `ActorProxy`。
 
 参数：
 
-- `name: String` — 目标远程 Actor 的名称。
-- `client: ActorClient` — 管理远程 Actor 的客户端。
+- `name: String` — 目标远程 actor 的名称。
+- `client: ActorClient` — 连接到远程 actor 的客户端。
 
 ### func tell()
 
@@ -57,12 +57,12 @@ public ActorProxy(
 public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit
 ```
 
-功能：以 Tell 模式调用远程 Actor 的 Receiver 函数（不期待返回值）。
+功能：以 `Tell` 模式调用远程 actor 的 receiver 函数（即发即忘，不期待返回值）。
 
 参数：
 
-- `receiverName: String` — Receiver 函数名称。
-- `args: Array<DataModel>` — Receiver 的序列化参数。
+- `receiverName: String` — receiver 函数名称。
+- `args: Array<DataModel>` — receiver 的序列化参数。
 - `config!: ReceiverConfig` — 调用配置，默认 `ReceiverConfig.default`。
 
 ### func ask()
@@ -71,17 +71,17 @@ public func tell(receiverName: String, args: Array<DataModel>, config!: Receiver
 public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
 ```
 
-功能：以 Ask 模式调用远程 Actor 的 Receiver 函数并返回结果 Future。
+功能：以 `Ask` 模式调用远程 actor 的 receiver 函数，并返回表示待处理结果的 `DistributedFuture`。
 
 参数：
 
-- `receiverName: String` — Receiver 函数名称。
-- `args: Array<DataModel>` — Receiver 的序列化参数。
+- `receiverName: String` — receiver 函数名称。
+- `args: Array<DataModel>` — receiver 的序列化参数。
 - `config!: ReceiverConfig` — 调用配置，默认 `ReceiverConfig.default`。
 
 返回值：
 
-- `DistributedFuture` — 包含远程调用序列化结果的 Future。
+- `DistributedFuture` — 表示远程调用待处理结果的对象。
 
 ## class ActorSystemException
 
@@ -91,7 +91,7 @@ public class ActorSystemException <: Exception {
 }
 ```
 
-功能：Actor 系统相关错误的通用异常。
+功能：actor 系统相关错误的通用异常。
 
 ### init(String)
 
@@ -103,7 +103,7 @@ public init(msg: String)
 
 参数：
 
-- `msg: String` — 描述 Actor 系统错误的消息。
+- `msg: String` — 描述 actor 系统错误的消息。
 
 ## class DistributedFuture
 
@@ -111,7 +111,7 @@ public init(msg: String)
 public class DistributedFuture
 ```
 
-功能：一个future的实现用于表示在远程Actor上调用Receiver时的待处理结果。提供获取序列化返回值的方法。
+功能：表示远程 receiver 调用待处理结果的具体类，提供获取与兑现序列化结果的方法。
 
 ### func get()
 
@@ -119,7 +119,7 @@ public class DistributedFuture
 public func get(): DataModel
 ```
 
-功能：阻塞当前线程直至结果就绪并返回序列化结果。
+功能：阻塞当前线程直到结果就绪并返回序列化结果。若远程 receiver 抛出异常或错误且可序列化，则本方法抛出相同的异常或错误；否则抛出 [RemoteReceiverException](./distributed_package_classes.md#class-remotereceiverexception)。
 
 返回值：
 
@@ -131,7 +131,7 @@ public func get(): DataModel
 public func get(timeout: Duration): Option<DataModel>
 ```
 
-功能：阻塞当前线程直到超时到期或结果就绪。
+功能：阻塞当前线程直到超时到期或结果就绪。若结果已准备好则返回结果，否则返回 `None`。若远程 receiver 抛出异常或错误且可序列化，则本方法抛出相同的异常或错误；否则抛出 [RemoteReceiverException](./distributed_package_classes.md#class-remotereceiverexception)。`timeout = 0` 表示无限等待，与调用 `get()` 等效。
 
 参数：
 
@@ -147,7 +147,7 @@ public func get(timeout: Duration): Option<DataModel>
 public func tryGet(): Option<DataModel>
 ```
 
-功能：若结果已就绪立刻返回序列化结果，否则返回 `None`。
+功能：若结果已就绪则立刻返回序列化结果，否则返回 `None`。若远程 receiver 抛出异常或错误且可序列化，则本方法抛出相同的异常或错误；否则抛出 [RemoteReceiverException](./distributed_package_classes.md#class-remotereceiverexception)。
 
 返回值：
 
@@ -177,7 +177,7 @@ public class ReceiverNotFoundException <: Exception {
 }
 ```
 
-功能：当在指定的 Actor 接口中找不到 Receiver 函数时抛出。
+功能：当在指定的 actor 接口中找不到 receiver 函数时抛出。
 
 ### init(String, String)
 
@@ -185,12 +185,12 @@ public class ReceiverNotFoundException <: Exception {
 public init(name: String, receiverName: String)
 ```
 
-功能：创建包含接口名与找不到的 Receiver 名称信息的 `ReceiverNotFoundException`。
+功能：创建包含接口名与找不到的 receiver 名称信息的 `ReceiverNotFoundException`。
 
 参数：
 
-- `name: String` — Actor 接口名称。
-- `receiverName: String` — 找不到的 Receiver 函数名称。
+- `name: String` — actor 接口名称。
+- `receiverName: String` — 找不到的 receiver 函数名称。
 
 ## class RemoteException
 
@@ -200,7 +200,7 @@ public class RemoteException <: Exception {
 }
 ```
 
-功能：分布式通信过程中远程连接失败时抛出。
+功能：分布式 actor 通信过程中远程连接失败时抛出。
 
 ### init()
 
@@ -221,7 +221,10 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
 }
 ```
 
-功能：包装远程 Receiver 执行中抛出的不可序列化异常或错误；该异常可序列化以便网络传输。
+功能：包装远程 receiver 执行中抛出的不可序列化异常或错误；该异常可序列化以便网络传输。
+
+实现接口：
+- `Serializable`
 
 ### init(Exception)
 

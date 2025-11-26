@@ -10,13 +10,17 @@ public enum ReceiverMode <: ToString & Equatable<ReceiverMode> {
 }
 ```
 
-Function: Represents the calling mode for receiver functions. This enum determines how a receiver function can be called in distributed actor systems.
+Function: Represents the calling mode for receivers. This enum determines which mode a receiver can be called, *ask* only, *tell* only or both.
+
+Implements:
+- `ToString`
+- `Equatable`
 
 ### Values
 
-- `AskOnly` - The receiver function can only be called using the ask mode (expecting a return value)
-- `TellOnly` - The receiver function can only be called using the tell mode (fire-and-forget)
-- `AskAndTell` - The receiver function can be called using both ask and tell patterns
+- `AskOnly` - The receiver can only be called using the ask mode (expecting a return value).
+- `TellOnly` - The receiver can only be called using the tell mode (fire-and-forget).
+- `AskAndTell` - The receiver can be called using both ask and tell patterns.
 
 ### func toString()
 
@@ -44,7 +48,7 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the `ReceiverModes` are equal, `false` otherwise.
+- `Bool` - Returns `true` if the `ReceiverMode`s are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -60,7 +64,7 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the `ReceiverModes` are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the `ReceiverMode`s are not equal, `false` otherwise.
 
 ## enum TypeModel
 
@@ -76,7 +80,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
 }
 ```
 
-Function: Represents type information for serialization and metadata generation. This enum is used to describe the types of parameters and return values in receiver functions for distributed actor communication.
+Function: Represents type schema of a Cangjie type, describing its structure. This enum is used to describe the types of parameters and return values in receiver functions for distributed actor communication.
 
 ### Values
 
@@ -114,7 +118,7 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the `TypeModels` are equal, `false` otherwise.
+- `Bool` - Returns `true` if the `TypeModel`s are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -130,4 +134,4 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the `TypeModels` are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the `TypeModel`s are not equal, `false` otherwise.

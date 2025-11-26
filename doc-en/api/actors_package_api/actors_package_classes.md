@@ -14,11 +14,11 @@ Function: A concrete class representing the pending result of a closure submitte
 public func get(): T
 ```
 
-Function: Blocks the current thread until the closure completes. If the closure throws an exception or error, this method will throw the same exception or error.
+Function: Blocks the current thread until the closure execution completes. If the closure throws an exception or error, this method will throw the same exception or error.
 
 Return Value:
 
-- `T` - The computed result of the corresponding closure.
+- `T` - The execution result of the corresponding closure.
 
 ### func get(Duration)
 
@@ -26,7 +26,7 @@ Return Value:
 public func get(timeout: Duration): Option<T>
 ```
 
-Function: Blocks the current thread until either the specified timeout has expired or the result is ready. If the result is already prepared, it will return the result; otherwise, it will return `None`. If an exception or error is thrown, this method will propagate the same exception or error. If the timeout is set to zero, it means there is no time limit.
+Function: Blocks the current thread until either the specified timeout has expired or the result is ready. If the result is ready, this method will return the result; otherwise, it will return `None`. If an exception or error is thrown, this method will throw the same exception or error. If the timeout is set to zero, it means there is no time limit, and it is essentially the same as calling `get()`.
 
 Parameters:
 
@@ -57,7 +57,7 @@ public class SequentialDispatcher {
 }
 ```
 
-Function: A `SequentialDispatcher` instance represents a thread in the Cangjie system. Users can submit closures to a `SequentialDispatcher` instance, and these closures will be queued and executed on that thread.
+Function: A dispatcher that queues and executes closures sequentially on a dedicated thread, and provides methods for submitting closures. Supports priority-based scheduling.
 
 Typically, users do not need to use this class directly. Instead, they should use the [@Actor](../macros/macros_package_api/macros_package_macros.md#actor-macro) macro.
 
@@ -67,7 +67,7 @@ Typically, users do not need to use this class directly. Instead, they should us
 public init(enableReceiverPriority!: Bool = false)
 ```
 
-Function: Creates a `SequentialDispatcher` instance and starts a thread for the `SequentialDispatcher` to handle the closures submitted by the user.
+Function: Creates a `SequentialDispatcher` instance and starts a thread to execute the closures submitted to it.
 
 Parameters:
 
@@ -79,16 +79,16 @@ Parameters:
 public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T>
 ```
 
-Function: Submits a closure to the dispatcher, which will be queued and executed on the dispatcher thread. This method returns an [ActorFuture\<T>](actors_package_classes.md#class-actorfuture), representing the pending result of the closure. If the dispatcher was created with `enableReceiverPriority` set to true, closures with higher priority will be executed first. If `enableReceiverPriority` is set to false, the `priority` value will have no effect.
+Function: Submits a closure to the dispatcher, which will be queued and executed on the dispatcher thread. This method returns an [ActorFuture\<T>](actors_package_classes.md#class-actorfuture), representing the pending result of the closure. If the dispatcher was created with `enableReceiverPriority` set to true, closures with higher priority will be executed first. If `enableReceiverPriority` is set to false, the `priority` value inside [ReceiverConfig](./actors_package_structs.md#struct-receiverconfig) will have no effect.
 
 Parameters:
 
-- `f: () -> T` - The closure submitted to the actor.
-- `config!: ReceiverConfig` - The configuration for the submitted task, defaults to ReceiverConfig.default.
+- `f: () -> T` - The closure submitted to the dispatcher.
+- `config!: ReceiverConfig` - The configuration for the submitted task, defaults to `ReceiverConfig.default`.
 
 Return Value:
 
-- [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) - This object can be used to obtain the computed result of the closure.
+- [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) - Pending result of the submitted closure.
 
 ### func tell(() -> Unit, ReceiverConfig)
 
@@ -96,11 +96,9 @@ Return Value:
 public func tell(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default): Unit
 ```
 
-Function: Submits a closure to the dispatcher without expecting a return value (Tell mode).
+Function: Submits a closure to the dispatcher without expecting a return value (`Tell` mode or fire-and-forget mode).
 
 Parameters:
 
-- `f: () -> Unit` - The closure submitted to the actor.
-- `config!: ReceiverConfig` - The configuration for the submitted task, defaults to ReceiverConfig.default.
-
-
+- `f: () -> Unit` - The closure submitted to the dispatcher.
+- `config!: ReceiverConfig` - The configuration for the submitted task, defaults to `ReceiverConfig.default`.

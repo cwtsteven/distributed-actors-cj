@@ -6,7 +6,7 @@
 public interface ActorClient
 ```
 
-Function: Interface for actor client implementations that provide remote access to actors in a distributed actor system.
+Function: Interface that provide remote access to actors *exported* by the connected `ActorHost`.
 
 ### prop id
 
@@ -14,7 +14,7 @@ Function: Interface for actor client implementations that provide remote access 
 prop id: String
 ```
 
-Function: The unique identifier of the actor client.
+Function: A unique identifier of the actor client.
 
 ### func find()
 
@@ -38,11 +38,11 @@ Return Value:
 func findAll(): Array<ActorInfo>
 ```
 
-Function: Finds all actors registered in the distributed actor system.
+Function: Finds all actors exported in the corresponding `ActorHost`.
 
 Return Value:
 
-- `Array<ActorInfo>` - An array containing information about all registered actors.
+- `Array<ActorInfo>` - An array containing information about all exported actors.
 
 ### func remoteCall()
 
@@ -50,7 +50,7 @@ Return Value:
 func remoteCall(invokeInfo: InvokeInfo): Unit
 ```
 
-Function: Makes a remote call to an actor's receiver function and fulfills the provided future with the result.
+Function: Makes a remote call to an actor's receiver according to the invocation info.
 
 Parameters:
 
@@ -62,40 +62,40 @@ Parameters:
 public interface ActorHost
 ```
 
-Function: Interface for actor host implementations that manage actor registration and deregistration in a distributed actor system.
+Function: Interface that exports and un-exports distributed actors.
 
-### func register()
+### func export()
 
 ```cangjie
-func register(name: String, a: Distributable): Bool
+func export(name: String, a: Distributable): Bool
 ```
 
-Function: Registers an actor instance with the actor system under the specified name.
+Function: Exports an actor instance with a specified name.
 
 Parameters:
 
-- `name: String` - The name to register the actor under.
-- `a: Distributable` - The actor instance to register, must implement `Distributable`.
+- `name: String` - The name to export the actor.
+- `a: Distributable` - The actor instance to export.
 
 Return Value:
 
-- `Bool` - Returns `true` if the actor was successfully registered, `false` if the name is already taken.
+- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
 
-### func deregister()
+### func unexport()
 
 ```cangjie
-func deregister(name: String): Bool
+func unexport(name: String): Bool
 ```
 
-Function: Removes an actor from the actor system.
+Function: Un-export an actor.
 
 Parameters:
 
-- `name: String` - The name of the actor to deregister.
+- `name: String` - The name of the actor to un-export.
 
 Return Value:
 
-- `Bool` - Returns `true` if the actor was successfully deregistered, `false` if the actor was not found.
+- `Bool` - Returns `true` if the actor was successfully un-exported, `false` if the actor was not found.
 
 ## interface Distributable
 
@@ -103,7 +103,7 @@ Return Value:
 public interface Distributable
 ```
 
-Function: Interface that distributed actor interfaces must implement to support remote communication. This interface provides the necessary methods for remote method invocation and metadata access.
+Function: A common interface for **all** distributed actors. This interface provides the necessary methods for dispatching remote receiver invocation to the underlying actor instance and metadata access.
 
 ### func getMetadata()
 
@@ -111,7 +111,7 @@ Function: Interface that distributed actor interfaces must implement to support 
 func getMetadata(): Metadata
 ```
 
-Function: Gets the metadata of the actor, including information about its receiver functions, description, and custom data.
+Function: Gets the metadata of the actor, including information about its receivers, description, and custom data.
 
 Return Value:
 
@@ -128,7 +128,7 @@ Function: Dispatches a `tell` operation to the actor without expecting a return 
 Parameters:
 
 - `receiverName: String` - The name of the receiver function to call.
-- `args: Array<DataModel>` - Serialized arguments for the receiver function.
+- `args: Array<DataModel>` - Serialized arguments for the receiver.
 - `config: ReceiverConfig` - Configuration for the call.
 
 Exceptions:
@@ -141,7 +141,7 @@ Exceptions:
 func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
 ```
 
-Function: Dispatches an `ask` operation to the actor and returns a waitable for the result.
+Function: Dispatches an `ask` operation to the actor and returns a *waitable* object for the result.
 
 Parameters:
 
@@ -151,7 +151,7 @@ Parameters:
 
 Return Value:
 
-- `LocalWaitable` - A waitable object that can be used to retrieve the result.
+- [LocalWaitable](./distributed_package_interfaces.md#interface-localwaitable) - A *waitable* object that can be used to retrieve the pending result of a receiver call.
 
 Exceptions:
 
@@ -163,7 +163,7 @@ Exceptions:
 public interface LocalWaitable
 ```
 
-Function: Interface for objects that can be waited upon locally and provide serialized results.
+Function: A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`.
 
 ### func getResult()
 
@@ -171,7 +171,7 @@ Function: Interface for objects that can be waited upon locally and provide seri
 func getResult(): DataModel
 ```
 
-Function: Gets the serialized result of the operation.
+Function: Gets the serialized result of the operation. If the receiver throws an exception or an error, they will be returned as serialized data model.
 
 Return Value:
 
@@ -183,7 +183,7 @@ Return Value:
 static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
 ```
 
-Function: Creates a LocalWaitable from an ActorFuture for serializable types.
+Function: Creates a LocalWaitable from an `ActorFuture` for serializable types.
 
 Parameters:
 

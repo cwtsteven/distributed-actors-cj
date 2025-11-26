@@ -31,9 +31,9 @@ main() {
     let tcpHost = TCPActorHost(bindAt: PORT)
     let serverFuture = tcpHost.serve()
 
-    // Register the bank service
+    // Export the bank service
     let bankService = BankServiceImpl()
-    tcpHost.register("bank-service", bankService)
+    tcpHost.export("bank-service", bankService)
 
     println("TCP Actor Host is running on port ${PORT}")
     println("Press Ctrl+C to stop the server")

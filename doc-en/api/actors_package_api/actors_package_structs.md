@@ -9,7 +9,10 @@ public struct ReceiverConfig <: Equatable<ReceiverConfig> {
 }
 ```
 
-Function: Configuration struct for receiver function calls, including priority settings and other call parameters.
+Function: Configuration for receiver calls, including priority.
+
+Implements:
+- `Equatable`
 
 ### init(Int64)
 
@@ -17,7 +20,7 @@ Function: Configuration struct for receiver function calls, including priority s
 public init(priority!: Int64 = 5)
 ```
 
-Function: Creates a ReceiverConfig with the specified priority.
+Function: Creates a `ReceiverConfig` with the specified priority.
 
 Parameters:
 
@@ -29,7 +32,7 @@ Parameters:
 public static let default = ReceiverConfig()
 ```
 
-Function: A default ReceiverConfig instance with standard priority settings.
+Function: A default `ReceiverConfig` instance with default priority.
 
 ### operator ==()
 
@@ -37,15 +40,15 @@ Function: A default ReceiverConfig instance with standard priority settings.
 public override operator func ==(other: ReceiverConfig): Bool
 ```
 
-Function: Compares two ReceiverConfig instances for equality.
+Function: Compares two `ReceiverConfig` instances for equality.
 
 Parameters:
 
-- `other: ReceiverConfig` - The other ReceiverConfig to compare with.
+- `other: ReceiverConfig` - The other `ReceiverConfig` to compare with.
 
 Return Value:
 
-- `Bool` - Returns `true` if the ReceiverConfigs are equal, `false` otherwise.
+- `Bool` - Returns `true` if all the values inside the `ReceiverConfig`s are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -53,12 +56,12 @@ Return Value:
 public override operator func !=(other: ReceiverConfig): Bool
 ```
 
-Function: Compares two ReceiverConfig instances for inequality.
+Function: Compares two `ReceiverConfig` instances for inequality.
 
 Parameters:
 
-- `other: ReceiverConfig` - The other ReceiverConfig to compare with.
+- `other: ReceiverConfig` - The other `ReceiverConfig` to compare with.
 
 Return Value:
 
-- `Bool` - Returns `true` if the ReceiverConfigs are not equal, `false` otherwise.
+- `Bool` - Returns `true` if any of the values inside the `ReceiverConfig`s is not equal, `false` otherwise.

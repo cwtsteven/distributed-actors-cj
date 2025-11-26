@@ -32,7 +32,7 @@ main() {
     tcpHost.serve() // start the server
 
     let bankService = BankServiceImpl()
-    tcpHost.register("bank-service", bankService)
+    tcpHost.export("bank-service", bankService)
 
     // Client side
     let tcpClient = TCPActorClient("client-1", "localhost", PORT)

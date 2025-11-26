@@ -28,7 +28,8 @@
 - [ ] 消息传递语义（至少一次 vs 最多一次）
 - [ ] 失败消息传递的重试机制
 - [ ] 增强异常与错误处理
-
+- [ ] 可重入的 Actor
+- [ ] Cluster
 
 ## 项目架构
 
@@ -107,7 +108,7 @@ make test
 - **[示例](examples/)**：演示各项功能的示例
 - **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**：展示在 HarmonyOS 上使用分布式 Actor 和智能体集成的 AI 应用示例
 
-#### 基本 Actor
+#### 本地 Actor
 
 ```cangjie
 import actors.*
@@ -179,7 +180,7 @@ main() {
     tcpHost.serve() // start the server
 
     let bankService = BankServiceImpl()
-    tcpHost.register("bank-service", bankService)
+    tcpHost.export("bank-service", bankService)
 
     // Client side
     let tcpClient = TCPActorClient("client-1", "localhost", PORT)

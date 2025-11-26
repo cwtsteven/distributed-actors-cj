@@ -1,5 +1,3 @@
-package actors.dummy_actor_system
-
 import std.collection.*
 import std.collection.concurrent.*
 import std.sync.*
@@ -8,6 +6,7 @@ import actors.*
 import actors.macros.*
 import actors.distributed.*
 
+import encoding.json.*
 import serialization.serialization.*
 
 private let actorMap = ConcurrentHashMap<String, Distributable>()
@@ -21,7 +20,7 @@ private let metadataMap = ConcurrentHashMap<String, ActorInfo>()
 @Actor
 public class DummyActorHost <: ActorHost {
 
-    public func register(name: String, a: Distributable): Bool {
+    public func export(name: String, a: Distributable): Bool {
         let res = actorMap.putIfAbsent(name, a)
         match (res) {
             case Some(_) => false
@@ -31,7 +30,7 @@ public class DummyActorHost <: ActorHost {
         }
     }
 
-    public func deregister(name: String): Bool {
+    public func unexport(name: String): Bool {
         match (actorMap.remove(name)) {
             case Some(_) =>
                 metadataMap.remove(name)
@@ -119,4 +118,43 @@ public class DummyActorClient <: ActorClient {
         let _ = config
         host.handleRemoteCall(name, receiverName, args, config, None, tell: True)
     }
+}
+
+@ActorInterface[
+    distributed: true,
+    description: "This is a test service",
+    customInfo: """
+        { "service": "test" }
+    """
+]
+public interface Service {
+
+    @Receiver[
+        description: "This is foo function",
+        customInfo: """
+            { "foo": "bar" }
+        """
+    ]
+    func foo(x: Int64): Int64
+
+}
+
+@Actor
+public class MyService <: Service {
+
+    @Receiver
+    public func foo(x: Int64): Int64 {
+        println("inside foo")
+        x + 42
+    }
+}
+
+main() {
+    let dummyHost = DummyActorHost()
+    let dummyClient = DummyActorClient(dummyHost)
+    dummyHost.export("myService", MyService())
+
+    let proxy = ActorProxy("myService", dummyClient)
+    let fut = proxy.ask("foo", [0.serialize()])
+    println(Int64.deserialize(fut.get()))
 }

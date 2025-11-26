@@ -6,7 +6,7 @@
 public interface ActorClient
 ```
 
-功能：分布式 Actor 系统中，向远程 Actor 提供访问能力的客户端接口。
+功能：为连接到的 `ActorHost` 所 *导出* 的 actor 提供远程访问能力的客户端接口。
 
 ### prop id
 
@@ -14,7 +14,7 @@ public interface ActorClient
 prop id: String
 ```
 
-功能：客户端唯一标识。
+功能：actor client 的唯一标识符。
 
 ### func find()
 
@@ -22,11 +22,11 @@ prop id: String
 func find(name: String): Option<ActorInfo>
 ```
 
-功能：按名称查找 Actor 并返回其信息。
+功能：按名称查找 actor 并返回其信息。
 
 参数：
 
-- name: String — 要查找的 Actor 名称。
+- name: String — 要查找的 actor 名称。
 
 返回值：
 
@@ -38,11 +38,11 @@ func find(name: String): Option<ActorInfo>
 func findAll(): Array<ActorInfo>
 ```
 
-功能：查找分布式系统中注册的全部 Actor。
+功能：查找对应 `ActorHost` 中导出的全部 actor。
 
 返回值：
 
-- `Array<ActorInfo>` — 所有已注册 Actor 的信息数组。
+- `Array<ActorInfo>` — 所有已导出 actor 的信息数组。
 
 ### func remoteCall()
 
@@ -50,11 +50,11 @@ func findAll(): Array<ActorInfo>
 func remoteCall(invokeInfo: InvokeInfo): Unit
 ```
 
-功能：远程调用 Actor 的 Receiver，并将结果填充到提供的 Future 中。
+功能：根据调用信息对某个 actor 的 receiver 发起远程调用。
 
 参数：
 
-- `invokeInfo: InvokeInfo` — 远程调用所需信息。
+- `invokeInfo: InvokeInfo` — 关于远程调用的全部信息。
 
 ## interface ActorHost
 
@@ -62,40 +62,40 @@ func remoteCall(invokeInfo: InvokeInfo): Unit
 public interface ActorHost
 ```
 
-功能：分布式 Actor 系统中管理 Actor 注册与注销的主机接口。
+功能：分布式 actor 系统中用于导出与取消导出分布式 actor 的主机接口。
 
-### func register()
+### func export()
 
 ```cangjie
-func register(name: String, a: Distributable): Bool
+func export(name: String, a: Distributable): Bool
 ```
 
-功能：以指定名称在系统中注册 Actor 实例。
+功能：以指定名称导出一个 actor 实例。
 
 参数：
 
-- `name: String` — 注册名。
-- `a: Distributable` — 待注册的 Actor，需实现 `Distributable`。
+- `name: String` — 用于注册 actor 的名称。
+- `a: Distributable` — 待导出的 actor 实例，需实现 `Distributable`。
 
 返回值：
 
-- `Bool` — 成功返回 `true`；若名称已被占用返回 `false`。
+- `Bool` — 导出成功返回 `true`；若名称已被占用返回 `false`。
 
-### func deregister()
+### func unexport()
 
 ```cangjie
-func deregister(name: String): Bool
+func unexport(name: String): Bool
 ```
 
-功能：从系统移除指定 Actor。
+功能：取消导出指定名称的 actor。
 
 参数：
 
-- `name: String` — 要移除的 Actor 名称。
+- `name: String` — 要取消导出的 actor 名称。
 
 返回值：
 
-- `Bool` — 成功返回 `true`；未找到返回 `false`。
+- `Bool` — 取消导出成功返回 `true`；未找到返回 `false`。
 
 ## interface Distributable
 
@@ -103,7 +103,7 @@ func deregister(name: String): Bool
 public interface Distributable
 ```
 
-功能：分布式 Actor 接口为提供远程通信能力而需实现的接口，提供远程调用与元数据访问所需方法。
+功能：所有分布式 actor 为支持远程通信需实现的共用接口。该接口提供将远程 receiver 调用分发到底层 actor 实例，以及访问元数据所需的方法。
 
 ### func getMetadata()
 
@@ -111,11 +111,11 @@ public interface Distributable
 func getMetadata(): Metadata
 ```
 
-功能：获取 Actor 的元数据，包括 Receiver 信息、描述与自定义数据。
+功能：获取 actor 的元数据，包括其所有 receiver 信息、描述与自定义数据。
 
 返回值：
 
-- `Metadata` — 描述 Actor 接口的元数据。
+- `Metadata` — 描述 actor 接口的元数据。
 
 ### func dispatchTell()
 
@@ -123,17 +123,17 @@ func getMetadata(): Metadata
 func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
 ```
 
-功能：以 Tell 方式分发调用，不期待返回值。
+功能：以 `Tell` 方式向 actor 分发调用，不期待返回值。
 
 参数：
 
-- `receiverName: String` — Receiver 名称。
-- `args: Array<DataModel>` — Receiver 的序列化参数。
+- `receiverName: String` — receiver 函数名称。
+- `args: Array<DataModel>` — receiver 的序列化参数。
 - `config: ReceiverConfig` — 调用配置。
 
 异常：
 
-- `ReceiverNotFoundException` — 未找到 Receiver 时抛出。
+- `ReceiverNotFoundException` — 未找到 receiver 函数时抛出。
 
 ### func dispatchAsk()
 
@@ -141,21 +141,21 @@ func dispatchTell(receiverName: String, args: Array<DataModel>, config: Receiver
 func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
 ```
 
-功能：以 Ask 方式分发调用，并返回可等待的对象以获取结果。
+功能：以 `Ask` 方式向 actor 分发调用，并返回可等待对象以获取结果。
 
 参数：
 
-- `receiverName: String` — Receiver 名称。
-- `args: Array<DataModel>` — Receiver 的序列化参数。
+- `receiverName: String` — receiver 函数名称。
+- `args: Array<DataModel>` — receiver 的序列化参数。
 - `config: ReceiverConfig` — 调用配置。
 
 返回值：
 
-- `LocalWaitable` — 可用于获取结果的可等待的对象。
+- `LocalWaitable` — 可用于获取 receiver 调用待处理结果的可等待对象。
 
 异常：
 
-- `ReceiverNotFoundException` — 未找到 Receiver 时抛出。
+- `ReceiverNotFoundException` — 未找到 receiver 函数时抛出。
 
 ## interface LocalWaitable
 
@@ -163,7 +163,7 @@ func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverC
 public interface LocalWaitable
 ```
 
-功能：可在本地等待并提供序列化结果的对象接口。
+功能：所有本地 `ActorFuture<T>` 类型共用的接口，提供以序列化形式（`DataModel`）获取 Future 结果的方法。
 
 ### func getResult()
 
@@ -171,11 +171,11 @@ public interface LocalWaitable
 func getResult(): DataModel
 ```
 
-功能：获取操作的序列化结果。
+功能：获取操作的序列化结果。若 receiver 抛出异常或错误，则会以序列化数据模型的形式返回。
 
 返回值：
 
-- `DataModel` — 序列化结果。
+- `DataModel` — 操作的序列化结果。
 
 ### func fromActorFuture<T>()
 
@@ -183,12 +183,12 @@ func getResult(): DataModel
 static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
 ```
 
-功能：从 ActorFuture（可序列化类型）创建 `LocalWaitable`。
+功能：从可序列化类型的 `ActorFuture` 创建 `LocalWaitable`。
 
 参数：
 
-- `obj: Object` — 要转换的 ActorFuture 对象。
+- `obj: Object` — 要转换的 `ActorFuture` 对象。
 
 返回值：
 
-- `LocalWaitable` — 提供该 ActorFuture 序列化结果的 `LocalWaitable`。
+- `LocalWaitable` — 提供该 `ActorFuture` 序列化结果的 `LocalWaitable`。

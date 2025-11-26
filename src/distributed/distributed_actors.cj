@@ -73,19 +73,19 @@ public class ActorProxy {
 */
 public interface ActorHost {
     /*
-    * Registers an actor
+    * Exports an actor
     * @param name - the name of the actor
-    * @param a - the actor to register
-    * @return true if the actor was successfully registered, false otherwise
+    * @param a - the actor to export
+    * @return true if the actor was successfully exported, false otherwise
     */
-    func register(name: String, a: Distributable): Bool
+    func export(name: String, a: Distributable): Bool
 
     /*
-    * Deregisters an actor
+    * Un-exports an actor
     * @param name - the name of the actor
-    * @return true if the actor was successfully deregistered, false otherwise
+    * @return true if the actor was successfully un-exported, false otherwise
     */
-    func deregister(name: String): Bool
+    func unexport(name: String): Bool
 }
 
 /*

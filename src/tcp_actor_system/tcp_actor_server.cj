@@ -31,7 +31,7 @@ public class TCPActorHost <: ActorHost {
         logTag = "[TCPActorHost (${serverSocket.localAddress})]"
     }
 
-    public func register(name: String, a: Distributable): Bool  {
+    public func export(name: String, a: Distributable): Bool  {
         if (let Some(_) <- localMap.putIfAbsent(name, a)) {
             false
         } else {
@@ -39,7 +39,7 @@ public class TCPActorHost <: ActorHost {
         }
     }
 
-    public func deregister(name: String): Bool {
+    public func unexport(name: String): Bool {
         match (localMap.remove(name)) {
             case Some(_) => true
             case None => false

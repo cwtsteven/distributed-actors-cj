@@ -20,7 +20,7 @@ endif
 
 OPTIONS = -g
 IMPORT_ACTORS = --import-path ./target/release/actors -L./target/release/actors -lactors
-IMPORT_ACTORS_DISTRIBUTED = -lactors.distributed -lactors.dummy_actor_system -lactors.tcp_actor_system -lactors.distributed.mcp
+IMPORT_ACTORS_DISTRIBUTED = -lactors.distributed -lactors.tcp_actor_system -lactors.distributed.mcp
 
 example:
 	rm -rf $(TARGET_DIR)
@@ -35,13 +35,14 @@ example:
 	cjc $(EXAMPLE_DIR)/tcp-actor-host.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-actor-host
 	cjc $(EXAMPLE_DIR)/tcp-actor-client.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-actor-client
 	cjc $(EXAMPLE_DIR)/distributed-actor-example.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/distributed-actor-example
+	cjc $(EXAMPLE_DIR)/dummy-actor-system.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/dummy-actor-system
 	pushd $(EXAMPLE_DIR)/agent-example && cjpm build && popd && cp $(EXAMPLE_DIR)/agent-example/target/release/bin/agent_example $(TARGET_DIR)/agent_example
 
 build:
 	cjpm build -i
 
 test:
-	cjpm test src/tests src/tests/end2end src/macros/internal/tests src/dummy_actor_system/tests src/tcp_actor_system/tests
+	cjpm test src/tests src/tests/end2end src/macros/internal/tests src/tcp_actor_system/tests
 
 clean:
 	pushd $(EXAMPLE_DIR)/agent-example && cjpm clean && popd

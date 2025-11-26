@@ -18,7 +18,7 @@ public func get(): T
 
 返回值：
 
-- `T` — 对应闭包计算得到的结果。
+- `T` — 对应闭包的执行结果。
 
 ### func get(Duration)
 
@@ -26,7 +26,7 @@ public func get(): T
 public func get(timeout: Duration): Option<T>
 ```
 
-功能：阻塞当前线程直到超时到期或结果就绪。若结果已准备好则返回结果，否则返回 `None`。若产生异常或错误，本方法会传播相同的异常或错误。`timeout = 0` 表示无限等待。
+功能：阻塞当前线程直到超时到期或结果就绪。若结果已准备好则返回结果，否则返回 `None`。若产生异常或错误，本方法会抛出相同的异常或错误。`timeout = 0` 表示无限等待，与调用 `get()` 等效。
 
 参数：
 
@@ -56,7 +56,7 @@ public class SequentialDispatcher {
 }
 ```
 
-功能：一个 `SequentialDispatcher` 实例代表 Cangjie 系统中的一个线程。用户可以向该实例提交闭包，这些闭包将被排队并在该线程上执行。
+功能：在专用线程上按顺序排队并执行闭包的调度器，并提供提交闭包的方法；支持基于优先级的调度。
 
 通常无需直接使用该类，推荐通过 [@Actor](../macros/macros_package_api/macros_package_macros.md#actor-宏) 宏。
 
@@ -66,7 +66,7 @@ public class SequentialDispatcher {
 public init(enableReceiverPriority!: Bool = false)
 ```
 
-功能：创建 `SequentialDispatcher` 并启动对应线程以处理用户提交的闭包。
+功能：创建 `SequentialDispatcher` 并启动线程以执行提交给它的闭包。
 
 参数：
 
@@ -78,16 +78,16 @@ public init(enableReceiverPriority!: Bool = false)
 public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T>
 ```
 
-功能：向调度器提交闭包，闭包将在调度器线程上排队并执行。返回 [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) 作为待处理结果。若构造时启用了 `enableReceiverPriority`，高优先级闭包将被优先执行；否则 `priority` 值无效。
+功能：向调度器提交闭包，闭包将在调度器线程上排队并执行。返回 [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) 作为待处理结果。若构造时启用了 `enableReceiverPriority`，高优先级闭包将被优先执行；否则 [ReceiverConfig](./actors_package_structs.md#struct-receiverconfig) 中的 `priority` 值无效。
 
 参数：
 
-- `f: () -> T` — 提交给 Actor 的闭包。
+- `f: () -> T` — 提交给调度器的闭包。
 - `config!: ReceiverConfig` — 提交任务的配置，默认为 `ReceiverConfig.default`。
 
 返回值：
 
-- [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) — 用于获取闭包计算结果。
+- [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) — 提供用于获取该闭包结果的待处理对象。
 
 ### func tell(() -> Unit, ReceiverConfig)
 
@@ -95,9 +95,9 @@ public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default
 public func tell(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default): Unit
 ```
 
-功能：以 Tell 模式提交闭包（不关心返回值）。
+功能：以 `Tell` 模式（即发即忘）提交闭包，不关心返回值。
 
 参数：
 
-- `f: () -> Unit` — 提交给 Actor 的闭包。
+- `f: () -> Unit` — 提交给调度器的闭包。
 - `config!: ReceiverConfig` — 提交任务的配置，默认为 `ReceiverConfig.default`。

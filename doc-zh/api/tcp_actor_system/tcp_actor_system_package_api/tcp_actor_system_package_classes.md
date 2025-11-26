@@ -6,7 +6,7 @@
 public class TCPActorSystem
 ```
 
-功能：提供 TCP Actor 系统日志配置的主类。管理整个 TCP Actor 系统用于调试与监控的全局日志器实例。
+功能：提供 TCP actor 系统日志配置的主类。管理整个 TCP actor 系统用于调试与监控的全局日志器实例。
 
 ### static mut prop logger
 
@@ -14,7 +14,7 @@ public class TCPActorSystem
 public static mut prop logger: Logger
 ```
 
-功能：可变的全局日志器属性，供 TCP Actor 系统各组件使用。
+功能：可变的全局日志器属性，供 TCP actor 系统各组件使用。
 
 返回值：
 
@@ -28,7 +28,7 @@ public class TCPActorHost <: ActorHost {
 }
 ```
 
-功能：基于 TCP 的 `ActorHost` 实现，负责通过 TCP 连接管理 Actor 注册与远程调用。提供服务器以接受客户端连接并管理网络通信。
+功能：基于 TCP 的 `ActorHost` 实现，负责通过 TCP 连接管理 actor 的导出与远程调用。提供服务器以接受客户端连接并在网络上管理 actor 通信。
 
 ### init(UInt16)
 
@@ -42,38 +42,38 @@ public init(bindAt!: UInt16)
 
 - `bindAt!: UInt16` — 服务器绑定的端口。
 
-### func register()
+### func export()
 
 ```cangjie
-public func register(name: String, a: Distributable): Bool
+public func export(name: String, a: Distributable): Bool
 ```
 
-功能：以指定名称注册 Actor。
+功能：以指定名称导出 actor 实例。
 
 参数：
 
-- `name: String` — 注册名。
-- `a: Distributable` — 待注册的 Actor 实例。
+- `name: String` — 用于导出 actor 的名称。
+- `a: Distributable` — 待导出的 actor 实例。
 
 返回值：
 
-- `Bool` — 成功返回 `true`；若名称已被占用返回 `false`。
+- `Bool` — 导出成功返回 `true`；若名称已被占用返回 `false`。
 
-### func deregister()
+### func unexport()
 
 ```cangjie
-public func deregister(name: String): Bool
+public func unexport(name: String): Bool
 ```
 
-功能：从主机注销指定 Actor。
+功能：从主机取消导出指定 actor。
 
 参数：
 
-- `name: String` — 要注销的 Actor 名称。
+- `name: String` — 要取消导出的 actor 名称。
 
 返回值：
 
-- `Bool` — 成功返回 `true`；未找到则返回 `false`。
+- `Bool` — 取消导出成功返回 `true`；未找到则返回 `false`。
 
 ### func serve()
 
@@ -107,7 +107,7 @@ public class TCPActorClient <: ActorClient {
 }
 ```
 
-功能：基于 TCP 的 `ActorClient` 实现，连接到 TCP Actor 主机以访问远程 Actor。
+功能：基于 TCP 的 `ActorClient` 实现，通过 TCP 连接为远程 actor 提供访问能力。该类连接到 TCP actor 主机并启用与远程 actor 的通信。
 
 ### init(String, String, UInt16)
 
@@ -129,7 +129,7 @@ public init(id: String, addr: String, port: UInt16)
 public prop id: String
 ```
 
-功能：TCP 客户端的唯一标识。
+功能：TCP actor 客户端的唯一标识。
 
 ### func find()
 
@@ -137,11 +137,11 @@ public prop id: String
 public func find(name: String): Option<ActorInfo>
 ```
 
-功能：按名称查找 Actor 并返回信息。
+功能：按名称查找 actor 并返回信息。
 
 参数：
 
-- `name: String` — 要查找的 Actor 名称。
+- `name: String` — 要查找的 actor 名称。
 
 返回值：
 
@@ -153,11 +153,11 @@ public func find(name: String): Option<ActorInfo>
 public func findAll(): Array<ActorInfo>
 ```
 
-功能：获取主机上注册的全部 Actor 信息。
+功能：查找 TCP actor 主机中注册的全部 actor。
 
 返回值：
 
-- `Array<ActorInfo>` — 所有已注册 Actor 的信息数组。
+- `Array<ActorInfo>` — 所有已注册 actor 的信息数组。
 
 ### func remoteCall()
 
@@ -165,7 +165,7 @@ public func findAll(): Array<ActorInfo>
 public func remoteCall(invokeInfo: InvokeInfo): Unit
 ```
 
-功能：远程调用 Actor 的 Receiver，并以结果完成提供的 Future。
+功能：根据调用信息对某个 actor 的 receiver 发起远程调用。
 
 参数：
 

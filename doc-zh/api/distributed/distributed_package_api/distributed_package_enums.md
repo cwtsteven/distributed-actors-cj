@@ -10,13 +10,17 @@ public enum ReceiverMode <: ToString & Equatable<ReceiverMode> {
 }
 ```
 
-功能：表示 Receiver 函数的调用模式，决定在分布式系统中 Receiver 可被如何调用。
+功能：表示 receiver 函数的调用模式，决定在分布式系统中 receiver 是仅可 Ask 调用、仅可 Tell 调用，还是两者皆可。
+
+实现接口：
+- `ToString`
+- `Equatable`
 
 ### 取值
 
-- `AskOnly` — 仅允许以 Ask 模式调用（期待返回值）
-- `TellOnly` — 仅允许以 Tell 模式调用（即发即忘）
-- `AskAndTell` — 既可 Ask 也可 Tell
+- `AskOnly` — 仅允许以 Ask 模式调用（期待返回值）。
+- `TellOnly` — 仅允许以 Tell 模式调用（即发即忘）。
+- `AskAndTell` — 既可 Ask 也可 Tell。
 
 ### func toString()
 
@@ -76,7 +80,7 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
 }
 ```
 
-功能：用于序列化与元数据生成的类型信息。描述分布式 Actor 通信中 Receiver 参数与返回值的类型。
+功能：表示 Cangjie 类型的类型模式，用于描述其结构。该枚举用于描述分布式 actor 通信中 receiver 参数与返回值的类型。
 
 ### 取值
 

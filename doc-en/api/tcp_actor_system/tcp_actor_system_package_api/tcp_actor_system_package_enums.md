@@ -38,11 +38,11 @@ Function: Compares two Payload instances for equality.
 
 Parameters:
 
-- other: Payload - The other Payload to compare with.
+- `other: Payload` - The other Payload to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the Payloads are equal, `false` otherwise.
+- `Bool` - Returns `true` if the Payloads are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -54,11 +54,11 @@ Function: Compares two Payload instances for inequality.
 
 Parameters:
 
-- other: Payload - The other Payload to compare with.
+- `other: Payload` - The other Payload to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the Payloads are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the Payloads are not equal, `false` otherwise.
 
 ### func toString()
 
@@ -70,7 +70,7 @@ Function: Converts the Payload to a string representation.
 
 Return Value:
 
-- String - A string representation of the Payload.
+- `String` - A string representation of the Payload.
 
 ## enum TCPActorSystemError
 
@@ -100,7 +100,7 @@ Function: Converts the TCPActorSystemError to a string representation.
 
 Return Value:
 
-- String - A string representation of the TCPActorSystemError.
+- `String` - A string representation of the TCPActorSystemError.
 
 ### operator ==()
 
@@ -112,11 +112,11 @@ Function: Compares two TCPActorSystemError instances for equality.
 
 Parameters:
 
-- other: TCPActorSystemError - The other TCPActorSystemError to compare with.
+- `other: TCPActorSystemError` - The other TCPActorSystemError to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the TCPActorSystemErrors are equal, `false` otherwise.
+- `Bool` - Returns `true` if the TCPActorSystemErrors are equal, `false` otherwise.
 
 ### operator !=()
 
@@ -128,8 +128,8 @@ Function: Compares two TCPActorSystemError instances for inequality.
 
 Parameters:
 
-- other: TCPActorSystemError - The other TCPActorSystemError to compare with.
+- `other: TCPActorSystemError` - The other TCPActorSystemError to compare with.
 
 Return Value:
 
-- Bool - Returns `true` if the TCPActorSystemErrors are not equal, `false` otherwise.
+- `Bool` - Returns `true` if the TCPActorSystemErrors are not equal, `false` otherwise.

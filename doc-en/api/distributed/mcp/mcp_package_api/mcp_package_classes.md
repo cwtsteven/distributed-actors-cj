@@ -18,7 +18,7 @@ Function: Creates an ActorToolManager with an optional base tool manager.
 
 Parameters:
 
-- baseManager!: ToolManager - The base tool manager to delegate to, defaults to SimpleToolManager().
+- `baseManager!: ToolManager` - The base tool manager to delegate to, defaults to SimpleToolManager().
 
 ### func addTool()
 
@@ -30,7 +30,7 @@ Function: Adds a tool to the tool manager.
 
 Parameters:
 
-- tool: Tool - The tool to add.
+- `tool: Tool` - The tool to add.
 
 ### func delTool()
 
@@ -42,7 +42,7 @@ Function: Removes a tool from the tool manager.
 
 Parameters:
 
-- tool: Tool - The tool to remove.
+- `tool: Tool` - The tool to remove.
 
 ### func addTools()
 
@@ -54,7 +54,7 @@ Function: Adds multiple tools to the tool manager.
 
 Parameters:
 
-- tools: Array<Tool> - The tools to add.
+- `tools: Array<Tool>` - The tools to add.
 
 ### func clear()
 
@@ -74,7 +74,7 @@ Function: Finds a tool by name.
 
 Parameters:
 
-- name: String - The name of the tool to find.
+- `name: String` - The name of the tool to find.
 
 Return Value:
 
@@ -102,8 +102,8 @@ Function: Filters tools based on a question and search configuration.
 
 Parameters:
 
-- question: String - The search question.
-- config: ToolSearchConfig - The search configuration.
+- `question: String` - The search question.
+- `config: ToolSearchConfig` - The search configuration.
 
 Return Value:
 
@@ -127,7 +127,7 @@ Function: Adds an actor client to the tool manager, making its actors available 
 
 Parameters:
 
-- client: ActorClient - The actor client to add.
+- `client: ActorClient` - The actor client to add.
 
 ### func removeActorClient()
 
@@ -139,11 +139,11 @@ Function: Removes an actor client from the tool manager, making its actors no lo
 
 Parameters:
 
-- clientId: String - The ID of the actor client to remove.
+- `clientId: String` - The ID of the actor client to remove.
 
 Exceptions:
 
-- ActorMCPException - Thrown if the client is not found.
+- `ActorMCPException` - Thrown if the client is not found.
 
 ## class ReceiverTool
 
@@ -172,14 +172,14 @@ Function: Creates a ReceiverTool with the specified configuration.
 
 Parameters:
 
-- name!: String - The name of the tool (format: "actorName;__actors_08275892475824__;receiverName").
-- description!: String - The description of the tool.
-- parameters!: `Array<ToolParameter>` - The parameters for the tool.
-- retType!: TypeSchema - The return type schema for the tool.
-- examples!: `Array<String>` - Example usage strings for the tool.
-- extra!: `HashMap<String, String>` - Extra metadata for the tool.
-- client!: ActorClient - The actor client to use for communication.
-- info!: ReceiverInfo - The receiver information for the actor function.
+- `name!: String` - The name of the tool (format: "actorName;__actors_08275892475824__;receiverName").
+- `description!: String` - The description of the tool.
+- `parameters!: Array<ToolParameter>` - The parameters for the tool.
+- `retType!: TypeSchema` - The return type schema for the tool.
+- `examples!: Array<String>` - Example usage strings for the tool.
+- `extra!: HashMap<String, String>` - Extra metadata for the tool.
+- `client!: ActorClient` - The actor client to use for communication.
+- `info!: ReceiverInfo` - The receiver information for the actor function.
 
 ### prop name
 
@@ -255,15 +255,15 @@ Function: Invokes the MCP tool with the provided arguments, converting them to a
 
 Parameters:
 
-- args: HashMap<String, ToJsonValue> - The arguments for the tool invocation, including an optional "config" parameter for ReceiverConfig.
+- `args: HashMap<String, ToJsonValue>` - The arguments for the tool invocation, including an optional "config" parameter for ReceiverConfig.
 
 Return Value:
 
-- ToolResponse - The response from the tool execution, serialized as a string.
+- `ToolResponse` - The response from the tool execution, serialized as a string.
 
 Exceptions:
 
-- ActorMCPException - Thrown if the tool name format is invalid or required arguments are missing.
+- `ActorMCPException` - Thrown if the tool name format is invalid or required arguments are missing.
 
 ### func toString()
 
@@ -275,7 +275,7 @@ Function: Converts the ReceiverTool to a string representation.
 
 Return Value:
 
-- String - A string representation of the ReceiverTool in the format "name [description]".
+- `String` - A string representation of the ReceiverTool in the format "name [description]".
 
 ## class ActorMCPException
 
@@ -297,4 +297,4 @@ Function: Creates an ActorMCPException with a custom error message.
 
 Parameters:
 
-- msg: String - The custom error message describing the MCP error.
+- `msg: String` - The custom error message describing the MCP error.

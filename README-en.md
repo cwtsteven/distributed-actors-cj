@@ -28,6 +28,8 @@ A distributed actor framework designed for the Cangjie programming language, pro
 - [ ] Message delivery semantics (at-least-once vs at-most-once)
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Enhanced exception and error handling
+- [ ] Reentrant actors
+- [ ] Cluster
 
 ## Project structure
 
@@ -92,7 +94,7 @@ Most tests should pass. Known failing tests:
 - `testGarbageCollection`
 - `testForkJoinGarbageCollection`
 
-These problems are fixed in a newer version of the Cangjie compiler however this library is not supporting that yet.
+These problems are fixed in a newer version of the Cangjie compiler however this library is not supporting that version yet.
 
 ### Tutorial
 
@@ -105,7 +107,7 @@ For more detailed examples please refers to
 - **[Examples](examples/)**: Working examples demonstrating various features
 - **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**: Example AI-powered applications demonstrating distributed actors with agent integration on HarmonyOS
 
-#### Basic Actor
+#### Local Actor
 
 ```cangjie
 import actors.*
@@ -177,7 +179,7 @@ main() {
     tcpHost.serve() // start the server
 
     let bankService = BankServiceImpl()
-    tcpHost.register("bank-service", bankService)
+    tcpHost.export("bank-service", bankService)
 
     // Client side
     let tcpClient = TCPActorClient("client-1", "localhost", PORT)

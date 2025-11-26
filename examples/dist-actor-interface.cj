@@ -6,7 +6,7 @@ import encoding.json.*
 import actors.*
 import actors.macros.*
 import actors.distributed.*
-import actors.dummy_actor_system.*
+import actors.tcp_actor_system.*
 
 @ActorInterface[
     distributed: true,
@@ -39,19 +39,11 @@ public class MyService <: Service {
 
 main() {
     let myService = MyService()
-    let host = DummyActorHost()
-    let client = DummyActorClient(host)
-    host.register("myService", myService)
+    let tcpHost = TCPActorHost(bindAt: 52165)
+    tcpHost.export("myService", myService)
 
-    let proxy = ActorProxy("myService", client)
+    let tcpClient = TCPActorClient("client-1", "localhost", 52165)
+    let proxy = ActorProxy("myService", tcpClient)
     let fut = proxy.ask("foo", [0.serialize()])
     println(Int64.deserialize(fut.get()))
-
-    let infos = client.findAll()
-    println("Metadata count: ${infos.size}")
-    for (info in infos) {
-        println("Service: ${info.name}")
-        println("Metadata: ${info.metadata.toString()}")
-        println()
-    }
 }

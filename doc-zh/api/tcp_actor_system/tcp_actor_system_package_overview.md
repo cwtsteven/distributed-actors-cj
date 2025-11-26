@@ -20,9 +20,8 @@
 
 | 类名 | 功能 |
 | --- | --- |
-| [TCPActorSystem](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorsystem) | 提供 TCP Actor 系统日志配置的主类。 |
-| [TCPActorHost](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorhost) | 基于 TCP 的 `ActorHost` 实现，负责 Actor 注册并通过 TCP 处理远程调用。 |
-| [TCPActorClient](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorclient) | 基于 TCP 的 `ActorClient` 实现，通过 TCP 访问远程 Actor。 |
+| [TCPActorHost](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorhost) | 基于 TCP 的 actor host 实现，提供用于 *导出* 分布式 actor 的方法 |
+| [TCPActorClient](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorclient) | 基于 TCP 的 actor client 实现，提供用于 *查找* 分布式 actor 的方法 |
 | [TCPActorSystemSerializationException](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorsystemserializationexception) | TCP Actor 系统中的序列化失败异常。 |
 | [TCPActorSystemDeserializationException](./tcp_actor_system_package_api/tcp_actor_system_package_classes.md#class-tcpactorsystemdeserializationexception) | TCP Actor 系统中的反序列化失败异常。 |
 

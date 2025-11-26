@@ -9,7 +9,10 @@ public struct ReceiverConfig <: Equatable<ReceiverConfig> {
 }
 ```
 
-功能：Receiver 函数调用的配置，包含优先级与其他调用参数。
+功能：Receiver 调用的配置，包含优先级等信息。
+
+实现接口：
+- `Equatable`
 
 ### init(Int64)
 
@@ -29,7 +32,7 @@ public init(priority!: Int64 = 5)
 public static let default = ReceiverConfig()
 ```
 
-功能：使用标准优先级设置的默认 `ReceiverConfig` 实例。
+功能：使用默认优先级的 `ReceiverConfig` 实例。
 
 ### operator ==()
 
@@ -37,15 +40,15 @@ public static let default = ReceiverConfig()
 public override operator func ==(other: ReceiverConfig): Bool
 ```
 
-功能：判断两个 `ReceiverConfig` 是否相等。
+功能：比较两个 `ReceiverConfig` 是否相等。
 
 参数：
 
-- `other: ReceiverConfig` — 待比较的另一个配置。
+- `other: ReceiverConfig` — 待比较的另一个 `ReceiverConfig`。
 
 返回值：
 
-- `Bool` — 相等返回 `true`，否则 `false`。
+- `Bool` — 若两个 `ReceiverConfig` 的所有字段都相同则返回 `true`，否则返回 `false`。
 
 ### operator !=()
 
@@ -53,12 +56,12 @@ public override operator func ==(other: ReceiverConfig): Bool
 public override operator func !=(other: ReceiverConfig): Bool
 ```
 
-功能：判断两个 `ReceiverConfig` 是否不相等。
+功能：比较两个 `ReceiverConfig` 是否不相等。
 
 参数：
 
-- `other: ReceiverConfig` — 待比较的另一个配置。
+- `other: ReceiverConfig` — 待比较的另一个 `ReceiverConfig`。
 
 返回值：
 
-- `Bool` — 不相等返回 `true`，否则 `false`。
+- `Bool` — 若任一字段不同则返回 `true`，否则返回 `false`。

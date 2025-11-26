@@ -558,11 +558,11 @@ To manage distributed actors, you need an actor host and client. The actor host 
 // Create an actor host (implementation depends on your distributed setup)
 let actorHost: ActorHost
 
-// Create and register the actor
+// Create and export the actor
 let bankService = BankServiceImpl()
-let registered = actorHost.register("bank-service", bankService)
+let registered = actorHost.export("bank-service", bankService)
 if (!registered) {
-    println("Failed to register bank service")
+    println("Failed to export bank service")
     return
 }
 ```
@@ -637,9 +637,9 @@ import actors.tcp_actor_system.*
 // Create a TCP actor host that listens on port 8080
 let tcpHost = TCPActorHost(bindAt: 8080)
 
-// Register actors with the host
+// Export actors with the host
 let bankService = BankServiceImpl()
-tcpHost.register("bank-service", bankService)
+tcpHost.export("bank-service", bankService)
 
 // Start the server to accept client connections
 let serverFuture = tcpHost.serve()
@@ -711,9 +711,9 @@ main() {
     let tcpHost = TCPActorHost(bindAt: PORT)
     let serverFuture = tcpHost.serve()
 
-    // Register the bank service
+    // Export the bank service
     let bankService = BankServiceImpl()
-    tcpHost.register("bank-service", bankService)
+    tcpHost.export("bank-service", bankService)
 
     println("TCP Actor Host is running on port ${PORT}")
     println("Press Ctrl+C to stop the server")

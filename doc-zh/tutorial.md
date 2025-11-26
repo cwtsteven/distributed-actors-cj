@@ -559,9 +559,9 @@ let actorHost: ActorHost
 
 // 创建并注册 actor
 let bankService = BankServiceImpl()
-let registered = actorHost.register("bank-service", bankService)
+let registered = actorHost.export("bank-service", bankService)
 if (!registered) {
-    println("Failed to register bank service")
+    println("Failed to export bank service")
     return
 }
 ```
@@ -638,7 +638,7 @@ let tcpHost = TCPActorHost(bindAt: 8080)
 
 // 向 host 注册 actor
 let bankService = BankServiceImpl()
-tcpHost.register("bank-service", bankService)
+tcpHost.export("bank-service", bankService)
 
 // 启动服务器以接受客户端连接
 let serverFuture = tcpHost.serve()
@@ -712,7 +712,7 @@ main() {
 
     // 注册银行服务
     let bankService = BankServiceImpl()
-    tcpHost.register("bank-service", bankService)
+    tcpHost.export("bank-service", bankService)
 
     println("TCP Actor Host is running on port ${PORT}")
     println("Press Ctrl+C to stop the server")
