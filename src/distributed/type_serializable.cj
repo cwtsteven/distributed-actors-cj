@@ -1,5 +1,7 @@
 package actors.distributed
 
+import std.collection.*
+
 public interface TypeSerializable {
     static func typeModel(): TypeModel
 }
@@ -95,6 +97,12 @@ extend<T> Array<T> <: TypeSerializable where T <: TypeSerializable {
 }
 
 extend<T> Option<T> <: TypeSerializable where T <: TypeSerializable {
+    public static func typeModel(): TypeModel {
+        TypeModel.ListType(T.typeModel())
+    }
+}
+
+extend<T> ArrayList<T> <: TypeSerializable where T <: TypeSerializable {
     public static func typeModel(): TypeModel {
         TypeModel.ListType(T.typeModel())
     }

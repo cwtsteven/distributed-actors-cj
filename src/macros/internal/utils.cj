@@ -67,3 +67,15 @@ func deserializeFuncParams(fd: FuncDecl, isTell: Bool): Tokens {
 enum Behaviour {
     | Ask | Tell
 }
+
+func generateParamList(fd: FuncDecl): Tokens {
+    var res = Tokens()
+    for (i in 0..fd.funcParams.size) {
+        let fp = fd.funcParams[i]
+        res += quote($(fp.identifier))
+        if (i < fd.funcParams.size - 1) {
+            res += quote(, )
+        }
+    }
+    res
+}

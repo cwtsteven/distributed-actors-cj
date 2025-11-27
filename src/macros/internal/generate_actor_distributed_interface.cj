@@ -71,10 +71,12 @@ protected class GenerateDistributedActorInterface {
 
                 if (rOpts.shouldAsk()) {
                     newDecls.append(newReceiver(mDecl, rOpts, behaviour: Ask))
+                    newDecls.append(newDefaultReceiver(mDecl, rOpts, behaviour: Ask))
                     proxyClassDecl.body.decls.append(newProxyReceiver(mDecl, rOpts, behaviour: Ask))
                 }
                 if (rOpts.shouldTell()) {
                     newDecls.append(newReceiver(mDecl, rOpts, behaviour: Tell))
+                    newDecls.append(newDefaultReceiver(mDecl, rOpts, behaviour: Tell))
                     proxyClassDecl.body.decls.append(newProxyReceiver(mDecl, rOpts, behaviour: Tell))
                 }
             })
@@ -143,13 +145,56 @@ protected class GenerateDistributedActorInterface {
             let callExpr = deserializeFuncParams(fd, false)
             staticInit.block.nodes.append(CallExpr(quote(
                 $dispatchAskHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
-                    LocalWaitable.fromActorFuture<$(fd.declType)>(a.$(fd.identifier)$(callExpr))
+                    a.$(fd.identifier)$(callExpr)
                 })
             )))
         }
         // Add receiver info to the static receivers array
         staticInit.block.nodes.append(CallExpr(quote(
             $receiverInfosArrayVarToken.append($receiverInfoVarIdent)
+        )))
+    }
+
+    private func checkReceiverDecl(fd: FuncDecl): Unit {
+        if (fd.block.nodes.size != 0) {
+            errors.add(ReceiverMacroInsideActorInterface)
+        }
+        // Check that the function has no type parameters
+        if (fd.isGenericDecl) {
+            errors.add(ReceiverMacroInvalidDecl)
+        }
+
+        errors.report()
+    }
+
+    private func newReceiverInfo(receiverInfoVarIdent: Token, rOpts: MacroOptionSet, fd: FuncDecl, retTy: TypeNode, errors: MacroErrors): ?VarDecl {
+        let description = rOpts.getDescription()
+        let customInfo = rOpts.getCustomInfos()
+        let paramSchema = try {
+            buildParamSchema(fd)
+        } catch (_: Exception) {
+            // Add error for unsupported type and return empty parameter schema
+            errors.add(MacroReceiverInfoUnsupportedType)
+            errors.doThrow()
+        }
+        let retTypeModel = try {
+            getTypeModel(retTy)
+        } catch (_: Exception) {
+            // Add error for unsupported type and return empty parameter schema
+            errors.add(MacroReceiverInfoUnsupportedType)
+            errors.doThrow()
+        }
+
+        let modeToken = Token(IDENTIFIER, rOpts.getMode().toString())
+        Some(VarDecl(quote(
+            static let $receiverInfoVarIdent: $receiverInfoToken = $receiverInfoToken(
+                description: $(description),
+                customInfo: JsonObject.fromStr($(customInfo.toString())).asObject(),
+                methodName: $(fd.identifier.value),
+                paramSchema: $paramSchema,
+                retTypeModel: $retTypeModel,
+                mode: $modeToken
+            )
         )))
     }
 
@@ -163,6 +208,19 @@ protected class GenerateDistributedActorInterface {
         }
 
         modifyFuncDecl(rOpts, fd, behaviour)
+        headDecl
+    }
+
+    private func newDefaultReceiver(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, behaviour!: Behaviour): Decl {
+        let headDecl: Decl = parseDecl(mDecl.macroInputs)
+        let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+            case Some(fd) => fd
+            case None =>
+                errors.add(ReceiverMacroInvalidDecl)
+                errors.doThrow()
+        }
+
+        modifyDefaultFuncDecl(rOpts, fd, behaviour)
         headDecl
     }
 
@@ -204,7 +262,7 @@ protected class GenerateDistributedActorInterface {
 
     private func getProxyFunc(): FuncDecl {
         FuncDecl(quote(
-            static func getProxy(name: String, client: ActorClient): $proxyClassIdent {
+            static func getProxy(name: String, client: ActorClient): $interfaceName {
                 $proxyClassIdent(name, client)
             }
         ))
@@ -212,7 +270,7 @@ protected class GenerateDistributedActorInterface {
 
     private func generateProxyClassDecl(): ClassDecl {
         ClassDecl(quote(
-            public class $proxyClassIdent <: ActorProxy & $interfaceName {
+            private class $proxyClassIdent <: ActorProxy & $interfaceName {
                 static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
                 static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> LocalWaitable>()
                 static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
@@ -289,18 +347,6 @@ protected class GenerateDistributedActorInterface {
         }
     }
 
-    private func checkReceiverDecl(fd: FuncDecl): Unit {
-        if (fd.block.nodes.size != 0) {
-            errors.add(ReceiverMacroInsideActorInterface)
-        }
-        // Check that the function has no type parameters
-        if (fd.isGenericDecl) {
-            errors.add(ReceiverMacroInvalidDecl)
-        }
-
-        errors.report()
-    }
-
     private func modifyFuncDecl(_: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         fd.funcParams.append(FuncParam(quote(
             config!: ReceiverConfig
@@ -314,40 +360,48 @@ protected class GenerateDistributedActorInterface {
         }
 
         fd.declType = match (behaviour) {
-            case Ask => RefType(quote(Object))
+            case Ask => RefType(quote(ActorFuture<$(fd.declType)>))
             case Tell => PrimitiveType(quote(Unit))
         }
     }
 
-    private func newReceiverInfo(receiverInfoVarIdent: Token, rOpts: MacroOptionSet, fd: FuncDecl, retTy: TypeNode, errors: MacroErrors): ?VarDecl {
-        let description = rOpts.getDescription()
-        let customInfo = rOpts.getCustomInfos()
-        let paramSchema = try {
-            buildParamSchema(fd)
-        } catch (_: Exception) {
-            // Add error for unsupported type and return empty parameter schema
-            errors.add(MacroReceiverInfoUnsupportedType)
-            errors.doThrow()
-        }
-        let retTypeModel = try {
-            getTypeModel(retTy)
-        } catch (_: Exception) {
-            // Add error for unsupported type and return empty parameter schema
-            errors.add(MacroReceiverInfoUnsupportedType)
-            errors.doThrow()
+    private func modifyDefaultFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
+        var args = generateParamList(fd)
+
+        if (let Tell <- behaviour) {
+            // Add the `tell` parameter
+            fd.funcParams.append(FuncParam(quote(
+                tell!: $tellTypeToken
+            )))
         }
 
-        let modeToken = Token(IDENTIFIER, rOpts.getMode().toString())
-        Some(VarDecl(quote(
-            static let $receiverInfoVarIdent: $receiverInfoToken = $receiverInfoToken(
-                description: $(description),
-                customInfo: JsonObject.fromStr($(customInfo.toString())).asObject(),
-                methodName: $(fd.identifier.value),
-                paramSchema: $paramSchema,
-                retTypeModel: $retTypeModel,
-                mode: $modeToken
-            )
-        )))
+        let declaredType = fd.declType
+
+        fd.declType = match (behaviour) {
+            case Ask => RefType(quote(ActorFuture<$declaredType>))
+            case Tell => PrimitiveType(quote(Unit))
+        }
+
+        fd.block = Block()
+        fd.block.lBrace = Token(LCURL)
+        fd.block.rBrace = Token(RCURL)
+
+        args += if (args.size > 0) {
+            quote(, config: ReceiverConfig.default)
+        } else {
+            quote(config: ReceiverConfig.default)
+        }
+
+        match (behaviour) {
+            case Ask =>
+                fd.block.nodes.append(CallExpr(quote(
+                    ($(fd.identifier)($args) as ActorFuture<$declaredType>).getOrThrow()
+                )))
+            case Tell =>
+                fd.block.nodes.append(CallExpr(quote(
+                    $(fd.identifier)($args, tell: tell)
+                )))
+        }
     }
 }
 
