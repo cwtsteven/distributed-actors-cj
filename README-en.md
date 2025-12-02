@@ -20,16 +20,18 @@ A distributed actor framework designed for the Cangjie programming language, pro
 - **Actor Programming Model**: Active object abstractions with asynchronous method calls
 - **Distributed Actors**: Declarative syntax for defining distributed actor interfaces and implementations
 - **TCP Actor System**: TCP-based distributed actor system implementation
+- **TCP Cluster**: Cluster-based distributed actor system supporting multi-node deployment and automatic actor placement
 - **Agent Integration**: Exposing actors as tools under MCP protocol
 
 ### Roadmap
 
 - [x] Typed distributed actor proxy
+- [ ] Serializable proxy
 - [ ] Message delivery semantics (at-least-once vs at-most-once)
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Enhanced exception and error handling
 - [ ] Reentrant actors
-- [ ] Cluster
+- [x] Cluster
 
 ## Project structure
 
@@ -45,6 +47,7 @@ actors                   # Core actor programming model and local actor system
 │   ├── ActorClient         # Remote actor access interface
 │   ├── ActorProxy          # Client-side proxy for remote actors
 │   ├── DistributedFuture   # Distributed operation results
+│   ├── ActorCluster
 │   │
 │   └── actors.distributed.mcp  # Model Context Protocol integration
 │       ├── ActorMCPClient      # MCP client for AI agent integration
@@ -58,7 +61,10 @@ actors                   # Core actor programming model and local actor system
 ├── actors.tcp_actor_system # TCP-based distributed actor implementation
     ├── TCPActorHost        # TCP-based actor host
     ├── TCPActorClient      # TCP-based actor client
-    └── TCPActorSystem      # Main TCP actor system configuration
+    ├── TCPActorSystem      # Main TCP actor system configuration
+    │
+    └── actors.tcp_actor_system.cluster  # Cluster-based distributed actor system
+        └── TCPCluster                   # Cluster manager (head server and worker nodes)
 ```
 
 ### APIs description

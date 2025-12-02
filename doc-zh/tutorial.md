@@ -795,6 +795,428 @@ let customLogger = CustomLogger()
 TCPActorSystem.logger = customLogger
 ```
 
+# 使用 TCPCluster
+
+TCPCluster 提供了一个基于集群的分布式 actor 系统，允许您在多个工作节点上生成、管理和与分布式 actor 通信。集群由一个协调 actor 放置的头服务器和多个托管实际 actor 的工作节点组成。
+
+## 集群架构
+
+TCPCluster 由以下部分组成：
+
+- **头服务器（Head Server）**：一个中央协调器，管理整个集群中的 actor 注册、放置和查找
+- **工作节点（Worker Nodes）**：多个托管和执行分布式 actor 的节点
+- **客户端节点（Client Nodes）**：可选节点，可以加入集群以生成和与 actor 交互，但不托管它们
+
+以下图表说明了集群架构：
+
+```mermaid
+graph TB
+    subgraph "TCPCluster"
+        HS[Head Server<br/>Coordinates Actor Placement]
+
+        subgraph "Worker Nodes"
+            W1[Worker Node 1<br/>Hosts Actors]
+            W2[Worker Node 2<br/>Hosts Actors]
+            W3[Worker Node 3<br/>Hosts Actors]
+        end
+
+        subgraph "Client Nodes"
+            C1[Client Node 1]
+            C2[Client Node 2]
+        end
+
+        subgraph "Actors"
+            A1[Actor: alice]
+            A2[Actor: bob]
+            A3[Actor: charlie]
+        end
+    end
+
+    HS -->|Manages| W1
+    HS -->|Manages| W2
+    HS -->|Manages| W3
+
+    C1 -->|Spawn/Lookup| HS
+    C2 -->|Spawn/Lookup| HS
+
+    W1 -.->|Hosts| A1
+    W2 -.->|Hosts| A2
+    W3 -.->|Hosts| A3
+
+    C1 -->|Communicate| A1
+    C1 -->|Communicate| A2
+    C2 -->|Communicate| A3
+
+    style HS fill:#e1f5ff
+    style W1 fill:#fff4e1
+    style W2 fill:#fff4e1
+    style W3 fill:#fff4e1
+    style C1 fill:#e8f5e9
+    style C2 fill:#e8f5e9
+    style A1 fill:#f3e5f5
+    style A2 fill:#f3e5f5
+    style A3 fill:#f3e5f5
+```
+
+## 创建可生成的 Actor
+
+要在 TCPCluster 中使用 actor，它们必须实现 `Spawnable<T>` 接口。此接口需要：
+
+1. 一个 `typeName()` 静态函数，返回唯一的类型标识符
+2. 一个 `spawnWith(args: Array<SpawnArgument>)` 静态函数，从参数创建 actor 实例
+3. 在集群中注册可生成类型及其参数类型
+
+以下是一个可生成 actor 接口的示例：
+
+```cangjie
+@ActorInterface[distributed: true]
+public interface BankAccount <: Spawnable<BankAccount> {
+    @Receiver
+    func deposit(amount: Float64): Bool
+
+    static func typeName(): String {
+        "BankAccount"
+    }
+
+    static func spawnWith(args: Array<SpawnArgument>): Option<BankAccount> {
+        if (args.size == 0) {
+            return Some(BankAccountImpl())
+        }
+        if (args.size == 1) {
+            return Some(BankAccountImpl((args[0].value as String).getOrThrow()))
+        }
+        if (args.size == 2) {
+            return Some(BankAccountImpl(
+                (args[0].value as String).getOrThrow(),
+                (args[1].value as Float64).getOrThrow()
+            ))
+        }
+        None
+    }
+}
+```
+
+正确实现 `spawnWith` 函数以构造 actor 实例非常重要。以下是实现 `BankAccount` 接口的 actor 示例：
+
+```cangjie
+@Actor
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    public init(name: String, initialBalance: Float64) {
+        this.name = name
+        this.balance = initialBalance
+    }
+
+    public init(name: String) {
+        this.name = name
+        this.balance = 0.0
+    }
+
+    public init() {
+        this.name = "Unknown"
+        this.balance = 0.0
+    }
+
+    @Receiver
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+}
+```
+
+请注意，此 actor 类中的三个构造函数对应于 `spawnWith` 函数中的三种情况。用户还需要使用以下方式注册生成函数：
+
+```cangjie
+// 注册可生成类型
+ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+```
+
+并注册传递给构造函数的参数：
+
+```cangjie
+// 注册可在 SpawnArgument 中使用的参数类型
+ActorCluster.registerSpawnArgument<String>("String")
+ActorCluster.registerSpawnArgument<Float64>("Float64")
+```
+
+这些注册必须在使用分布式 actor 之前完成，并且**必须**在所有工作节点上执行。
+
+## 设置头服务器
+
+头服务器协调集群。使用 `createHeadServer` 函数创建并启动它：
+
+```cangjie
+TCPCluster.createHeadServer(headServerAddr: headServerAddr, headServerPort: headServerPort)
+```
+
+调用此函数将启动服务器并返回其线程句柄。
+
+## 设置工作节点
+
+工作节点托管实际的 actor。每个工作节点需要使用以下方式连接到头服务器：
+
+```cangjie
+TCPCluster.createWorker(
+    headServerAddr: headServerAddr,
+    headServerPort: headServerPort,
+    selfId: workerId,
+    selfAddr: workerAddr,
+    selfPort: workerPort
+)
+```
+
+每个工作节点必须具有唯一的 `workerId`。调用此函数将启动工作线程并返回其线程句柄。
+
+## 作为客户端加入
+
+您也可以作为仅客户端节点加入集群，该节点可以生成和与 actor 交互，但不会托管它们：
+
+```cangjie
+TCPCluster.join(headServerAddr: headServerAddr, headServerPort: headServerPort)
+```
+
+这将返回一个布尔值，指示是否成功加入集群。
+
+## 在集群中生成和使用 Actor
+
+一旦集群设置完成，您就可以生成 actor 并与它们交互。可以从已加入集群的任何节点（作为工作节点或客户端）生成 actor：
+
+```cangjie
+// 使用不同的构造函数参数生成 actor
+let aliceOpt: Option<BankAccount> = TCPCluster.spawnActor<BankAccount>(
+    "alice",
+    [
+        SpawnArgument.create<String>("String", "alice"),
+        SpawnArgument.create<Float64>("Float64", 100.0)
+    ]
+)
+let alice = aliceOpt.getOrThrow()
+```
+
+然后，您可以像使用本地 actor 引用一样使用类型化代理：
+
+```cangjie
+alice.deposit(100.0)
+```
+
+## 查找现有 Actor
+
+您可以查找在集群中其他地方生成的 actor：
+
+```cangjie
+// 按名称查找现有 actor
+let account = TCPCluster.getActor<BankAccount>("alice")
+match (account) {
+    case Some(proxy) => {
+        let balance = proxy.getBalance().get()
+        println("Alice's balance: ${balance}")
+    }
+    case None => println("Actor 'alice' not found")
+}
+```
+
+## 完整的集群示例
+
+以下是一个显示完整集群设置的完整示例：
+
+### 通用 Actor 定义（所有节点共享）
+
+```cangjie
+package cluster_example.common
+
+import std.collection.*
+
+import actors.*
+import actors.macros.*
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+@ActorInterface[distributed: true]
+public interface BankAccount <: Spawnable<BankAccount> {
+
+    @Receiver
+    func deposit(amount: Float64): Bool
+
+    @Receiver
+    func withdraw(amount: Float64): Bool
+
+    @Receiver
+    func getBalance(): Float64
+
+    static func typeName(): String {
+        "BankAccount"
+    }
+
+    static func spawnWith(args: Array<SpawnArgument>): Option<BankAccount> {
+        if (args.size == 0) {
+            return Some(BankAccountImpl())
+        }
+        if (args.size == 1) {
+            return Some(BankAccountImpl((args[0].value as String).getOrThrow()))
+        }
+        if (args.size == 2) {
+            return Some(BankAccountImpl((args[0].value as String).getOrThrow(), (args[1].value as Float64).getOrThrow()))
+        }
+        None
+    }
+}
+
+@Actor
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    static init() {
+        ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+        ActorCluster.registerSpawnArgument<String>("String")
+        ActorCluster.registerSpawnArgument<Float64>("Float64")
+    }
+
+    public init(name: String, initialBalance: Float64) {
+        this.name = name
+        this.balance = initialBalance
+    }
+
+    public init(name: String) {
+        this.name = name
+        this.balance = 0.0
+    }
+
+    public init() {
+        this.name = "Unknown"
+        this.balance = 0.0
+    }
+
+    @Receiver
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
+        }
+        balance -= amount
+        true
+    }
+
+    @Receiver
+    public func getBalance(): Float64 {
+        balance
+    }
+}
+
+public func entry() {
+    let alice = TCPCluster.spawnActor<BankAccount>("alice", [SpawnArgument.create<String>("String", "alice"), SpawnArgument.create<Float64>("Float64", 100.0)]).getOrThrow()
+    let bob = TCPCluster.spawnActor<BankAccount>("bob", [SpawnArgument.create<String>("String", "bob")]).getOrThrow()
+    alice.deposit(100.0).get()
+    bob.withdraw(50.0).get()
+    println("Alice's balance: ${alice.getBalance().get()}")
+    println("Bob's balance: ${bob.getBalance().get()}")
+
+    TCPCluster.killActor("alice")
+    TCPCluster.killActor("bob")
+
+    return 0
+}
+```
+
+### 头服务器
+
+```cangjie
+package cluster_example.head_server
+
+import std.convert.*
+import std.log.*
+
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+import cluster_example.common.*
+
+main(args: Array<String>) {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let port = UInt16.parse(args[0])
+    TCPCluster.createHeadServer(headServerAddr: "localhost", headServerPort: port).get()
+}
+```
+
+### 工作节点
+
+```cangjie
+package cluster_example.worker
+
+import std.convert.*
+import std.log.*
+
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+import cluster_example.common.*
+
+main(args: Array<String>) {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let headServerAddr = args[0]
+    let headServerPort = UInt16.parse(args[1])
+    let workerId = args[2]
+    let workerAddr = args[3]
+    let workerPort = UInt16.parse(args[4])
+
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort).get()
+}
+```
+
+### 入口点
+
+```cangjie
+package cluster_example.entry
+
+import std.convert.*
+import std.log.*
+
+import actors.*
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+import cluster_example.common.*
+
+main(args: Array<String>) {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let headServerAddr = args[0]
+    let headServerPort = UInt16.parse(args[1])
+    let workerId = args[2]
+    let workerAddr = args[3]
+    let workerPort = UInt16.parse(args[4])
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort)
+
+    entry()
+}
+```
+
 # 使用 MCP 扩展和 CangjieMagic
 
 MCP（模型上下文协议）扩展与 CangjieMagic 结合，提供了一种强大的方式来创建可以与分布式 actor 系统交互的 AI 驱动应用程序。本节展示如何构建可以通过自然语言发现和使用 actor 服务的智能代理。

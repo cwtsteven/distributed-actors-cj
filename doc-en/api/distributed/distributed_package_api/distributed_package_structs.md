@@ -296,3 +296,80 @@ Function: Converts the `ReceiverParameter` to a string representation.
 Return Value:
 
 - `String` - A string representation of the `ReceiverParameter`.
+
+## struct SpawnArgument
+
+```cangjie
+public struct SpawnArgument <: Serializable<SpawnArgument> & TypeSerializable {
+  public let typeName: String
+  public let value: Any
+}
+```
+
+Function: Represents a single argument for spawning distributed actors in the cluster. Each `SpawnArgument` carries both a type name and its value.
+
+### func create\<T>()
+
+```cangjie
+public static func create<T>(typeName: String, value: T): SpawnArgument where T <: Serializable<T> & TypeSerializable
+```
+
+Function: Creates a new `SpawnArgument` for a value of a serializable and type-serializable type.
+
+Parameters:
+
+- `typeName: String` - The unique type name associated with the argument type.
+- `value: T` - The argument value to wrap.
+
+Return Value:
+
+- `SpawnArgument` - The created spawn argument instance.
+
+### func serialize()
+
+```cangjie
+public func serialize(): DataModel
+```
+
+Function: Serializes the `SpawnArgument` into a `DataModel`.
+
+Return Value:
+
+- `DataModel` - The serialized representation of the `SpawnArgument`.
+
+Exceptions:
+
+- `ActorSystemException` - Thrown when no serialization functions have been registered for the given `typeName`.
+
+### func deserialize()
+
+```cangjie
+public static func deserialize(dataModel: DataModel): SpawnArgument
+```
+
+Function: Deserializes a `SpawnArgument` from its `DataModel` representation.
+
+Parameters:
+
+- `dataModel: DataModel` - The serialized spawn argument data.
+
+Return Value:
+
+- `SpawnArgument` - The deserialized spawn argument instance.
+
+Exceptions:
+
+- `DataModelException` - Thrown when the structure or fields of the data model are invalid.
+- `ActorSystemException` - Thrown when no deserialization functions have been registered for the referenced `typeName`.
+
+### func typeModel()
+
+```cangjie
+public static func typeModel(): TypeModel
+```
+
+Function: Returns the structural type model of `SpawnArgument` for metadata and schema purposes.
+
+Return Value:
+
+- `TypeModel` - A struct type model describing the `SpawnArgument` fields.
