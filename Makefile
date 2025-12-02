@@ -37,6 +37,7 @@ example:
 	cjc $(EXAMPLE_DIR)/distributed-actor-example.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/distributed-actor-example
 	cjc $(EXAMPLE_DIR)/dummy-actor-system.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/dummy-actor-system
 	pushd $(EXAMPLE_DIR)/agent-example && cjpm build && popd && cp $(EXAMPLE_DIR)/agent-example/target/release/bin/agent_example $(TARGET_DIR)/agent_example
+	pushd $(EXAMPLE_DIR)/cluster-example && cjpm build && popd && cp $(EXAMPLE_DIR)/cluster-example/target/release/bin/cluster_example.head_server $(TARGET_DIR)/cluster_example.head_server && cp $(EXAMPLE_DIR)/cluster-example/target/release/bin/cluster_example.worker $(TARGET_DIR)/cluster_example.worker && cp $(EXAMPLE_DIR)/cluster-example/target/release/bin/cluster_example.entry $(TARGET_DIR)/cluster_example.entry
 
 build:
 	cjpm build -i
@@ -46,4 +47,5 @@ test:
 
 clean:
 	pushd $(EXAMPLE_DIR)/agent-example && cjpm clean && popd
+	pushd $(EXAMPLE_DIR)/cluster-example && cjpm clean && popd
 	cjpm clean
