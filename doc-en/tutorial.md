@@ -796,6 +796,428 @@ let customLogger = CustomLogger()
 TCPActorSystem.logger = customLogger
 ```
 
+# Using TCPCluster
+
+The TCPCluster provides a cluster-based distributed actor system that allows you to spawn, manage, and communicate with distributed actors across multiple worker nodes. The cluster consists of a head server that coordinates actor placement and multiple worker nodes that host the actual actors.
+
+## Cluster Architecture
+
+A TCPCluster consists of:
+
+- **Head Server**: A central coordinator that manages actor registration, placement, and lookup across the cluster
+- **Worker Nodes**: Multiple nodes that host and execute distributed actors
+- **Client Nodes**: Optional nodes that can join the cluster to spawn and interact with actors without hosting them
+
+The following diagram illustrates the cluster architecture:
+
+```mermaid
+graph TB
+    subgraph "TCPCluster"
+        HS[Head Server<br/>Coordinates Actor Placement]
+
+        subgraph "Worker Nodes"
+            W1[Worker Node 1<br/>Hosts Actors]
+            W2[Worker Node 2<br/>Hosts Actors]
+            W3[Worker Node 3<br/>Hosts Actors]
+        end
+
+        subgraph "Client Nodes"
+            C1[Client Node 1]
+            C2[Client Node 2]
+        end
+
+        subgraph "Actors"
+            A1[Actor: alice]
+            A2[Actor: bob]
+            A3[Actor: charlie]
+        end
+    end
+
+    HS -->|Manages| W1
+    HS -->|Manages| W2
+    HS -->|Manages| W3
+
+    C1 -->|Spawn/Lookup| HS
+    C2 -->|Spawn/Lookup| HS
+
+    W1 -.->|Hosts| A1
+    W2 -.->|Hosts| A2
+    W3 -.->|Hosts| A3
+
+    C1 -->|Communicate| A1
+    C1 -->|Communicate| A2
+    C2 -->|Communicate| A3
+
+    style HS fill:#e1f5ff
+    style W1 fill:#fff4e1
+    style W2 fill:#fff4e1
+    style W3 fill:#fff4e1
+    style C1 fill:#e8f5e9
+    style C2 fill:#e8f5e9
+    style A1 fill:#f3e5f5
+    style A2 fill:#f3e5f5
+    style A3 fill:#f3e5f5
+```
+
+## Creating Spawnable Actors
+
+To use actors in a TCPCluster, they must implement the `Spawnable<T>` interface. This interface requires:
+
+1. A `typeName()` static function that returns a unique type identifier
+2. A `spawnWith(args: Array<SpawnArgument>)` static function that creates actor instances from arguments
+3. Registration of the spawnable type and its argument types with the cluster
+
+Here's an example of a spawnable actor interface:
+
+```cangjie
+@ActorInterface[distributed: true]
+public interface BankAccount <: Spawnable<BankAccount> {
+    @Receiver
+    func deposit(amount: Float64): Bool
+
+    static func typeName(): String {
+        "BankAccount"
+    }
+
+    static func spawnWith(args: Array<SpawnArgument>): Option<BankAccount> {
+        if (args.size == 0) {
+            return Some(BankAccountImpl())
+        }
+        if (args.size == 1) {
+            return Some(BankAccountImpl((args[0].value as String).getOrThrow()))
+        }
+        if (args.size == 2) {
+            return Some(BankAccountImpl(
+                (args[0].value as String).getOrThrow(),
+                (args[1].value as Float64).getOrThrow()
+            ))
+        }
+        None
+    }
+}
+```
+
+It is important that the `spawnWith` function is implemented correctly to construct the actor instance. Here is an example of an actor implementing the `BankAccount` interface:
+
+```
+@Actor
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    public init(name: String, initialBalance: Float64) {
+        this.name = name
+        this.balance = initialBalance
+    }
+
+    public init(name: String) {
+        this.name = name
+        this.balance = 0.0
+    }
+
+    public init() {
+        this.name = "Unknown"
+        this.balance = 0.0
+    }
+
+    @Receiver
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+}
+```
+
+Notice that the three constructors in this actor class corresponds to the three cases in the `spawnWith` function. The user also needs to register the spawning functions using
+
+```cangjie
+// Register the spawnable type
+ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+```
+
+and register the arguments passed into the constructors:
+
+```cangjie
+// Register argument types that can be used in SpawnArgument
+ActorCluster.registerSpawnArgument<String>("String")
+ActorCluster.registerSpawnArgument<Float64>("Float64")
+```
+
+These registration must be done before using distributed actors and **must** be executed in all worker nodes.
+
+## Setting Up the Head Server
+
+The head server coordinates the cluster. Create and start it using the `createHeadServer` function:
+
+```cangjie
+TCPCluster.createHeadServer(headServerAddr: headServerAddr, headServerPort: headServerPort)
+```
+
+Calling this function will start the server and return its thread handle.
+
+## Setting Up Worker Nodes
+
+Worker nodes host the actual actors. Each worker needs to connect to the head server using:
+
+```cangjie
+TCPCluster.createWorker(
+    headServerAddr: headServerAddr,
+    headServerPort: headServerPort,
+    selfId: workerId,
+    selfAddr: workerAddr,
+    selfPort: workerPort
+)
+```
+
+Each worker must have a unique `workerId`. Calling this function will start the worker thread and return its thread handle.
+
+## Joining as a Client
+
+You can also join the cluster as a client-only node that can spawn and interact with actors but won't host them:
+
+```cangjie
+TCPCluster.join(headServerAddr: headServerAddr, headServerPort: headServerPort)
+```
+
+This return a boolean value indicating if it has successfully joined the cluster or not.
+
+## Spawning and Using Actors in the Cluster
+
+Once the cluster is set up, you can spawn actors and interact with them. Actors can be spawned from any node that has joined the cluster (either as a worker or as a client):
+
+```cangjie
+// Spawn actors with different constructor arguments
+let aliceOpt: Option<BankAccount> = TCPCluster.spawnActor<BankAccount>(
+    "alice",
+    [
+        SpawnArgument.create<String>("String", "alice"),
+        SpawnArgument.create<Float64>("Float64", 100.0)
+    ]
+)
+let alice = aliceOpt.getOrThrow()
+```
+
+You can then use the typed proxy like a local actor reference:
+
+```cangjie
+alice.deposit(100.0)
+```
+
+## Looking Up Existing Actors
+
+You can look up actors that were spawned elsewhere in the cluster:
+
+```cangjie
+// Look up an existing actor by name
+let account = TCPCluster.getActor<BankAccount>("alice")
+match (account) {
+    case Some(proxy) => {
+        let balance = proxy.getBalance().get()
+        println("Alice's balance: ${balance}")
+    }
+    case None => println("Actor 'alice' not found")
+}
+```
+
+## Complete Cluster Example
+
+Here's a complete example showing the full cluster setup:
+
+### Common Actor Definition (shared by all nodes)
+
+```cangjie
+package cluster_example.common
+
+import std.collection.*
+
+import actors.*
+import actors.macros.*
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+@ActorInterface[distributed: true]
+public interface BankAccount <: Spawnable<BankAccount> {
+
+    @Receiver
+    func deposit(amount: Float64): Bool
+
+    @Receiver
+    func withdraw(amount: Float64): Bool
+
+    @Receiver
+    func getBalance(): Float64
+
+    static func typeName(): String {
+        "BankAccount"
+    }
+
+    static func spawnWith(args: Array<SpawnArgument>): Option<BankAccount> {
+        if (args.size == 0) {
+            return Some(BankAccountImpl())
+        }
+        if (args.size == 1) {
+            return Some(BankAccountImpl((args[0].value as String).getOrThrow()))
+        }
+        if (args.size == 2) {
+            return Some(BankAccountImpl((args[0].value as String).getOrThrow(), (args[1].value as Float64).getOrThrow()))
+        }
+        None
+    }
+}
+
+@Actor
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    static init() {
+        ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+        ActorCluster.registerSpawnArgument<String>("String")
+        ActorCluster.registerSpawnArgument<Float64>("Float64")
+    }
+
+    public init(name: String, initialBalance: Float64) {
+        this.name = name
+        this.balance = initialBalance
+    }
+
+    public init(name: String) {
+        this.name = name
+        this.balance = 0.0
+    }
+
+    public init() {
+        this.name = "Unknown"
+        this.balance = 0.0
+    }
+
+    @Receiver
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
+        }
+        balance -= amount
+        true
+    }
+
+    @Receiver
+    public func getBalance(): Float64 {
+        balance
+    }
+}
+
+public func entry() {
+    let alice = TCPCluster.spawnActor<BankAccount>("alice", [SpawnArgument.create<String>("String", "alice"), SpawnArgument.create<Float64>("Float64", 100.0)]).getOrThrow()
+    let bob = TCPCluster.spawnActor<BankAccount>("bob", [SpawnArgument.create<String>("String", "bob")]).getOrThrow()
+    alice.deposit(100.0).get()
+    bob.withdraw(50.0).get()
+    println("Alice's balance: ${alice.getBalance().get()}")
+    println("Bob's balance: ${bob.getBalance().get()}")
+
+    TCPCluster.killActor("alice")
+    TCPCluster.killActor("bob")
+
+    return 0
+}
+```
+
+### Head server
+
+```cangjie
+package cluster_example.head_server
+
+import std.convert.*
+import std.log.*
+
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+import cluster_example.common.*
+
+main(args: Array<String>) {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let port = UInt16.parse(args[0])
+    TCPCluster.createHeadServer(headServerAddr: "localhost", headServerPort: port).get()
+}
+```
+
+### Worker
+
+```cangjie
+package cluster_example.worker
+
+import std.convert.*
+import std.log.*
+
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+import cluster_example.common.*
+
+main(args: Array<String>) {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let headServerAddr = args[0]
+    let headServerPort = UInt16.parse(args[1])
+    let workerId = args[2]
+    let workerAddr = args[3]
+    let workerPort = UInt16.parse(args[4])
+
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort).get()
+}
+```
+
+### Entry
+
+```cangjie
+package cluster_example.entry
+
+import std.convert.*
+import std.log.*
+
+import actors.*
+import actors.distributed.*
+import actors.tcp_actor_system.*
+import actors.tcp_actor_system.cluster.*
+
+import encoding.json.*
+import serialization.serialization.*
+
+import cluster_example.common.*
+
+main(args: Array<String>) {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let headServerAddr = args[0]
+    let headServerPort = UInt16.parse(args[1])
+    let workerId = args[2]
+    let workerAddr = args[3]
+    let workerPort = UInt16.parse(args[4])
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort)
+
+    entry()
+}
+```
+
 # Using MCP extension and CangjieMagic
 
 The MCP (Model Context Protocol) extension combined with CangjieMagic provides a powerful way to create AI-powered applications that can interact with distributed actor systems. This section shows how to build intelligent agents that can discover and use actor services through natural language.
