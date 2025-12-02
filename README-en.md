@@ -29,7 +29,7 @@ A distributed actor framework designed for the Cangjie programming language, pro
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Enhanced exception and error handling
 - [ ] Reentrant actors
-- [ ] Cluster
+- [x] Cluster
 
 ## Project structure
 

@@ -17,7 +17,7 @@
   description = "A distributed actors framework."
   version = "1.0.0"
   name = "actors"
-  compile-option = "-Woff unused"
+  compile-option = "--debug-macro -Woff unused"
   output-type = "dynamic"
 
 [package.package-configuration."actors.macros.internal"]
