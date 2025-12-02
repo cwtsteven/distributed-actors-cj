@@ -46,4 +46,5 @@ test:
 
 clean:
 	pushd $(EXAMPLE_DIR)/agent-example && cjpm clean && popd
+	pushd $(EXAMPLE_DIR)/cluster-example && cjpm clean && popd
 	cjpm clean
