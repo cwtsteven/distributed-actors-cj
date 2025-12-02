@@ -30,6 +30,7 @@ This package enables building scalable distributed systems where actors can be d
 | [ReceiverParameter](./distributed_package_api/distributed_package_structs.md#struct-receiverparameter) | Information about a parameter in a receiver function, including its name, type, and description. |
 | [FieldModel](./distributed_package_api/distributed_package_structs.md#struct-fieldmodel) | Information about a field in a struct type, including its name, type, and description. Part of the whole type model schema. |
 | [InvokeInfo](./distributed_package_api/distributed_package_structs.md#struct-invokeinfo) | Information about a remote call invocation, containing all the necessary details to make a remote call to an actor's receiver. |
+| [SpawnArgument](./distributed_package_api/distributed_package_structs.md#struct-spawnargument) | Represents a single argument for spawning distributed actors in the cluster. |
 
 ### Interfaces
 
@@ -40,6 +41,8 @@ This package enables building scalable distributed systems where actors can be d
 | [ActorClient](./distributed_package_api/distributed_package_interfaces.md#interface-actorclient) | Interface for actor client implementations. Provides methods for *finding* a distributed actor. |
 | [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`. |
 | [TypeSerializable](./distributed_package_api/distributed_package_interfaces.md#interface-typeserializable) | Interface for types that can describe their type schema for distributed transport by returning a `TypeModel`. |
+| [Spawnable](./distributed_package_api/distributed_package_interfaces.md#interface-spawnablet) | Interface for distributed actors that can be spawned dynamically within a cluster. Users are required implement this interface for any actor interfaces that are meant to be spawned in a cluster. |
+| [ActorCluster](./distributed_package_api/distributed_package_interfaces.md#interface-actorcluster) | Interface for creating a cluster system for spawning and discovering distributed actors. |
 
 ### Enumerations
 
