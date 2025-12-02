@@ -20,16 +20,18 @@
 - **Actor 编程模型**：基于异步方法调用的主动对象抽象
 - **分布式 Actor**：用于定义分布式 Actor 接口与实现的声明式语法
 - **TCP Actor 系统**：基于 TCP 的分布式 Actor 系统实现
+- **TCP 集群**：基于集群的分布式 Actor 系统，支持多节点部署和自动 actor 放置
 - **智能体集成**：通过 MCP 协议将 Actor 以工具形式提供给 AI 智能体使用
 
 ### 项目计划
 
 - [x] 类型安全的 Actor 代理
+- [ ] 可序列化的代理
 - [ ] 消息传递语义（至少一次 vs 最多一次）
 - [ ] 失败消息传递的重试机制
 - [ ] 增强异常与错误处理
 - [ ] 可重入的 Actor
-- [ ] Cluster
+- [x] Cluster
 
 ## 项目架构
 
@@ -45,6 +47,7 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 │   ├── ActorClient         # 远程 Actor 访问接口
 │   ├── ActorProxy          # 远程 Actor 的客户端代理
 │   ├── DistributedFuture   # 分布式操作结果
+│   ├── ActorCluster
 │   │
 │   └── actors.distributed.mcp  # Model Context Protocol (MCP) 集成
 │       ├── ActorMCPClient      # 用于 AI 智能体集成的 MCP 客户端
@@ -58,7 +61,10 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 ├── actors.tcp_actor_system # 基于 TCP 的分布式 Actor 实现
     ├── TCPActorHost        # 基于 TCP 的 Actor 主机
     ├── TCPActorClient      # 基于 TCP 的 Actor 客户端
-    └── TCPActorSystem      # TCP Actor 系统的主配置
+    ├── TCPActorSystem      # TCP Actor 系统的主配置
+    │
+    └── actors.tcp_actor_system.cluster  # 基于集群的分布式 Actor 系统
+        └── TCPCluster                   # 集群管理器（头服务器和工作节点）
 ```
 
 ### 接口说明

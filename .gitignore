@@ -1,6 +1,7 @@
 cjpm.lock
-target/
+**/target/
 **.cj.macrocall
 /.vscode/
 /.cache/
 *.log
+**/log.txt

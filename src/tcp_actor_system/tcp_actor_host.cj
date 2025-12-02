@@ -152,14 +152,14 @@ public class TCPActorHost <: ActorHost {
                 TCPActorSystem.logger.debug("${logTag}: local future done.")
                 conn.send(Envelope(id, Fulfill(futId, res)))
             }
-        } catch (_: ReceiverNotFoundException) {
-            TCPActorSystem.logger.error("${logTag}: receiver not found for ${name}.${methodName}.")
+        } catch (e: ReceiverNotFoundException) {
+            TCPActorSystem.logger.error("${logTag}: receiver not found for ${name}.${methodName}: ${e.toString()}")
             conn.send(Envelope(id, ErrorCode(ReceiverNotFound)))
-        } catch (_: Exception) {
-            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}.")
+        } catch (e: Exception) {
+            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}: ${e.toString()}")
             conn.send(Envelope(id, ErrorCode(UnknownError)))
-        } catch (_: Error) {
-            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}.")
+        } catch (e: Error) {
+            TCPActorSystem.logger.error("${logTag}: unknown error for ${name}.${methodName}: ${e.toString()}")
             conn.send(Envelope(id, ErrorCode(UnknownError)))
         }
     }

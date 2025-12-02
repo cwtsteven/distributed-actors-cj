@@ -15,9 +15,9 @@
 [package]
   cjc-version = "0.53.18"
   description = "A distributed actors framework."
-  version = "1.0.0"
+  version = "0.0.1"
   name = "actors"
-  compile-option = "-Woff unused"
+  compile-option = "--debug-macro -Woff unused"
   output-type = "dynamic"
 
 [package.package-configuration."actors.macros.internal"]

@@ -295,3 +295,81 @@ public override func toString(): String
 返回值：
 
 - `String` —  `ReceiverParameter` 的字符串表示。
+
+## struct SpawnArgument
+
+```cangjie
+public struct SpawnArgument <: Serializable<SpawnArgument> & TypeSerializable {
+  public let typeName: String
+  public let value: Any
+}
+```
+
+功能：表示在集群中创建分布式 actor 时使用的单个已类型化参数。每个 `SpawnArgument` 同时携带类型名和序列化后的值。
+
+
+### func create\<T>()
+
+```cangjie
+public static func create<T>(typeName: String, value: T): SpawnArgument where T <: Serializable<T> & TypeSerializable
+```
+
+功能：为实现了 `Serializable` 和 `TypeSerializable` 的值创建一个新的 `SpawnArgument`。
+
+参数：
+
+- `typeName: String` — 与该参数类型关联的唯一类型名。
+- `value: T` — 要包装的参数值。
+
+返回值：
+
+- `SpawnArgument` — 创建出的创建参数实例。
+
+### func serialize()
+
+```cangjie
+public func serialize(): DataModel
+```
+
+功能：将 `SpawnArgument` 序列化为 `DataModel`。
+
+返回值：
+
+- `DataModel` — `SpawnArgument` 的序列化表示。
+
+异常：
+
+- `ActorSystemException` — 当找不到与给定 `typeName` 对应的序列化函数时抛出。
+
+### func deserialize()
+
+```cangjie
+public static func deserialize(dataModel: DataModel): SpawnArgument
+```
+
+功能：从 `DataModel` 表示反序列化出一个 `SpawnArgument`。
+
+参数：
+
+- `dataModel: DataModel` — 创建参数的序列化数据。
+
+返回值：
+
+- `SpawnArgument` — 反序列化得到的创建参数实例。
+
+异常：
+
+- `DataModelException` — 当数据模型结构或字段非法时抛出。
+- `ActorSystemException` — 当找不到与引用的 `typeName` 对应的反序列化函数时抛出。
+
+### func typeModel()
+
+```cangjie
+public static func typeModel(): TypeModel
+```
+
+功能：返回 `SpawnArgument` 的结构化类型模式，用于元数据与模式描述。
+
+返回值：
+
+- `TypeModel` — 描述 `SpawnArgument` 字段的结构类型模式。
