@@ -30,6 +30,7 @@
 | [ReceiverParameter](./distributed_package_api/distributed_package_structs.md#struct-receiverparameter) | Receiver 参数的信息，包括名称、类型与描述。 |
 | [FieldModel](./distributed_package_api/distributed_package_structs.md#struct-fieldmodel) | 结构体字段的信息，包括名称、类型与描述，是整体类型模型的一部分。 |
 | [InvokeInfo](./distributed_package_api/distributed_package_structs.md#struct-invokeinfo) | 远程调用的信息，包含执行 receiver 所需的全部细节。 |
+| [SpawnArgument](./distributed_package_api/distributed_package_structs.md#struct-spawnargument) | 在集群中创建分布式 actor 时使用的单个参数。 |
 
 ### 接口
 
@@ -40,6 +41,8 @@
 | [ActorClient](./distributed_package_api/distributed_package_interfaces.md#interface-actorclient) | actor client 实现的接口，提供用于 *查找* 分布式 actor 的方法。 |
 | [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | 所有本地 `ActorFuture<T>` 类型共用的接口，提供以序列化形式（`DataModel`）获取 Future 结果的方法。 |
 | [TypeSerializable](./distributed_package_api/distributed_package_interfaces.md#interface-typeserializable) | 为类型提供 `TypeModel` 类型模式描述的接口，用于分布式传输与元数据生成。 |
+| [Spawnable](./distributed_package_api/distributed_package_interfaces.md#interface-spawnablet) | 可在集群中被动态创建的分布式 actor 接口。任何打算在集群中被创建的 actor 接口，都需要实现该接口。 |
+| [ActorCluster](./distributed_package_api/distributed_package_interfaces.md#interface-actorcluster) | 用于创建集群系统以在其中创建和发现分布式 actor 的接口。 |
 
 ### 枚举
 
