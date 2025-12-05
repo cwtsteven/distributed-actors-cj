@@ -100,6 +100,10 @@ public class DummyActorClient <: ActorClient {
         list.toArray()
     }
 
+    public func containsActor(name: String): Bool {
+        actorMap.contains(name)
+    }
+
     public func remoteCall(invokeInfo: InvokeInfo): Unit {
         match (invokeInfo.fut) {
             case Some(fut) => remoteAsk(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config, fut)

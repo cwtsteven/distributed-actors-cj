@@ -85,6 +85,8 @@ public class ActorFuture<T> {
 
     /*
     * Executes the task
+    * @throws Exception - if the task throws an exception
+    * @throws Error - if the task throws an error
     */
     func execute(): Unit {
         synchronized(mtx) {

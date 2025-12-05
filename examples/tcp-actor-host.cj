@@ -1,4 +1,9 @@
 import std.collection.*
+import std.log.*
+import std.io.*
+import std.fs.*
+import std.sync.*
+import std.time.*
 
 import actors.*
 import actors.macros.*
@@ -12,6 +17,9 @@ import serialization.serialization.*
 public interface BankService {
     @Receiver[description: "Transfer money between accounts"]
     func transfer(from: String, to: String, amount: Float64): Bool
+
+    @Receiver
+    func neverReturn(): Bool
 }
 
 @Actor
@@ -22,11 +30,23 @@ public class BankServiceImpl <: BankService {
         println("Transferred ${amount} from ${from} to ${to}")
         true
     }
+
+    @Receiver
+    public func neverReturn(): Bool {
+        while (true) {
+            sleep(Duration.second * 1)
+        }
+        true
+    }
 }
 
 const PORT: UInt16 = 52165
 
 main() {
+    let logFile = File("tcp-actor-host.log", OpenOption.CreateOrTruncate(false))
+    TCPActorSystem.logger.setOutput(logFile)
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
     // Create and start the TCP actor host
     let tcpHost = TCPActorHost(bindAt: PORT)
     let serverFuture = tcpHost.serve()
