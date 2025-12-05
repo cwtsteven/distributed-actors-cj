@@ -34,6 +34,8 @@ example:
 	cjc $(EXAMPLE_DIR)/dist-actor-interface.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/dist-actor-interface
 	cjc $(EXAMPLE_DIR)/tcp-actor-host.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-actor-host
 	cjc $(EXAMPLE_DIR)/tcp-actor-client.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-actor-client
+	cjc $(EXAMPLE_DIR)/tcp-test-fut-fail.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-test-fut-fail
+	cjc $(EXAMPLE_DIR)/tcp-test-request-fail.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/tcp-test-request-fail
 	cjc $(EXAMPLE_DIR)/distributed-actor-example.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/distributed-actor-example
 	cjc $(EXAMPLE_DIR)/dummy-actor-system.cj $(OPTIONS) $(IMPORT_ACTORS) $(IMPORT_ACTORS_DISTRIBUTED) -o $(TARGET_DIR)/dummy-actor-system
 	pushd $(EXAMPLE_DIR)/agent-example && cjpm build && popd && cp $(EXAMPLE_DIR)/agent-example/target/release/bin/agent_example $(TARGET_DIR)/agent_example
