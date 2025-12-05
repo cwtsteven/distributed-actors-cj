@@ -12,4 +12,10 @@ The `actors.tcp_actor_system.cluster` package builds a TCP-based cluster manager
 | --- | --- |
 | [TCPCluster](./cluster_package_api/cluster_package_classes.md#class-tcpcluster) | TCP-based implementation of `ActorCluster` consist of a head-server and multiple worker nodes. Provides functionalities to spawn and lookup distributed actors within the cluster. |
 
+### Exceptions
+
+| Exception Name | Function |
+|----------------|----------|
+| [TCPClusterException](./cluster_package_api/cluster_package_exceptions.md#class-tcpclusterexception) | Exception thrown when a cluster operation fails. |
+
 

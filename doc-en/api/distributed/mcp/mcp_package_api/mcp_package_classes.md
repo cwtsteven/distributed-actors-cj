@@ -1,5 +1,27 @@
 # Classes
 
+## class ActorMCPException
+
+```cangjie
+public class ActorMCPException <: Exception {
+  public init(msg: String)
+}
+```
+
+Function: Exception thrown when MCP-related operations fail, such as tool not found, invalid arguments, or other MCP-specific errors.
+
+### init(String)
+
+```cangjie
+public init(msg: String)
+```
+
+Function: Creates an ActorMCPException with a custom error message.
+
+Parameters:
+
+- `msg: String` - The custom error message describing the MCP error.
+
 ## class ActorToolManager
 
 ```cangjie
@@ -276,25 +298,3 @@ Function: Converts the ReceiverTool to a string representation.
 Return Value:
 
 - `String` - A string representation of the ReceiverTool in the format "name [description]".
-
-## class ActorMCPException
-
-```cangjie
-public class ActorMCPException <: Exception {
-  public init(msg: String)
-}
-```
-
-Function: Exception thrown when MCP-related operations fail, such as tool not found, invalid arguments, or other MCP-specific errors.
-
-### init(String)
-
-```cangjie
-public init(msg: String)
-```
-
-Function: Creates an ActorMCPException with a custom error message.
-
-Parameters:
-
-- `msg: String` - The custom error message describing the MCP error.

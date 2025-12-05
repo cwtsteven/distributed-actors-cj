@@ -14,4 +14,9 @@ This package enables distributed actors to be used as tools in MCP ecosystems, m
 | --------------------------------- | ---------------------------------- |
 | [ActorToolManager](./mcp_package_api/mcp_package_classes.md#class-actortoolmanager) | Tool manager implementation that manages multiple actor clients and exposes their receiver functions as MCP tools. |
 | [ReceiverTool](./mcp_package_api/mcp_package_classes.md#class-receivertool) | MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. |
+
+### Exceptions
+
+| Exception Name | Function |
+|----------------|----------|
 | [ActorMCPException](./mcp_package_api/mcp_package_classes.md#class-actormcpexception) | Exception thrown when MCP-related operations fail, such as tool not found or invalid arguments. |

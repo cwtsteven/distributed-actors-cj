@@ -47,9 +47,9 @@ public class BankAccountImpl <: BankAccount {
     private var balance: Float64
 
     static init() {
-        ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
-        ActorCluster.registerSpawnArgument<String>("String")
-        ActorCluster.registerSpawnArgument<Float64>("Float64")
+        ActorCluster.registerSpawningFunc<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+        ActorCluster.registerSpawnParameterType<String>("String")
+        ActorCluster.registerSpawnParameterType<Float64>("Float64")
     }
 
     public init(name: String, initialBalance: Float64) {
