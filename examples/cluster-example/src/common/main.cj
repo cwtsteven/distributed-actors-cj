@@ -19,8 +19,8 @@ public func entry() {
     println("Alice's balance: ${alice.getBalance().get()}")
     println("Bob's balance: ${bob.getBalance().get()}")
 
-    TCPCluster.killActor("alice")
-    TCPCluster.killActor("bob")
+    TCPCluster.removeActor("alice")
+    TCPCluster.removeActor("bob")
 
     return 0
 }

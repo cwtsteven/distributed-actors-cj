@@ -32,6 +32,11 @@ Return Value:
 
 - `Option<ActorInfo>` - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
 
+Exceptions:
+
+- `RemoteException` - Thrown if the remote connection fails.
+- `ActorSystemException` - Thrown for any system-specific errors.
+
 ### func findAll()
 
 ```cangjie
@@ -43,6 +48,32 @@ Function: Finds all actors exported in the corresponding `ActorHost`.
 Return Value:
 
 - `Array<ActorInfo>` - An array containing information about all exported actors.
+
+Exceptions:
+
+- `RemoteException` - Thrown if the remote connection fails.
+- `ActorSystemException` - Thrown for any system-specific errors.
+
+### func containsActor()
+
+```cangjie
+func containsActor(name: String): Bool
+```
+
+Function: Checks if an actor is exported from the respective server.
+
+Parameters:
+
+- `name: String` - The name of the actor.
+
+Return Value:
+
+- `Bool` - Returns `true` if the actor is exported, `false` otherwise.
+
+Exceptions:
+
+- `RemoteException` - Thrown if the remote connection fails.
+- `ActorSystemException` - Thrown for any system-specific errors.
 
 ### func remoteCall()
 
@@ -56,203 +87,13 @@ Parameters:
 
 - `invokeInfo: InvokeInfo` - The information about the remote call invocation.
 
-## interface ActorHost
-
-```cangjie
-public interface ActorHost
-```
-
-Function: Interface that exports and un-exports distributed actors.
-
-### func export()
-
-```cangjie
-func export(name: String, a: Distributable): Bool
-```
-
-Function: Exports an actor instance with a specified name.
-
-Parameters:
-
-- `name: String` - The name to export the actor.
-- `a: Distributable` - The actor instance to export.
-
-Return Value:
-
-- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
-
-### func unexport()
-
-```cangjie
-func unexport(name: String): Bool
-```
-
-Function: Un-export an actor.
-
-Parameters:
-
-- `name: String` - The name of the actor to un-export.
-
-Return Value:
-
-- `Bool` - Returns `true` if the actor was successfully un-exported, `false` if the actor was not found.
-
-## interface Distributable
-
-```cangjie
-public interface Distributable
-```
-
-Function: A common interface for **all** distributed actors. This interface provides the necessary methods for dispatching remote receiver invocation to the underlying actor instance and metadata access.
-
-### func getMetadata()
-
-```cangjie
-func getMetadata(): Metadata
-```
-
-Function: Gets the metadata of the actor, including information about its receivers, description, and custom data.
-
-Return Value:
-
-- `Metadata` - The metadata describing the actor interface.
-
-### func dispatchTell()
-
-```cangjie
-func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
-```
-
-Function: Dispatches a `tell` operation to the actor without expecting a return value.
-
-Parameters:
-
-- `receiverName: String` - The name of the receiver function to call.
-- `args: Array<DataModel>` - Serialized arguments for the receiver.
-- `config: ReceiverConfig` - Configuration for the call.
-
 Exceptions:
 
-- `ReceiverNotFoundException` - Thrown if the receiver function is not found.
-
-### func dispatchAsk()
-
-```cangjie
-func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
-```
-
-Function: Dispatches an `ask` operation to the actor and returns a *waitable* object for the result.
-
-Parameters:
-
-- `receiverName: String` - The name of the receiver function to call.
-- `args: Array<DataModel>` - Serialized arguments for the receiver function.
-- `config: ReceiverConfig` - Configuration for the call.
-
-Return Value:
-
-- [LocalWaitable](./distributed_package_interfaces.md#interface-localwaitable) - A *waitable* object that can be used to retrieve the pending result of a receiver call.
-
-Exceptions:
-
-- `ReceiverNotFoundException` - Thrown if the receiver function is not found.
-
-## interface Proxyable\<T>
-
-```cangjie
-public interface Proxyable<T> where T <: Distributable
-```
-
-Function: Interface for actors that can be proxied to a typed proxy.
-
-### func getProxy()
-
-```cangjie
-static func getProxy(name: String, client: ActorClient): T
-```
-
-Function: Returns a typed proxy instance for the distributed actor that implements this interface.
-
-Parameters:
-
-- `name: String` - The remote actor name registered with the distributed system.
-- `client: ActorClient` - The client instance used to reach the remote host.
-
-Return Value:
-
-- `T` - The typed proxy that exposes methods mirroring the receivers declared on the interface.
-
-## interface LocalWaitable
-
-```cangjie
-public interface LocalWaitable
-```
-
-Function: A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`.
-
-### func getResult()
-
-```cangjie
-func getResult(): DataModel
-```
-
-Function: Gets the serialized result of the operation. If the receiver throws an exception or an error, they will be returned as serialized data model.
-
-Return Value:
-
-- `DataModel` - The serialized result.
-
-### func fromActorFuture<T>()
-
-```cangjie
-static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
-```
-
-Function: Creates a LocalWaitable from an `ActorFuture` for serializable types.
-
-Parameters:
-
-- `obj: Object` - The ActorFuture object to convert.
-
-Return Value:
-
-- `LocalWaitable` - A `LocalWaitable` that provides the serialized result of the ActorFuture.
-
-## interface Spawnable\<T>
-
-```cangjie
-public interface Spawnable<T> where T <: Distributable
-```
-
-Function: Interface for distributed actors that can be spawned dynamically within a cluster. Users are required implement this interface for any actor interfaces that are meant to be spawned in a cluster.
-
-### func typeName()
-
-```cangjie
-static func typeName(): String
-```
-
-Function: Returns the unique type name used by the cluster to register and look up its constructors.
-
-Return Value:
-
-- `String` - The unique type name for this actor type.
-
-### func spawnWith()
-
-```cangjie
-static func spawnWith(args: Array<SpawnArgument>): Option<T>
-```
-
-Function: Creates a new actor instance from a list of arguments. Implementations are responsible for validating and decoding arguments, and calling the correct constructor.
-
-Parameters:
-
-- `args: Array<SpawnArgument>` - The arguments used to construct the actor instance.
-
-Return Value:
-
-- `Option<T>` - Returns `Some(T)` when the actor is successfully created, `None` when creation fails (for example due to invalid arguments).
+- `ActorNotFoundException` - Thrown if the actor is not found on the client.
+- `ReceiverNotFoundException` - Thrown if the receiver is not found.
+- `RemoteException` - Thrown if the remote connection fails.
+- `SerializationException` - Thrown if the serialization fails.
+- `ActorSystemException` - Thrown for any system-specific errors.
 
 ## interface ActorCluster
 
@@ -359,6 +200,216 @@ Parameters:
 Return Value:
 
 - `Option<(Array<SpawnArgument>) -> Option<Distributable>>` - Returns `Some(f)` with the spawn function if found, `None` otherwise.
+
+## interface ActorHost
+
+```cangjie
+public interface ActorHost
+```
+
+Function: Interface that exports and un-exports distributed actors.
+
+### func export()
+
+```cangjie
+func export(name: String, a: Distributable): Bool
+```
+
+Function: Exports an actor instance with a specified name.
+
+Parameters:
+
+- `name: String` - The name to export the actor.
+- `a: Distributable` - The actor instance to export.
+
+Return Value:
+
+- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
+
+Exceptions:
+
+- `ActorSystemException` - Thrown for any system-specific errors.
+
+### func unexport()
+
+```cangjie
+func unexport(name: String): Bool
+```
+
+Function: Un-export an actor.
+
+Parameters:
+
+- `name: String` - The name of the actor to un-export.
+
+Return Value:
+
+- `Bool` - Returns `true` if the actor was successfully un-exported, `false` if the actor was not found.
+
+Exceptions:
+
+- `ActorSystemException` - Thrown for any system-specific errors.
+
+## interface Distributable
+
+```cangjie
+public interface Distributable
+```
+
+Function: A common interface for **all** distributed actors. This interface provides the necessary methods for dispatching remote receiver invocation to the underlying actor instance and metadata access.
+
+### func getMetadata()
+
+```cangjie
+func getMetadata(): Metadata
+```
+
+Function: Gets the metadata of the actor, including information about its receivers, description, and custom data.
+
+Return Value:
+
+- `Metadata` - The metadata describing the actor interface.
+
+### func dispatchTell()
+
+```cangjie
+func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
+```
+
+Function: Dispatches a `tell` operation to the actor without expecting a return value.
+
+Parameters:
+
+- `receiverName: String` - The name of the receiver function to call.
+- `args: Array<DataModel>` - Serialized arguments for the receiver.
+- `config: ReceiverConfig` - Configuration for the call.
+
+Exceptions:
+
+- `ReceiverNotFoundException` - Thrown if the receiver function is not found.
+
+### func dispatchAsk()
+
+```cangjie
+func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
+```
+
+Function: Dispatches an `ask` operation to the actor and returns a *waitable* object for the result.
+
+Parameters:
+
+- `receiverName: String` - The name of the receiver function to call.
+- `args: Array<DataModel>` - Serialized arguments for the receiver function.
+- `config: ReceiverConfig` - Configuration for the call.
+
+Return Value:
+
+- [LocalWaitable](./distributed_package_interfaces.md#interface-localwaitable) - A *waitable* object that can be used to retrieve the pending result of a receiver call.
+
+Exceptions:
+
+- `ReceiverNotFoundException` - Thrown if the receiver function is not found.
+
+## interface Proxyable\<T>
+
+```cangjie
+public interface Proxyable<T> where T <: Distributable
+```
+
+Function: Interface for actors that can be proxied to a typed proxy.
+
+### func getProxy()
+
+```cangjie
+static func getProxy(name: String, client: ActorClient): T
+```
+
+Function: Returns a typed proxy instance for the distributed actor that implements this interface.
+
+Parameters:
+
+- `name: String` - The remote actor name registered with the distributed system.
+- `client: ActorClient` - The client instance used to reach the remote host.
+
+Return Value:
+
+- `T` - The typed proxy that exposes methods mirroring the receivers declared on the interface.
+
+## interface LocalWaitable
+
+```cangjie
+public interface LocalWaitable
+```
+
+Function: A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`.
+
+### func getResult()
+
+```cangjie
+func getResult(): DataModel
+```
+
+Function: Gets the serialized result of the operation. If the receiver throws an exception or an error, they will be returned as serialized data model.
+
+Return Value:
+
+- `DataModel` - The serialized result.
+
+Exceptions:
+
+- `SerializationException` - Thrown if the result cannot be serialized.
+
+### func fromActorFuture\<T>()
+
+```cangjie
+static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
+```
+
+Function: Creates a LocalWaitable from an `ActorFuture` for serializable types.
+
+Parameters:
+
+- `obj: Object` - The ActorFuture object to convert.
+
+Return Value:
+
+- `LocalWaitable` - A `LocalWaitable` that provides the serialized result of the ActorFuture.
+
+## interface Spawnable\<T>
+
+```cangjie
+public interface Spawnable<T> where T <: Distributable
+```
+
+Function: Interface for distributed actors that can be spawned dynamically within a cluster. Users are required implement this interface for any actor interfaces that are meant to be spawned in a cluster.
+
+### func typeName()
+
+```cangjie
+static func typeName(): String
+```
+
+Function: Returns the unique type name used by the cluster to register and look up its constructors.
+
+Return Value:
+
+- `String` - The unique type name for this actor type.
+
+### func spawnWith()
+
+```cangjie
+static func spawnWith(args: Array<SpawnArgument>): Option<T>
+```
+
+Function: Creates a new actor instance from a list of arguments. Implementations are responsible for validating and decoding arguments, and calling the correct constructor.
+
+Parameters:
+
+- `args: Array<SpawnArgument>` - The arguments used to construct the actor instance.
+
+Return Value:
+
+- `Option<T>` - Returns `Some(T)` when the actor is successfully created, `None` when creation fails (for example due to invalid arguments).
 
 ## interface TypeSerializable
 
