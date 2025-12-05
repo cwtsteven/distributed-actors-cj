@@ -1,5 +1,8 @@
 package actors
 
+public const MAX_PRIORITY = 10
+public const MIN_PRIORITY = 1
+
 /*
 * Configuration for a receiver call
 */

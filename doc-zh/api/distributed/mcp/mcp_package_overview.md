@@ -14,4 +14,9 @@
 | --- | --- |
 | [ActorToolManager](./mcp_package_api/mcp_package_classes.md#class-actortoolmanager) | 管理多个 Actor 客户端并将其 Receiver 函数作为 MCP 工具对外暴露的工具管理器实现。 |
 | [ReceiverTool](./mcp_package_api/mcp_package_classes.md#class-receivertool) | 将 Actor 的 Receiver 函数封装为 MCP 工具的实现。 |
+
+### 异常
+
+| 异常名 | 功能 |
+| --- | --- |
 | [ActorMCPException](./mcp_package_api/mcp_package_classes.md#class-actormcpexception) | MCP 相关操作失败（如工具不存在、参数非法等）时抛出的异常。 |
