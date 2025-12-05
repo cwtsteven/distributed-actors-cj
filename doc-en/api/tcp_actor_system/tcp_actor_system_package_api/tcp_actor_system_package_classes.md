@@ -1,24 +1,141 @@
 # Classes
 
-## class TCPActorSystem
+## class TCPActorClient
 
 ```cangjie
-public class TCPActorSystem
+public class TCPActorClient <: ActorClient {
+  public init(id: String, addr: String, port: UInt16)
+}
 ```
 
-Function: Main system class that provides logging configuration for the TCP actor system. This class manages the global logger instance used throughout the TCP actor system for debugging and monitoring purposes.
+Function: TCP-based implementation of ActorClient that provides remote access to actors over TCP connections. This class connects to a TCP actor host and enables communication with remote actors.
 
-### static mut prop logger
+### init(String, String, UInt16)
 
 ```cangjie
-public static mut prop logger: Logger
+public init(id: String, addr: String, port: UInt16)
 ```
 
-Function: A mutable property representing the logger of the TCPActorSystem. This property provides access to the global logger instance used by all TCP actor system components.
+Function: Initializes the TCP actor client to connect to the specified host and port.
+
+Parameters:
+
+- `id: String` - The unique identifier for this client.
+- `addr: String` - The address of the TCP actor host to connect to.
+- `port: UInt16` - The port of the TCP actor host to connect to.
+
+Exceptions:
+
+- `IllegalArgumentException` - Thrown if the address or port is invalid.
+- `SocketException` - Thrown if the socket connection fails.
+- `SocketTimeoutException` - Thrown if the socket connection times out.
+
+### prop id
+
+```cangjie
+public prop id: String
+```
+
+Function: The unique identifier of the TCP actor client.
+
+### func find()
+
+```cangjie
+public func find(name: String): Option<ActorInfo>
+```
+
+Function: Finds an actor by name and returns its information.
+
+Parameters:
+
+- `name: String` - The name of the actor to find.
 
 Return Value:
 
-- `Logger` - The logger instance used by the TCP actor system.
+- `Option<ActorInfo>` - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
+
+Exceptions:
+
+- `TCPActorSystemRemoteException` - Thrown if the connection is lost.
+- `TCPActorSystemRequestTimeoutException` - Thrown if the TCP request has timed out.
+- `TCPActorSystemSerializationException` - Thrown if the envelope serialization fails.
+- `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
+- `TCPActorSystemInternalException` - Thrown for any internal errors.
+
+### func findAll()
+
+```cangjie
+public func findAll(): Array<ActorInfo>
+```
+
+Function: Finds all actors registered in the TCP actor host.
+
+Return Value:
+
+- `Array<ActorInfo>` - An array containing information about all registered actors.
+
+Exceptions:
+
+- `TCPActorSystemRemoteException` - Thrown if the connection is lost.
+- `TCPActorSystemRequestTimeoutException` - Thrown if the request has timed out.
+- `TCPActorSystemSerializationException` - Thrown if the envelope serialization fails.
+- `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
+- `TCPActorSystemInternalException` - Thrown for any internal errors.
+
+### func containsActor()
+
+```cangjie
+public func containsActor(name: String): Bool
+```
+
+Function: Checks if an actor is exported from the respective server.
+
+Parameters:
+
+- `name: String` - The name of the actor.
+
+Return Value:
+
+- `Bool` - Returns `true` if the actor is exported, `false` otherwise.
+
+Exceptions:
+
+- `TCPActorSystemRemoteException` - Thrown if the connection is lost.
+- `TCPActorSystemRequestTimeoutException` - Thrown if the request has timed out.
+- `TCPActorSystemSerializationException` - Thrown if the envelope serialization fails.
+- `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
+- `TCPActorSystemInternalException` - Thrown for any internal errors.
+
+### func remoteCall()
+
+```cangjie
+public func remoteCall(invokeInfo: InvokeInfo): Unit
+```
+
+Function: Makes a remote call to an actor's receiver.
+
+Parameters:
+
+- `invokeInfo: InvokeInfo` - The information about the remote call invocation.
+
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the actor is not found.
+- `ReceiverNotFoundException` - Thrown if the receiver is not found.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
+- `TCPActorSystemRemoteException` - Thrown if the connection is lost.
+- `TCPActorSystemRequestTimeoutException` - Thrown if the request has timed out.
+- `TCPActorSystemSerializationException` - Thrown if the envelope serialization fails.
+- `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
+- `TCPActorSystemInternalException` - Thrown for any internal errors.
+
+### func close()
+
+```cangjie
+public func close(): Unit
+```
+
+Function: Closes the TCP actor client connection. Can be called multiple times safely.
 
 ## class TCPActorHost
 
@@ -99,126 +216,46 @@ public func close(): Unit
 
 Function: Closes the TCP actor host by closing all client connections and the server socket.
 
-## class TCPActorClient
+## class TCPActorSystem
 
 ```cangjie
-public class TCPActorClient <: ActorClient {
-  public init(id: String, addr: String, port: UInt16)
-}
+public class TCPActorSystem
 ```
 
-Function: TCP-based implementation of ActorClient that provides remote access to actors over TCP connections. This class connects to a TCP actor host and enables communication with remote actors.
+Function: Main system class that provides logging configuration for the TCP actor system. This class manages the global logger instance used throughout the TCP actor system for debugging and monitoring purposes.
 
-### init(String, String, UInt16)
+### static mut prop logger
 
 ```cangjie
-public init(id: String, addr: String, port: UInt16)
+public static mut prop logger: Logger
 ```
 
-Function: Initializes the TCP actor client to connect to the specified host and port.
-
-Parameters:
-
-- `id: String` - The unique identifier for this client.
-- `addr: String` - The address of the TCP actor host to connect to.
-- `port: UInt16` - The port of the TCP actor host to connect to.
-
-### prop id
-
-```cangjie
-public prop id: String
-```
-
-Function: The unique identifier of the TCP actor client.
-
-### func find()
-
-```cangjie
-public func find(name: String): Option<ActorInfo>
-```
-
-Function: Finds an actor by name and returns its information.
-
-Parameters:
-
-- `name: String` - The name of the actor to find.
+Function: A mutable property representing the logger of the TCPActorSystem. This property provides access to the global logger instance used by all TCP actor system components.
 
 Return Value:
 
-- `Option<ActorInfo>` - Returns `Some(ActorInfo)` if the actor is found, `None` otherwise.
+- `Logger` - The logger instance used by the TCP actor system.
 
-### func findAll()
-
-```cangjie
-public func findAll(): Array<ActorInfo>
-```
-
-Function: Finds all actors registered in the TCP actor host.
-
-Return Value:
-
-- `Array<ActorInfo>` - An array containing information about all registered actors.
-
-### func remoteCall()
+### static var requestTimeout
 
 ```cangjie
-public func remoteCall(invokeInfo: InvokeInfo): Unit
+public static var requestTimeout: Duration
 ```
 
-Function: Makes a remote call to an actor's receiver.
+Function: The timeout duration for a request sent in a TCP channel.
 
-Parameters:
+Default Value:
 
-- `invokeInfo: InvokeInfo` - The information about the remote call invocation.
+- `Duration.second * 10` - Default timeout of 10 seconds.
 
-### func close()
+### static var heartbeatInterval
 
 ```cangjie
-public func close(): Unit
+public static var heartbeatInterval: Duration
 ```
 
-Function: Closes the TCP actor client connection.
+Function: The interval duration for sending a heartbeat.
 
-## class TCPActorSystemSerializationException
+Default Value:
 
-```cangjie
-public class TCPActorSystemSerializationException <: Exception {
-  TCPActorSystemSerializationException(message: String)
-}
-```
-
-Function: Exception thrown when a serialization operation fails in the TCP actor system.
-
-### init(String)
-
-```cangjie
-TCPActorSystemSerializationException(message: String)
-```
-
-Function: Creates a TCPActorSystemSerializationException with a custom error message.
-
-Parameters:
-
-- `message: String` - The custom error message describing the serialization error.
-
-## class TCPActorSystemDeserializationException
-
-```cangjie
-public class TCPActorSystemDeserializationException <: Exception {
-  TCPActorSystemDeserializationException(message: String)
-}
-```
-
-Function: Exception thrown when a deserialization operation fails in the TCP actor system.
-
-### init(String)
-
-```cangjie
-TCPActorSystemDeserializationException(message: String)
-```
-
-Function: Creates a TCPActorSystemDeserializationException with a custom error message.
-
-Parameters:
-
-- `message: String` - The custom error message describing the deserialization error.
+- `Duration.second * 2` - Default heartbeat interval of 2 seconds.

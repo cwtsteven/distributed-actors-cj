@@ -17,6 +17,9 @@ enum Payload <: Equatable<Payload> & ToString {
     | Ask(String, String, Array<DataModel>, ReceiverConfig, UInt64)
     | Tell(String, String, Array<DataModel>, ReceiverConfig)
     | Fulfill(UInt64, DataModel)
+    | ContainsActor(String)
+    | ContainsActorResponse(Bool)
+    | Heartbeat
 
     public operator func ==(other: Payload): Bool {
         match ((this, other)) {
@@ -24,6 +27,9 @@ enum Payload <: Equatable<Payload> & ToString {
             case (ErrorCode(e1), ErrorCode(e2)) => e1 == e2
             case (Find(n1), Find(n2)) => n1 == n2
             case (FindAll, FindAll) => true
+            case (ContainsActor(n1), ContainsActor(n2)) => n1 == n2
+            case (ContainsActorResponse(b1), ContainsActorResponse(b2)) => b1 == b2
+            case (Heartbeat, Heartbeat) => true
             case _ => false
         }
     }
@@ -42,6 +48,9 @@ enum Payload <: Equatable<Payload> & ToString {
             case Ask(name, methodName, _, _, _) => "Ask ${name}.${methodName}"
             case Tell(name, methodName, _, _) => "Tell ${name}.${methodName}"
             case Fulfill(futId, _) => "Fullfill(${futId})"
+            case ContainsActor(name) => "ContainsActor(${name})"
+            case ContainsActorResponse(b) => "ContainsActorResponse(${b})"
+            case Heartbeat => "Heartbeat"
         }
     }
 }

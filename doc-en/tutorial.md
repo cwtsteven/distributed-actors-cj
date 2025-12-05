@@ -150,7 +150,7 @@ spawn {
 
 ## Execution Order of Receivers
 
-When calling two receivers on the same actor within the same thread, these functions will be executed in the order they were called. For example:
+When calling two receivers on the same actor within the same thread, these receivers will be executed in the order they were called. For example:
 
 ```cangjie
 func foo() {
@@ -340,16 +340,16 @@ public class Account {
 
 By increasing the priority of `deposit` and lowering the priority of `withdraw`, when there are many `deposit` and `withdraw` calls simultaneously, `deposit` will be prioritized, reducing the chances of `withdraw` throwing a `BalanceNotEnoughException`.
 
-Additionally, when calling a receiver, one can override its priority by passing an extra named parameter, *priority*, at the end of the argument list:
+Additionally, when calling a receiver, one can override its priority by passing an extra named parameter, *config*, at the end of the argument list:
 
 ```cangjie
 func foo(account: Account) {
     account.getBalance()
-    account.withdraw(100.0, priority: 10)
+    account.withdraw(100.0, config: ReceiverConfig(priority: 10))
 }
 ```
 
-The call to `account.withdraw(100.0, priority: 10)` may be executed before `account.getBalance()`.
+The call to `account.withdraw(100.0, config: ReceiverConfig(priority: 10))` may be executed before `account.getBalance()`.
 
 ## Deadlock
 
@@ -382,7 +382,7 @@ However, in some scenarios, the caller may not need to synchronize with the acto
 
 ```cangjie
 func foo(account: Account) {
-    let _: Unit = account.withdraw(100.0, priority: 10, tell: True)
+    let _: Unit = account.withdraw(100.0, config: ReceiverConfig(priority: 10), tell: True)
 }
 ```
 
@@ -552,7 +552,7 @@ public class BankServiceImpl <: BankService {
 
 ## ActorHost
 
-To manage distributed actors, you need an actor host and client. The actor host handles actor registration, and the actor client provides remote communication:
+To manage distributed actors, you need an actor host and client. The actor host can be used to export an actor, and users can obtain proxies through actor client:
 
 ```cangjie
 // Create an actor host (implementation depends on your distributed setup)
@@ -567,6 +567,10 @@ if (!registered) {
 }
 ```
 
+The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this paricular actor host. Exporting twice with the same name should return `false`.
+
+Once an actor has been exported, it can be found by a corresponding actor client.
+
 ## Actor Client and Remote Actor Communication
 
 ```cangjie
@@ -574,34 +578,50 @@ if (!registered) {
 let actorClient: ActorClient
 ```
 
-To communicate with remote actors, you use an `ActorProxy`:
+To obtain a proxy to an exported distributed actor, you can simply create an `ActorProxy` with the *name* of the actor and the corresponding actor client:
 
 ```cangjie
 // Create a proxy to communicate with the remote actor
 let bankProxy = ActorProxy("bank-service", actorClient)
+```
 
+This constructor call will throw `ActorNotFoundException` if the actor name cannot be found in the actor client, and `RemoteException` if the connect to the client has failed.
+
+Once we obtain an actor proxy, we can use the `ask` or `tell` function to make a remote call to a particular receiver:
+
+```cangjie
 // Call remote methods - these return DistributedFuture objects
 let createFut: DistributedFuture = bankProxy.ask("createAccount", [
     "account1".serialize(),
     1000.0.serialize()
 ])
-
-let transferFut: DistributedFuture = bankProxy.ask("transfer", [
-    "account1".serialize(),
-    "account2".serialize(),
-    500.0.serialize()
-])
-
-let balanceFut: DistributedFuture = bankProxy.ask("getBalance", [
-    "account1".serialize()
-])
-
-// Wait for operations to complete
-createFut.get()
-transferFut.get()
-let balance = Float64.deserialize(balanceFut.get())
-println("Account1 balance: ${balance}") // Output: 500.0
 ```
+
+The function `ask` has the following signature:
+
+```cangjie
+public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
+```
+
+If the actor has been unexported from the host (using the `unexport` function) before, this function throws an `ActorNotFoundException`.
+
+The `receiverName` corresponds to the name of the receiver declared in the actor interface. Note that this means function overloading is not allowed in actor interface declaration and a macro error will be thrown if violated. If there is no matching receiver found, this function throws a `ReceiverNotFoundException`.
+
+The `args` is an array of `DataModel` which is the serialized arguments to that particular receiver. If the supplied arguments are invalid, e.g. the numbers do not match or the types do not match, this function throws an `IllegalArugementException`.
+
+This function also throws `RemoteException` when the remote connection fails and `ActorSystemException` for any potential errors coming from the specific actor system.
+
+The `tell` function works similarly except that it does not return a `DistributedFuture`.
+
+The execution order of remote receivers is the same as local receivers where calling two (remote) receivers on the same actor from the same thread, these receivers will be executed in the order they were called.
+
+```cangjie
+createFut.get()
+```
+
+If the exeuction of the receiver throws any exception or error, this function will throw a `RemoteReceiverExcception` that wraps the message and the stack trace of the original exception (or error).
+
+This function will also throw a `RemoteException` when connection has failed and a `ActorSystemException` for any actor system specific errors that has occured.
 
 ## Typed-proxy
 
@@ -610,40 +630,32 @@ For more convenient use of actor proxy, users can get a typed-proxy from the act
 ```cangjie
 // Create a typed-proxy to communicate with the remote actor
 let bankProxy: BankService = BankService.getProxy("bank-service", actorClient)
-
-// Call remote methods - these return ActorFuture objects
-let createFut: ActorFuture<Unit> = bankProxy.createAccount("account1", 1000.0)
-
-let transferFut: ActorFuture<Unit> = bankProxy.transfer("account1", "account2", 500.0)
-
-let balanceFut: ActorFuture<Float64> = bankProxy.getBalance("account1")
-
-// Wait for operations to complete
-createFut.get()
-transferFut.get()
-let balance = balanceFut.get()
-println("Account1 balance: ${balance}") // Output: 500.0
 ```
 
-## Tell Mode for Distributed Actors
+This is similar to creating an untyped `ActorProxy` in the sense that it will throw `ActorNotFoundException` if the actor name cannot be found in the actor client, and `RemoteException` if the connect to the client has failed.
 
-You can also use Tell mode for fire-and-forget operations in distributed actors:
+After obtaining a typed-proxy, we can invoke its remote receives as if it were a local actor:
 
 ```cangjie
-// Tell mode - no return value, no synchronization
-bankProxy.tell("createAccount", [
-    "account3".serialize(),
-    2000.0.serialize()
-])
+// Call remote methods - these return ActorFuture objects
+let createFut: ActorFuture<Unit> = bankProxy.createAccount("account1", 1000.0)
+let balanceFut: ActorFuture<Float64> = bankProxy.getBalance("account1")
 ```
 
+Calling remote receivers using a typed-proxy essentially calls the `ask` or `tell` functions of the underlying `ActorProxy`, which will throw a `RemoteException` when connection has failed and a `ActorSystemException` for any actor system specific errors that has occured.
+
+This function returns an `ActorFuture<T>` that can be used to obtain the result of the remote receiver call.
+
+```
+createFut.get()
+let balance = balanceFut.get()
+println("Account1 balance: ${balance}") // Output: 1000.0
+```
 
 ## Key Differences from Local Actors
 
 1. **Serialization**: All parameters and return values of receivers must be serializable
-2. **Network Communication**: Calls go over the network, so they might have higher latency
-4. **No Direct References**: You cannot hold direct references to remote actors, the lifetime of a remote actor is not affected by the proxy created
-
+2. **Network Communication**: Calls go over the network, so they might have higher latency and is subjected to distributed system failures
 
 # Using the TCPActorSystem
 
