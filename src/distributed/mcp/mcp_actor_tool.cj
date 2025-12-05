@@ -23,6 +23,9 @@ let receiverConfigTypeSchema =
         FieldSchema("priority", "The priority of the receiver call", TypeSchema.Int)
     ])
 
+/*
+* A tool that wraps an actor receiver function
+*/
 public class ReceiverTool <: Tool {
 
     private let __name: String
@@ -34,6 +37,15 @@ public class ReceiverTool <: Tool {
     private let __client: ActorClient
     private let __info: ReceiverInfo
 
+    /*
+    * Initializes the ReceiverTool
+    * @param name - the name of the tool
+    * @param description - the description of the tool
+    * @param parameters - the parameters of the tool
+    * @param retType - the return type of the tool
+    * @param examples - the examples of the tool
+    * @param extra - the extra of the tool
+    */
     public init(
         name!: String,
         description!: String,
@@ -63,6 +75,16 @@ public class ReceiverTool <: Tool {
     public prop client: ActorClient { get() { __client } }
     public prop info: ReceiverInfo { get() { __info } }
 
+    /*
+    * Invokes the tool with the given arguments
+    * @param args - the arguments to invoke the tool with
+    * @return the response from the tool
+    * @throws ActorMCPException - if the tool name is invalid
+    * @throws DeserializationException - if the deserialization fails
+    * @throws ActorNotFoundException - if the receiver is not found on the client
+    * @throws ReceiverNotFoundException - if the receiver is not found on the actor
+    * @throws RemoteException - if the remote connection fails
+    */
     public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse {
         let names = __name.split(SEPARATOR)
         if (names.size != 2) {
@@ -161,7 +183,7 @@ func deserializeFromDataModelToString(typeModel: TypeModel, dm: DataModel): Stri
                 result + "]"
         }
     } catch (e: NoneValueException) {
-        throw DataModelException("Cannot deserialize data model.")
+        throw DeserializationException("Cannot deserialize data model.")
     }
 }
 

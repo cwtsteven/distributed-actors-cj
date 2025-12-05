@@ -20,11 +20,6 @@ public struct ActorInfo <: ToString {
         public let metadata!: Metadata
     ) {}
 
-    /*
-    * Creates an ActorInfo
-    * @param name - the name of the actor
-    * @param metadata - the metadata of the actor
-    */
     public override func toString(): String {
         "ActorInfo(name: ${name}, metadata: ${metadata.toString()})"
     }
@@ -46,9 +41,6 @@ public struct Metadata <: ToString {
         public let customInfo!: JsonObject
     ) {}
 
-    /*
-    * Converts the Metadata to a string
-    */
     public override func toString(): String {
         var result = "Metadata(\n"
         result += "    receiver count: ${receivers.size},\n"
@@ -68,6 +60,9 @@ public struct Metadata <: ToString {
     }
 }
 
+/*
+* The mode of a receiver
+*/
 public enum ReceiverMode <: ToString & Equatable<ReceiverMode> {
     | AskOnly
     | TellOnly
@@ -118,9 +113,6 @@ public struct ReceiverInfo <: ToString {
         public let mode!: ReceiverMode
     ) {}
 
-    /*
-    * Converts the ReceiverInfo to a string
-    */
     public override func toString(): String {
         var res = "${methodName} ("
         var i = 0
@@ -139,6 +131,9 @@ public struct ReceiverInfo <: ToString {
     }
 }
 
+/*
+* Information about a receiver parameter
+*/
 public struct ReceiverParameter <: ToString {
     public ReceiverParameter(
         public let name!: String,
@@ -152,7 +147,7 @@ public struct ReceiverParameter <: ToString {
 }
 
 /*
-* Type model
+* The type model of a Cangjie type
 */
 public enum TypeModel <: ToString & Equatable<TypeModel> {
     | IntType
@@ -163,9 +158,6 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
     | StructType(Array<FieldModel>)
     | ListType(TypeModel)
 
-    /*
-    * Converts the TypeModel to a string
-    */
     public override func toString(): String {
         match (this) {
             case IntType => "Int"
@@ -196,6 +188,9 @@ public enum TypeModel <: ToString & Equatable<TypeModel> {
     }
 }
 
+/*
+* Information about a field of a struct
+*/
 public struct FieldModel <: ToString & Equatable<FieldModel> {
     public FieldModel(
         public let name!: String,
@@ -216,7 +211,18 @@ public struct FieldModel <: ToString & Equatable<FieldModel> {
     }
 }
 
+/*
+* Information about a receiver invocation
+*/
 public struct InvokeInfo {
+    /*
+    * Initializes the InvokeInfo
+    * @param name - the name of the invocation
+    * @param receiverName - the name of the receiver
+    * @param args - the arguments of the invocation
+    * @param config - the configuration of the invocation
+    * @param fut - the distributed future of the invocation
+    */
     public InvokeInfo(
         public let name!: String,
         public let receiverName!: String,
