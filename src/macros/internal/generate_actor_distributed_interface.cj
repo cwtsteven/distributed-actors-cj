@@ -134,8 +134,9 @@ protected class GenerateDistributedActorInterface {
 
         if (rOpts.shouldTell()) {
             let callExpr = deserializeFuncParams(fd, true)
+            let argsToken = if (fd.funcParams.size > 0) { quote(args) } else { Tokens([Token(WILDCARD)]) }
             staticInit.block.nodes.append(CallExpr(quote(
-                $dispatchTellHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
+                $dispatchTellHashMapVarToken.put($(fd.identifier.value), { a, $argsToken, config =>
                     a.$(fd.identifier)$(callExpr)
                 })
             )))
@@ -143,8 +144,9 @@ protected class GenerateDistributedActorInterface {
 
         if (rOpts.shouldAsk()) {
             let callExpr = deserializeFuncParams(fd, false)
+            let argsToken = if (fd.funcParams.size > 0) { quote(args) } else { Tokens([Token(WILDCARD)]) }
             staticInit.block.nodes.append(CallExpr(quote(
-                $dispatchAskHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
+                $dispatchAskHashMapVarToken.put($(fd.identifier.value), { a, $argsToken, config =>
                     a.$(fd.identifier)$(callExpr)
                 })
             )))
@@ -263,6 +265,9 @@ protected class GenerateDistributedActorInterface {
     private func getProxyFunc(): FuncDecl {
         FuncDecl(quote(
             static func getProxy(name: String, client: ActorClient): $interfaceName {
+                if (!client.containsActor(name)) {
+                    throw ActorNotFoundException(name)
+                }
                 $proxyClassIdent(name, client)
             }
         ))

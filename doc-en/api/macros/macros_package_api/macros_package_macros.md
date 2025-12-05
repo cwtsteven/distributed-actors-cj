@@ -106,3 +106,8 @@ Available options:
 - `customInfo: value` - Custom metadata for the receiver function in JSON format. Must be a valid JSON string.
 
 Each option can only appear once, otherwise, an error will be thrown during macro expansion.
+
+Methods annotated with this macro may throw the following exceptions during remote or distributed invocation:
+- `ActorNotFoundException` – Thrown if the target actor cannot be found.
+- `RemoteException` – Thrown if a remote connection fails during the receiver call.
+- `ActorSystemException` – Thrown for other internal errors in the actor system or distributed runtime.

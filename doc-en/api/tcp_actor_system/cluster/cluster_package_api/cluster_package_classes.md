@@ -119,13 +119,13 @@ Return Value:
 
 - `Option<T>` - Returns `Some(T)` with a typed proxy when the actor is found, or `None` otherwise.
 
-### static func killActor()
+### static func removeActor()
 
 ```cangjie
-public static func killActor(name: String): Bool
+public static func removeActor(name: String): Bool
 ```
 
-Function: Requests the cluster head server to remove the actor with the given name from the cluster.
+Function: Removes an actor from the cluster.
 
 Parameters:
 
@@ -133,6 +133,13 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the actor was removed, `false` if no such actor exists or the removal fails.
+- `Bool` - Returns `true` if the actor was removed, `false` otherwise.
+
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the worker actor is not found on the specified client.
+- `RemoteException` - Thrown if the remote connection fails.
+- `TCPClusterException` - Thrown if the cluster is not initialized.
+- `ActorSystemException` - Thrown for any unknown internal errors.
 
 

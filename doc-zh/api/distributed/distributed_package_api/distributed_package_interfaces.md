@@ -32,6 +32,11 @@ func find(name: String): Option<ActorInfo>
 
 - `Option<ActorInfo>` — 找到返回 `Some(ActorInfo)`，否则返回 `None`。
 
+异常：
+
+- `RemoteException` — 如果远程连接失败则抛出。
+- `ActorSystemException` — 对于任何系统特定错误则抛出。
+
 ### func findAll()
 
 ```cangjie
@@ -44,6 +49,32 @@ func findAll(): Array<ActorInfo>
 
 - `Array<ActorInfo>` — 所有已导出 actor 的信息数组。
 
+异常：
+
+- `RemoteException` — 如果远程连接失败则抛出。
+- `ActorSystemException` — 对于任何系统特定错误则抛出。
+
+### func containsActor()
+
+```cangjie
+func containsActor(name: String): Bool
+```
+
+功能：检查服务器是否导出了指定的 actor。
+
+参数：
+
+- `name: String` — actor 的名称。
+
+返回值：
+
+- `Bool` — 如果 actor 已导出则返回 `true`，否则返回 `false`。
+
+异常：
+
+- `RemoteException` — 如果远程连接失败则抛出。
+- `ActorSystemException` — 对于任何系统特定错误则抛出。
+
 ### func remoteCall()
 
 ```cangjie
@@ -55,6 +86,120 @@ func remoteCall(invokeInfo: InvokeInfo): Unit
 参数：
 
 - `invokeInfo: InvokeInfo` — 关于远程调用的全部信息。
+
+异常：
+
+- `ActorNotFoundException` — 如果在客户端找不到 actor 则抛出。
+- `ReceiverNotFoundException` — 如果找不到 receiver 则抛出。
+- `RemoteException` — 如果远程连接失败则抛出。
+- `SerializationException` — 如果序列化失败则抛出。
+- `ActorSystemException` — 对于任何系统特定错误则抛出。
+
+## interface ActorCluster
+
+```cangjie
+public interface ActorCluster
+```
+
+功能：用于创建集群系统以在其中创建和发现分布式 actor 的接口。
+
+### func spawnActor\<T>()
+
+```cangjie
+static func spawnActor<T>(name: String, args: Array<SpawnArgument>): Option<T> where T <: Distributable & Proxyable<T> & Spawnable<T>
+```
+
+功能：以给定名称和参数在集群中创建一个新的分布式 actor 实例。
+
+参数：
+
+- `name: String` — 为新 actor 注册的唯一名称。
+- `args: Array<SpawnArgument>` — 用于构造该 actor 的创建参数。
+
+返回值：
+
+- `Option<T>` — 创建成功返回 `Some(T)`；若名称已存在或创建失败返回 `None`。
+
+### func getActor\<T>()
+
+```cangjie
+static func getActor<T>(name: String): Option<T> where T <: Distributable & Proxyable<T> & Spawnable<T>
+```
+
+功能：按名称在集群中查找已存在的分布式 actor，并以类型化实例的形式返回。
+
+参数：
+
+- `name: String` — 要查找的 actor 名称。
+
+返回值：
+
+- `Option<T>` — 找到并能匹配类型时返回 `Some(T)`，否则返回 `None`。
+
+### func killActor()
+
+```cangjie
+static func killActor(name: String): Bool
+```
+
+功能：从集群中移除指定名称的 actor。该操作不会立即 *杀死* actor，因为其可能尚未被垃圾回收。
+
+参数：
+
+- `name: String` — 要销毁的 actor 名称。
+
+返回值：
+
+- `Bool` — 成功移除返回 `true`，未找到返回 `false`。
+
+### func registerSpawnable\<T>()
+
+```cangjie
+static func registerSpawnable<T>(typeName: String, spawnableFunc: (Array<SpawnArgument>) -> Option<T>): Bool where T <: Distributable & Proxyable<T> & Spawnable<T>
+```
+
+功能：为给定的 actor 类型名注册创建函数，使集群后续可以按该类型名创建 actor。
+
+参数：
+
+- `typeName: String` — 与该 actor 类型关联的唯一类型名。
+- `spawnableFunc: (Array<SpawnArgument>) -> Option<T>` — 根据参数列表构造 actor 实例的函数。
+
+返回值：
+
+- `Bool` — 注册成功返回 `true`，若类型名已存在返回 `false`。
+
+### func registerSpawnArgument\<T>()
+
+```cangjie
+static func registerSpawnArgument<T>(typeName: String): Bool where T <: Serializable<T> & TypeSerializable
+```
+
+功能：为某个创建参数类型注册序列化与类型模式信息，以便在 `SpawnArgument` 中使用。
+
+参数：
+
+- `typeName: String` — 与该参数类型关联的唯一类型名。
+
+返回值：
+
+- `Bool` — 注册成功返回 `true`，若类型名已存在返回 `false`。
+
+### func getSpawnable()
+
+```cangjie
+static func getSpawnable(typeName: String): Option<(Array<SpawnArgument>) -> Option<Distributable>>
+```
+
+功能：按类型名查找之前注册的创建函数。
+
+参数：
+
+- `typeName: String` — 要查找创建函数的类型名。
+
+返回值：
+
+- `Option<(Array<SpawnArgument>) -> Option<Distributable>>` — 找到时返回 `Some(f)`，否则返回 `None`。
 
 ## interface ActorHost
 
@@ -81,6 +226,10 @@ func export(name: String, a: Distributable): Bool
 
 - `Bool` — 导出成功返回 `true`；若名称已被占用返回 `false`。
 
+异常：
+
+- `ActorSystemException` — 对于任何系统特定错误则抛出。
+
 ### func unexport()
 
 ```cangjie
@@ -96,6 +245,10 @@ func unexport(name: String): Bool
 返回值：
 
 - `Bool` — 取消导出成功返回 `true`；未找到返回 `false`。
+
+异常：
+
+- `ActorSystemException` — 对于任何系统特定错误则抛出。
 
 ## interface Distributable
 
@@ -202,7 +355,11 @@ func getResult(): DataModel
 
 - `DataModel` — 操作的序列化结果。
 
-### func fromActorFuture<T>()
+异常：
+
+- `SerializationException` — 如果结果无法序列化则抛出。
+
+### func fromActorFuture\<T>()
 
 ```cangjie
 static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
