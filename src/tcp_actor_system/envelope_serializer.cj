@@ -16,8 +16,50 @@ import encoding.json.*
 
 import serialization.serialization.*
 
+/*
+ * Tries to get the id from the envelope bytes
+ * @param bytes - the bytes to get the id from
+ * @return the id if successful, None otherwise
+ */
+func tryGetIdFromEnvelopeBytes(bytes: Array<Byte>): Option<UInt64> {
+    try {
+        // Check minimum length (4 bytes for length prefix)
+        if (bytes.size < 4) {
+           return None
+        }
+
+        // Read length prefix (4 bytes)
+        let lengthBytes = Array<Byte>(4, item: 0)
+        lengthBytes[0..4] = bytes[0..4]
+        let expectedLength = Int32.readLittleEndian(lengthBytes)
+
+        // Validate length
+        if (bytes.size != Int64(expectedLength + 4)) {
+            return None
+        }
+
+        // Extract the actual data (skip the 4-byte length prefix)
+        let dataBytes = Array<Byte>(Int64(expectedLength), item: 0)
+        dataBytes[0..dataBytes.size] = bytes[4..bytes.size]
+
+        let buffer = ByteArrayStream()
+        buffer.write(dataBytes)
+
+        // Deserialize id (UInt64)
+        let idBytes = Array<Byte>(8, item: 0)
+        buffer.read(idBytes)
+        let id = UInt64.readLittleEndian(idBytes)
+        Some(id)
+    } catch (e: IllegalArgumentException) {
+        None
+    }
+}
+
 /**
  * Serializes an Envelope object to a byte array
+ * @param envelope - the Envelope object to serialize
+ * @return the serialized byte array
+ * @throws TCPActorSystemSerializationException - if the envelope serialization fails
  */
 func serializeEnvelope(envelope: Envelope): Array<Byte> {
     try {
@@ -48,19 +90,22 @@ func serializeEnvelope(envelope: Envelope): Array<Byte> {
         result[4..result.size] = dataWithoutLength
 
         result
-    } catch (e: Exception) {
-        throw Exception("Failed to serialize envelope: " + e.message)
+    } catch (e: IllegalArgumentException) {
+        throw TCPActorSystemSerializationException("Failed to serialize envelope: " + e.message + ".")
     }
 }
 
 /**
  * Deserializes a byte array back to an Envelope object
+ * @param bytes - the byte array to deserialize
+ * @return the deserialized Envelope object
+ * @throws TCPActorSystemDeserializationException - if the envelope deserialization fails
  */
 func deserializeEnvelope(bytes: Array<Byte>): Envelope {
     try {
         // Check minimum length (4 bytes for length prefix)
         if (bytes.size < 4) {
-            throw Exception("Invalid envelope data: too short")
+            throw TCPActorSystemDeserializationException("Invalid envelope data: too short.")
         }
 
         // Read length prefix (4 bytes)
@@ -70,7 +115,7 @@ func deserializeEnvelope(bytes: Array<Byte>): Envelope {
 
         // Validate length
         if (bytes.size != Int64(expectedLength + 4)) {
-            throw Exception("Invalid envelope data: length mismatch. Expected " + (expectedLength + 4).toString() + " bytes, got " + bytes.size.toString())
+            throw TCPActorSystemDeserializationException("Invalid envelope data: length mismatch. Expected " + (expectedLength + 4).toString() + " bytes, got " + bytes.size.toString() + ".")
         }
 
         // Extract the actual data (skip the 4-byte length prefix)
@@ -89,8 +134,8 @@ func deserializeEnvelope(bytes: Array<Byte>): Envelope {
         let payload = deserializePayload(buffer)
 
         Envelope(id, payload)
-    } catch (e: Exception) {
-        throw Exception("Failed to deserialize envelope: " + e.message)
+    } catch (e: IllegalArgumentException) {
+        throw TCPActorSystemDeserializationException("Failed to deserialize envelope: " + e.message + ".")
     }
 }
 
@@ -142,6 +187,9 @@ func serializePayload(buffer: ByteArrayStream, payload: Payload): Unit {
             futId.writeLittleEndian(futIdBytes)
             buffer.write(futIdBytes)
             serializeDataModel(buffer, res)
+        case Heartbeat =>
+            kindBytes[0] = 8
+            buffer.write(kindBytes)
     }
 }
 
@@ -184,7 +232,8 @@ func deserializePayload(buffer: ByteArrayStream): Payload {
             let futId = UInt64.readLittleEndian(futIdBytes)
             let res = deserializeDataModel(buffer)
             Fulfill(futId, res)
-        case _ => throw Exception("Invalid Payload kind: " + kindBytes[0].toString())
+        case 8 => Heartbeat
+        case _ => throw TCPActorSystemDeserializationException("Invalid Payload kind: " + kindBytes[0].toString() + ".")
     }
 }
 
@@ -400,7 +449,8 @@ func serializeDataModelToBytes(dataModel: DataModel): Array<Byte> {
                 buffer.write(valueLengthBytes)
                 buffer.write(valueBytes)
             }
-        case _ => throw Exception()
+        case _ =>
+            throw TCPActorSystemSerializationException("Invalid DataModel type.")
     }
 
     // Get the serialized data
@@ -498,7 +548,7 @@ func deserializeDataModelFromBytes(dataModelBytes: Array<Byte>): DataModel {
                 fields.append(Field(name, value))
             }
             DataModelStruct(fields)
-        case _ => throw Exception("Invalid DataModel type: " + typeBytes[0].toString())
+        case _ => throw TCPActorSystemDeserializationException("Invalid DataModel type: " + typeBytes[0].toString() + ".")
     }
 }
 
@@ -517,6 +567,9 @@ func serializeTCPActorSystemError(buffer: ByteArrayStream, error: TCPActorSystem
         case ReceiverNotFound =>
             errorBytes[0] = 2
             buffer.write(errorBytes)
+        case RequestTimeout =>
+            errorBytes[0] = 3
+            buffer.write(errorBytes)
     }
 }
 
@@ -530,7 +583,7 @@ func deserializeTCPActorSystemError(buffer: ByteArrayStream): TCPActorSystemErro
         case 0 => UnknownError
         case 1 => ActorNotFound
         case 2 => ReceiverNotFound
-        case _ => throw Exception("Invalid TCPActorSystemError kind: " + errorBytes[0].toString())
+        case _ => throw TCPActorSystemDeserializationException("Invalid TCPActorSystemError kind: " + errorBytes[0].toString() + ".")
     }
 }
 

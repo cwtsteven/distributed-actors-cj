@@ -16,6 +16,9 @@ import encoding.json.*
 
 /**
  * Serializes a Metadata object to a byte array
+ * @param metadata - the Metadata object to serialize
+ * @return the serialized byte array
+ * @throws TCPActorSystemSerializationException - if the metadata serialization fails
  */
 func serializeMetadata(metadata: Metadata): Array<Byte> {
     try {
@@ -43,13 +46,16 @@ func serializeMetadata(metadata: Metadata): Array<Byte> {
         let result = Array<Byte>(Int64(buffer.length), item: 0)
         buffer.read(result)
         result
-    } catch (e: Exception) {
-        throw Exception("Failed to serialize metadata: " + e.message)
+    } catch (e: IllegalArgumentException) {
+        throw TCPActorSystemSerializationException("Failed to serialize metadata: " + e.message)
     }
 }
 
 /**
  * Deserializes a byte array back to a Metadata object
+ * @param bytes - the byte array to deserialize
+ * @return the deserialized Metadata object
+ * @throws TCPActorSystemDeserializationException - if the metadata deserialization fails
  */
 func deserializeMetadata(bytes: Array<Byte>): Metadata {
     try {
@@ -74,8 +80,8 @@ func deserializeMetadata(bytes: Array<Byte>): Metadata {
         let customInfo = deserializeJsonObject(buffer)
 
         Metadata(receivers: receivers.toArray(), description: description, customInfo: customInfo)
-    } catch (e: Exception) {
-        throw Exception("Failed to deserialize metadata: " + e.message)
+    } catch (e: IllegalArgumentException) {
+        throw TCPActorSystemDeserializationException("Failed to deserialize metadata: " + e.message)
     }
 }
 
@@ -222,7 +228,7 @@ func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
             // Deserialize ListType by reading the inner item type model
             let itemType = deserializeTypeModel(buffer)
             ListType(itemType)
-        case _ => throw Exception("Invalid TypeModel value: " + typeBytes[0].toString())
+        case _ => throw TCPActorSystemDeserializationException("Invalid TypeModel value: " + typeBytes[0].toString())
     }
 }
 
@@ -249,7 +255,7 @@ func deserializeReceiverMode(buffer: ByteArrayStream): ReceiverMode {
         case 0 => AskOnly
         case 1 => TellOnly
         case 2 => AskAndTell
-        case _ => throw Exception("Invalid ReceiverMode value: " + modeBytes[0].toString())
+        case _ => throw TCPActorSystemDeserializationException("Invalid ReceiverMode value: " + modeBytes[0].toString())
     }
 }
 

@@ -5,9 +5,26 @@ import actors.*
 import serialization.serialization.*
 
 /*
+* Exception thrown when an actor system fails
+*/
+public open class ActorSystemException <: Exception {
+    /*
+    * Creates a ActorSystemException
+    * @param msg - the message of the exception
+    */
+    protected init(msg: String) {
+        super(msg)
+    }
+
+    protected open override func getClassName(): String {
+        "ActorSystemException"
+    }
+}
+
+/*
 * Exception thrown when an actor is not found
 */
-public class ActorNotFoundException <: Exception {
+public open class ActorNotFoundException <: ActorSystemException {
     /*
     * Creates a ActorNotFoundException
     * @param name - the name of the actor
@@ -15,12 +32,16 @@ public class ActorNotFoundException <: Exception {
     public init(name: String) {
         super("Actor with name = ${name} cannot be found.")
     }
+
+    protected open override func getClassName(): String {
+        "ActorNotFoundException"
+    }
 }
 
 /*
 * Exception thrown when a receiver is not found
 */
-public class ReceiverNotFoundException <: Exception {
+public open class ReceiverNotFoundException <: ActorSystemException {
     /*
     * Creates a ReceiverNotFoundException
     * @param name - the name of the actor interface
@@ -29,42 +50,81 @@ public class ReceiverNotFoundException <: Exception {
     public init(name: String, receiverName: String) {
         super("Receiver: ${receiverName} cannot be found in actor interface: ${name}.")
     }
+
+    protected open override func getClassName(): String {
+        "ReceiverNotFoundException"
+    }
 }
 
 /*
 * Exception thrown when a remote connection fails
 */
-public class RemoteException <: Exception {
+public open class RemoteException <: ActorSystemException {
     /*
     * Creates a RemoteException
     */
-    public init() {
+    protected init() {
         super("Remote connection has failed.")
+    }
+
+    protected init(msg: String) {
+        super(msg)
+    }
+
+    protected open override func getClassName(): String {
+        "SerializationException"
     }
 }
 
-/*
-* Exception thrown when an actor system fails
-*/
-public class ActorSystemException <: Exception {
-    /*
-    * Creates a ActorSystemException
-    * @param msg - the message of the exception
-    */
-    public init(msg: String) {
-        super(msg)
+public open class SerializationException <: ActorSystemException {
+    protected init(message: String) {
+        super(message)
+    }
+
+    protected open override func getClassName(): String {
+        "DeserializationException"
+    }
+}
+
+public open class DeserializationException <: ActorSystemException {
+    protected init(message: String) {
+        super(message)
+    }
+
+    protected open override func getClassName(): String {
+        "DeserializationException"
+    }
+}
+
+public open class ActorClusterException <: ActorSystemException {
+    protected init(message: String) {
+        super(message)
+    }
+
+    protected open override func getClassName(): String {
+        "ActorClusterException"
+    }
+}
+
+public open class SerializingFunctionsNotFoundException <: ActorClusterException {
+    protected init(message: String) {
+        super(message)
+    }
+
+    protected open override func getClassName(): String {
+        "SerializingFunctionsNotFoundException"
     }
 }
 
 /*
 * Exception thrown when a remote receiver fails
 */
-public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverException> {
+public open class RemoteReceiverException <: ActorSystemException & Serializable<RemoteReceiverException> {
     /*
     * Creates a RemoteReceiverException from an Exception
     * @param e - the exception to wrap
     */
-    public init(e: Exception) {
+    protected init(e: Exception) {
         this(e.toStringWithStackTrace())
     }
 
@@ -72,7 +132,7 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
     * Creates a RemoteReceiverException from an Error
     * @param e - the error to wrap
     */
-    public init(e: Error) {
+    protected init(e: Error) {
         this(e.toStringWithStackTrace())
     }
 
@@ -80,7 +140,7 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
     * Creates a RemoteReceiverException from a message
     * @param msg - the message to wrap
     */
-    init(msg: String) {
+    protected init(msg: String) {
         super(msg)
     }
 
@@ -88,7 +148,7 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
     * Gets the class name
     * @return the class name
     */
-    protected override func getClassName(): String {
+    protected open override func getClassName(): String {
         "RemoteReceiverException"
     }
 
@@ -107,7 +167,7 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
     * Deserializes the RemoteReceiverException
     * @param dm - the serialized exception
     * @return the deserialized exception
-    * @throws DataModelException - if the exception cannot be deserialized
+    * @throws DeserializationException - if the exception cannot be deserialized
     */
     public static func deserialize(dm: DataModel): RemoteReceiverException {
         match (dm) {
@@ -117,10 +177,10 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
                         let message = String.deserialize(msgField)
                         RemoteReceiverException(message)
                     case _ =>
-                        throw DataModelException("Expected DataModelString for RemoteReceiverException deserialization")
+                        throw DeserializationException("Expected DataModelString for RemoteReceiverException deserialization")
                 }
             case _ =>
-                throw DataModelException("Expected DataModelStruct for RemoteReceiverException deserialization")
+                throw DeserializationException("Expected DataModelStruct for RemoteReceiverException deserialization")
         }
     }
 }

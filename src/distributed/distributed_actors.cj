@@ -39,7 +39,7 @@ public interface Distributable {
 }
 
 /*
-* Interface for actors that can be proxied to a typed proxy
+* Interface for actors that can create a typed proxy
 */
 public interface Proxyable<T> where T <: Distributable {
     /*
@@ -47,6 +47,8 @@ public interface Proxyable<T> where T <: Distributable {
     * @param name - the name of the actor
     * @param client - the client to use for remote communication
     * @return a typed-proxy for the actor
+    * @throws ActorNotFoundException - if the actor is not found on the client
+    * @throws RemoteException - if the remote connection fails
     */
     static func getProxy(name: String, client: ActorClient): T
 }
@@ -59,22 +61,44 @@ public open class ActorProxy {
     * Initializes the ActorProxy
     * @param name - the name of the actor
     * @param client - the client to use for remote communication
+    * @throws ActorNotFoundException - if the actor is not found on the client
+    * @throws RemoteException - if the remote connection fails
     */
     public ActorProxy(
         public let name: String,
         public let client: ActorClient
-    ) {}
+    ) {
+        match (client.find(name)) {
+            case Some(_) => ()
+            case None =>
+                throw ActorNotFoundException(name)
+        }
+    }
 
     /*
     * Invokes a receiver function without expecting a return value
     * @param receiverName - the name of the receiver
     * @param args - the arguments to the receiver
     * @param config - the configuration of the receiver
+    * @throws ActorNotFoundException - if the receiver is not found
+    * @throws ReceiverNotFoundException - if the receiver is not found
+    * @throws RemoteException - if the remote connection fails
+    * @throws ActorSystemException - for any system-specific errors
     */
     public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
         client.remoteCall(InvokeInfo(name: name, receiverName: receiverName, args: args, config: config, fut: None))
     }
 
+    /*
+    * Invokes a receiver function and returns a future for the result
+    * @param receiverName - the name of the receiver
+    * @param args - the arguments to the receiver
+    * @param config - the configuration of the receiver
+    * @throws ActorNotFoundException - if the actor is not found
+    * @throws ReceiverNotFoundException - if the receiver is not found
+    * @throws RemoteException - if the remote connection fails
+    * @throws ActorSystemException - for any system-specific errors
+    */
     public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture {
         let fut = DistributedFuture()
         client.remoteCall(InvokeInfo(name: name, receiverName: receiverName, args: args, config: config, fut: Some(fut)))
@@ -91,6 +115,7 @@ public interface ActorHost {
     * @param name - the name of the actor
     * @param a - the actor to export
     * @return true if the actor was successfully exported, false otherwise
+    * @throws ActorSystemException - for any system-specific errors
     */
     func export(name: String, a: Distributable): Bool
 
@@ -98,6 +123,7 @@ public interface ActorHost {
     * Un-exports an actor
     * @param name - the name of the actor
     * @return true if the actor was successfully un-exported, false otherwise
+    * @throws ActorSystemException - for any system-specific errors
     */
     func unexport(name: String): Bool
 }
@@ -107,7 +133,7 @@ public interface ActorHost {
 */
 public interface ActorClient {
     /*
-    * The id of the actor client
+    * A unique identifier of the actor client
     */
     prop id: String
 
@@ -115,18 +141,27 @@ public interface ActorClient {
     * Finds an actor
     * @param name - the name of the actor
     * @return the actor information if found, None otherwise
+    * @throws RemoteException - if the remote connection fails
+    * @throws ActorSystemException - for any system-specific errors
     */
     func find(name: String): Option<ActorInfo>
 
     /*
     * Finds all actors
     * @return the actor information of all actors
+    * @throws RemoteException - if the remote connection fails
+    * @throws ActorSystemException - for any system-specific errors
     */
     func findAll(): Array<ActorInfo>
 
     /*
     * Makes a remote call to an actor's receiver function and fulfills the provided future with the result
     * @param invokeInfo - the information about the invoke
+    * @throws ActorNotFoundException - if the actor is not found
+    * @throws ReceiverNotFoundException - if the receiver is not found
+    * @throws RemoteException - if the remote connection fails
+    * @throws SerializationException - if the serialization fails
+    * @throws ActorSystemException - for any system-specific errors
     */
     func remoteCall(invokeInfo: InvokeInfo): Unit
 }
