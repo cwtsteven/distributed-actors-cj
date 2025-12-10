@@ -114,7 +114,7 @@ interface HeadServer {
     * @throws ActorSystemException - for any unknown internal errors
     */
     static func connect(headServerAddr!: String, port!: UInt16): Unit {
-        let client = TCPActorClient(HEAD_SERVER_CLIENT_NAME, headServerAddr, port)
+        let client = TCPActorClient.create(HEAD_SERVER_CLIENT_NAME, headServerAddr, port)
         __instance = Some(HeadServer.getProxy(HEAD_SERVER_NAME, client))
     }
 }

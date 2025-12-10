@@ -19,6 +19,10 @@ type FutMap = ConcurrentHashMap<UInt64, DistributedFuture>
 */
 public class TCPActorClient <: ActorClient {
 
+    static init() {
+        ClientManager.instance.registerClientDeserializer("TCPActorClient", TCPActorClient.deserialize)
+    }
+
     /*
     * The information about the TCP actor client
     */
@@ -45,7 +49,7 @@ public class TCPActorClient <: ActorClient {
     * @throws SocketException - if the socket connection fails
     * @throws SocketTimeoutException - if the socket connection times out
     */
-    public init(id: String, addr: String, port: UInt16) {
+    init(id: String, addr: String, port: UInt16) {
         this.info = TCPActorClientInfo(id, addr, port)
         this.conn = TCPConnection(addr, port)
 
@@ -55,6 +59,21 @@ public class TCPActorClient <: ActorClient {
         this.timer.setCallback(sendHeartbeat)
         this.timer.start()
         this.conn.startListening(handleEnvelope)
+    }
+
+    public static func create(id: String, addr: String, port: UInt16): TCPActorClient {
+        match (ClientManager.instance.getClient(id)) {
+            case Some(client) =>
+                match (client) {
+                    case tcpa: TCPActorClient => tcpa
+                    // TODO
+                    case _ => throw DeserializationException("Expected TCPActorClient for ActorProxy deserialization.")
+                }
+            case None =>
+                let client = TCPActorClient(id, addr, port)
+                ClientManager.instance.registerClient(id, client)
+                client
+            }
     }
 
     /*
@@ -312,5 +331,18 @@ public class TCPActorClient <: ActorClient {
             return
         }
         conn.close()
+    }
+
+    public func serialize(): DataModel {
+        info.serialize()
+    }
+
+    public static func deserialize(dataModel: DataModel): ActorClient {
+        let info = TCPActorClientInfo.deserialize(dataModel)
+        TCPActorClient.create(info.id, info.addr, info.port)
+    }
+
+    public func getTypeName(): String {
+        "TCPActorClient"
     }
 }

@@ -10,7 +10,7 @@ import actors.*
 import actors.macros.*
 import actors.distributed.*
 import encoding.json.stream.*
-import serialization.serialization.DataModel
+import serialization.serialization.*
 
 /*
 * A class representing a TCP actor host

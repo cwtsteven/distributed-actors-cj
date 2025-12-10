@@ -20,7 +20,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = AssistantAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("service", "localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")

@@ -51,6 +51,12 @@ protected class GenerateDistributedActorInterface {
         decl.superTypes.append(RefType(quote(
             $proxyableTypeToken<$interfaceName>
         )))
+        decl.superTypes.append(RefType(quote(
+            $serializableTypeToken<$interfaceName>
+        )))
+        decl.superTypes.append(RefType(quote(
+            $typeSerializableTypeToken
+        )))
 
         let proxyClassDecl = generateProxyClassDecl()
         let staticInit = FuncDecl(quote(
@@ -87,6 +93,9 @@ protected class GenerateDistributedActorInterface {
         decl.body.decls.append(newDispatchTellFunc())
         decl.body.decls.append(newDispatchAskFunc())
         decl.body.decls.append(getProxyFunc())
+        decl.body.decls.append(newSerializeFunc())
+        decl.body.decls.append(newDeserializeFunc())
+        decl.body.decls.append(newTypeModelFunc())
 
         headDecl.toTokens() + proxyClassDecl.toTokens()
     }
@@ -287,15 +296,57 @@ protected class GenerateDistributedActorInterface {
         ))
     }
 
+    private func newSerializeFunc(): FuncDecl {
+        FuncDecl(quote(
+            func serialize(): DataModel {
+                // TODO
+                throw Exception("Serialization not supported for actor interface.")
+            }
+        ))
+    }
+
+    private func newDeserializeFunc(): FuncDecl {
+        FuncDecl(quote(
+            static func deserialize(dataModel: DataModel): $interfaceName {
+                $proxyClassIdent.deserialize(dataModel)
+            }
+        ))
+    }
+
+    private func newTypeModelFunc(): FuncDecl {
+        FuncDecl(quote(
+            static func typeModel(): TypeModel {
+                $proxyClassIdent.typeModel()
+            }
+        ))
+    }
+
     private func generateProxyClassDecl(): ClassDecl {
         ClassDecl(quote(
-            private class $proxyClassIdent <: ActorProxy & $interfaceName {
+            private class $proxyClassIdent <: $interfaceName & TypeSerializable {
                 static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
                 static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> LocalWaitable>()
                 static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
 
+                private let proxy: ActorProxy
+
                 public init(name: String, client: ActorClient) {
-                    super(name, client)
+                    proxy = ActorProxy(name, client)
+                }
+
+                public func serialize(): DataModel {
+                    proxy.serialize()
+                }
+
+                public static func deserialize(dataModel: DataModel): $interfaceName {
+                    let proxy = ActorProxy.deserialize(dataModel)
+                    $proxyClassIdent(proxy.name, proxy.client)
+                }
+
+                public static func typeModel(): TypeModel {
+                    TypeModel.StructType([
+                        FieldModel(name: "proxy", description: "ActorProxy", typeModel: ActorProxy.typeModel())
+                    ])
                 }
             }
         ))
@@ -352,7 +403,7 @@ protected class GenerateDistributedActorInterface {
         match (behaviour) {
             case Ask =>
                 fd.block.nodes.append(CallExpr(quote(
-                    this.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
+                    proxy.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
                 )))
             case Tell =>
                 let discardTellParam = VarDecl(quote(let dummy = tell))
@@ -361,7 +412,7 @@ protected class GenerateDistributedActorInterface {
                 discardTellParam.identifier = Token(WILDCARD)
                 fd.block.nodes.append(discardTellParam)
                 fd.block.nodes.append(CallExpr(quote(
-                    this.tell($(fd.identifier.value), $args, config: config)
+                    proxy.tell($(fd.identifier.value), $args, config: config)
                 )))
         }
     }

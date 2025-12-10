@@ -20,5 +20,5 @@ public class Counter {
 main() {
     let counter = Counter()
     let future = counter.increment()
-    println("Counter value: ${future.get()}")
+    println("Counter value: ${future.get()}") // 1
 }
