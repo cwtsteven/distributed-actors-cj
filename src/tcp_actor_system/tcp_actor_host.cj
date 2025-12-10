@@ -10,12 +10,13 @@ import actors.*
 import actors.macros.*
 import actors.distributed.*
 import encoding.json.stream.*
-import serialization.serialization.DataModel
+import serialization.serialization.*
 
 /*
 * A class representing a TCP actor host
 */
 public class TCPActorHost <: ActorHost {
+    private let hostInfo: TCPActorHostInfo
     private let localMap = ConcurrentHashMap<String, Distributable>()
     private let connMap = ConcurrentHashMap<Int64, TCPConnection>()
     private let serverSocket: TcpServerSocket
@@ -26,22 +27,23 @@ public class TCPActorHost <: ActorHost {
     * Initializes the server
     * @param bindAt - the port to bind to
     */
-    public init(bindAt!: UInt16) {
+    public init(addr!: String, bindAt!: UInt16) {
+        hostInfo = TCPActorHostInfo(addr, bindAt)
         serverSocket = TcpServerSocket(bindAt: bindAt)
         logger = TCPActorLoggerWrapper("[TCPActorHost (${serverSocket.localAddress})]")
     }
 
     /*
-    * Exports an actor
-    * @param name - the name of the actor
-    * @param a - the actor to export
-    * @return true if the actor was exported successfully, false otherwise
-    */
-    public func export(name: String, a: Distributable): Bool  {
+     * Exports an actor
+     * @param name - the name of the actor
+     * @param a - the actor to export
+     * @return Some(ActorProxy) if the actor was exported successfully, None if the name is already taken
+     */
+    public func export(name: String, a: Distributable): Option<ActorProxy> {
         if (let Some(_) <- localMap.putIfAbsent(name, a)) {
-            false
+            None
         } else {
-            true
+            Some(ActorProxy(name, hostInfo))
         }
     }
 
@@ -238,5 +240,9 @@ public class TCPActorHost <: ActorHost {
             case Some(t) => t.cancel()
             case None => ()
         }
+    }
+
+    public func getHostInfo(): HostInfo {
+        hostInfo
     }
 }

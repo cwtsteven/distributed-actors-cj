@@ -560,14 +560,17 @@ let actorHost: ActorHost
 
 // Create and export the actor
 let bankService = BankServiceImpl()
-let registered = actorHost.export("bank-service", bankService)
-if (!registered) {
-    println("Failed to export bank service")
-    return
+match (actorHost.export("bank-service", bankService)) {
+    case Some(proxy) =>
+        println("Bank service exported successfully")
+        // The proxy can be used directly if needed
+    case None =>
+        println("Failed to export bank service: name already taken")
+        return
 }
 ```
 
-The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this paricular actor host. Exporting twice with the same name should return `false`.
+The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this particular actor host. Exporting twice with the same name returns `None`. On successful export, it returns `Some(ActorProxy)` which can be used directly for local communication.
 
 Once an actor has been exported, it can be found by a corresponding actor client.
 
@@ -578,14 +581,26 @@ Once an actor has been exported, it can be found by a corresponding actor client
 let actorClient: ActorClient
 ```
 
-To obtain a proxy to an exported distributed actor, you can simply create an `ActorProxy` with the *name* of the actor and the corresponding actor client:
+To obtain a proxy to an exported distributed actor, you can use the `getActor()` method of the actor client:
 
 ```cangjie
 // Create a proxy to communicate with the remote actor
-let bankProxy = ActorProxy("bank-service", actorClient)
+match (actorClient.getActor("bank-service")) {
+    case Some(bankProxy) =>
+        // Use the proxy
+    case None =>
+        println("Actor not found")
+}
 ```
 
-This constructor call will throw `ActorNotFoundException` if the actor name cannot be found in the actor client, and `RemoteException` if the connect to the client has failed.
+Alternatively, you can create an `ActorProxy` directly with the actor name and host info:
+
+```cangjie
+// Create a proxy to communicate with the remote actor
+let bankProxy = ActorProxy("bank-service", actorClient.getHostInfo())
+```
+
+The `getActor()` method will return `None` if the actor is not found, and will throw `RemoteException` if the connection to the client has failed.
 
 Once we obtain an actor proxy, we can use the `ask` or `tell` function to make a remote call to a particular receiver:
 
@@ -628,11 +643,17 @@ This function will also throw a `RemoteException` when connection has failed and
 For more convenient use of actor proxy, users can get a typed-proxy from the actor interface and call its remote receivers using normal receiver call syntax. For example:
 
 ```cangjie
+// First get an ActorProxy
+let actorProxy = match (actorClient.getActor("bank-service")) {
+    case Some(proxy) => proxy
+    case None => throw Exception("Actor not found")
+}
+
 // Create a typed-proxy to communicate with the remote actor
-let bankProxy: BankService = BankService.getProxy("bank-service", actorClient)
+let bankProxy: BankService = BankService.getProxy(actorProxy)
 ```
 
-This is similar to creating an untyped `ActorProxy` in the sense that it will throw `ActorNotFoundException` if the actor name cannot be found in the actor client, and `RemoteException` if the connect to the client has failed.
+This is similar to creating an untyped `ActorProxy` in the sense that `getActor()` will return `None` if the actor name cannot be found in the actor client, and will throw `RemoteException` if the connection to the client has failed.
 
 After obtaining a typed-proxy, we can invoke its remote receives as if it were a local actor:
 
@@ -668,12 +689,15 @@ To create a TCP actor host that can accept connections from remote clients:
 ```cangjie
 import actors.tcp_actor_system.*
 
-// Create a TCP actor host that listens on port 8080
-let tcpHost = TCPActorHost(bindAt: 8080)
+// Create a TCP actor host that listens on localhost:8080
+let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
 
 // Export actors with the host
 let bankService = BankServiceImpl()
-tcpHost.export("bank-service", bankService)
+match (tcpHost.export("bank-service", bankService)) {
+    case Some(_) => println("Bank service exported")
+    case None => println("Failed to export: name already taken")
+}
 
 // Start the server to accept client connections
 let serverFuture = tcpHost.serve()
@@ -689,10 +713,13 @@ To create a TCP actor client that connects to a remote TCP actor host:
 import actors.tcp_actor_system.*
 
 // Create a TCP actor client that connects to localhost:8080
-let tcpClient = TCPActorClient(id: "client-1", addr: "localhost", port: 8080)
+let tcpClient = TCPActorClient.create("localhost", 8080)
 
-// Create a proxy for remote communication
-let bankProxy = ActorProxy("bank-service", tcpClient)
+// Get a proxy for remote communication
+let bankProxy = match (tcpClient.getActor("bank-service")) {
+    case Some(proxy) => proxy
+    case None => throw Exception("Actor not found")
+}
 
 // Use the proxy to make remote calls
 let createFut: DistributedFuture = bankProxy.ask("createAccount", [
@@ -742,12 +769,15 @@ const PORT: UInt16 = 52165
 
 main() {
     // Create and start the TCP actor host
-    let tcpHost = TCPActorHost(bindAt: PORT)
+    let tcpHost = TCPActorHost(addr: "localhost", bindAt: PORT)
     let serverFuture = tcpHost.serve()
 
     // Export the bank service
     let bankService = BankServiceImpl()
-    tcpHost.export("bank-service", bankService)
+    match (tcpHost.export("bank-service", bankService)) {
+        case Some(_) => println("Bank service exported")
+        case None => println("Failed to export: name already taken")
+    }
 
     println("TCP Actor Host is running on port ${PORT}")
     println("Press Ctrl+C to stop the server")
@@ -770,10 +800,13 @@ import serialization.serialization.*
 const PORT: UInt16 = 52165
 
 main() {
-    let tcpClient = TCPActorClient("client-1", "localhost", PORT)
+    let tcpClient = TCPActorClient.create("localhost", PORT)
 
     try {
-        let bankProxy = ActorProxy("bank-service", tcpClient)
+        let bankProxy = match (tcpClient.getActor("bank-service")) {
+            case Some(proxy) => proxy
+            case None => throw Exception("Actor not found")
+        }
 
         let transferFut: DistributedFuture = bankProxy.ask("transfer", [
             "alice".serialize(),
@@ -1277,7 +1310,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = MyAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")

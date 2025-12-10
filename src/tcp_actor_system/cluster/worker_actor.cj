@@ -50,8 +50,8 @@ interface WorkerActor {
     * @throws SocketException - if the server socket fails to bind
     * @throws ActorSystemException - for any unknown internal errors
     */
-    static func start(name!: String, bindAt!: UInt16): Future<Unit> {
-        let tcpHost = TCPActorHost(bindAt: bindAt)
+    static func start(name!: String, addr!: String, bindAt!: UInt16): Future<Unit> {
+        let tcpHost = TCPActorHost(addr: addr, bindAt: bindAt)
         let instance = WorkerActorImpl(tcpHost)
         tcpHost.export(name, instance)
         tcpHost.serve()

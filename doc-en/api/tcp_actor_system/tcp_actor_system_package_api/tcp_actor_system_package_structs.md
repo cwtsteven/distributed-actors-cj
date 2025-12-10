@@ -1,40 +1,65 @@
 # Structs
 
-## struct TCPActorClientInfo
+## struct TCPActorHostInfo
 
 ```cangjie
-public struct TCPActorClientInfo <: Serializable<TCPActorClientInfo> & TypeSerializable {
-  public TCPActorClientInfo(
-    public let id: String,
+public struct TCPActorHostInfo <: HostInfo {
+  public TCPActorHostInfo(
     public let addr: String,
     public let port: UInt16
   )
 }
 ```
 
-Function: Information about a TCP actor client, including the client ID, address, and port.
+Function: Information about a TCP actor host, including the host address and port. This struct implements `HostInfo` and is used to identify and connect to TCP actor hosts.
 
 Implements:
+- `HostInfo`
 - `Serializable`
 - `TypeSerializable`
+- `Equatable`
+- `Hashable`
+- `ToString`
 
-### init(String, String, UInt16)
+### init(String, UInt16)
 
 ```cangjie
-public TCPActorClientInfo(
-  public let id: String,
+public TCPActorHostInfo(
   public let addr: String,
   public let port: UInt16
 )
 ```
 
-Function: Initializes the TCPActorClientInfo.
+Function: Initializes the TCPActorHostInfo.
 
 Parameters:
 
-- `id: String` - The client ID.
-- `addr: String` - The client address.
-- `port: UInt16` - The client port.
+- `addr: String` - The host address.
+- `port: UInt16` - The host port.
+
+### func createClient()
+
+```cangjie
+public func createClient(): ActorClient
+```
+
+Function: Creates a client for connecting to this TCP actor host.
+
+Return Value:
+
+- `ActorClient` - A TCP actor client instance.
+
+### func getTypeName()
+
+```cangjie
+public func getTypeName(): String
+```
+
+Function: Gets the type name of the host info.
+
+Return Value:
+
+- `String` - Returns "TCPActorHostInfo".
 
 ### func serialize()
 
@@ -42,7 +67,7 @@ Parameters:
 public func serialize(): DataModel
 ```
 
-Function: Serializes the TCPActorClientInfo object to a DataModel.
+Function: Serializes the TCPActorHostInfo object to a DataModel.
 
 Return Value:
 
@@ -51,10 +76,10 @@ Return Value:
 ### func deserialize()
 
 ```cangjie
-public static func deserialize(dataModel: DataModel): TCPActorClientInfo
+public static func deserialize(dataModel: DataModel): HostInfo
 ```
 
-Function: Deserializes a DataModel to a TCPActorClientInfo object.
+Function: Deserializes a DataModel to a TCPActorHostInfo object.
 
 Parameters:
 
@@ -62,7 +87,7 @@ Parameters:
 
 Return Value:
 
-- `TCPActorClientInfo` - The deserialized TCPActorClientInfo object.
+- `HostInfo` - The deserialized TCPActorHostInfo object.
 
 Exceptions:
 
@@ -74,9 +99,9 @@ Exceptions:
 public static func typeModel(): TypeModel
 ```
 
-Function: Gets the type model of the TCPActorClientInfo.
+Function: Gets the type model of the TCPActorHostInfo.
 
 Return Value:
 
-- `TypeModel` - The type model of the TCPActorClientInfo.
+- `TypeModel` - The type model of the TCPActorHostInfo.
 

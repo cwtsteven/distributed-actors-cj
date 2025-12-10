@@ -8,14 +8,6 @@ public interface ActorClient
 
 Function: Interface that provide remote access to actors *exported* by the connected `ActorHost`.
 
-### prop id
-
-```cangjie
-prop id: String
-```
-
-Function: A unique identifier of the actor client.
-
 ### func find()
 
 ```cangjie
@@ -75,6 +67,28 @@ Exceptions:
 - `RemoteException` - Thrown if the remote connection fails.
 - `ActorSystemException` - Thrown for any system-specific errors.
 
+### func getActor()
+
+```cangjie
+func getActor(name: String): Option<ActorProxy>
+```
+
+Function: Gets an actor proxy for the specified actor name.
+
+Parameters:
+
+- `name: String` - The name of the actor.
+
+Return Value:
+
+- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor is found, `None` otherwise.
+
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the actor is not found on the client.
+- `RemoteException` - Thrown if the remote connection fails.
+- `ActorSystemException` - Thrown for any system-specific errors.
+
 ### func remoteCall()
 
 ```cangjie
@@ -92,8 +106,20 @@ Exceptions:
 - `ActorNotFoundException` - Thrown if the actor is not found on the client.
 - `ReceiverNotFoundException` - Thrown if the receiver is not found.
 - `RemoteException` - Thrown if the remote connection fails.
-- `SerializationException` - Thrown if the serialization fails.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
 - `ActorSystemException` - Thrown for any system-specific errors.
+
+### func getHostInfo()
+
+```cangjie
+func getHostInfo(): HostInfo
+```
+
+Function: Gets the host info of the client.
+
+Return Value:
+
+- `HostInfo` - The host info that identifies the remote host this client connects to.
 
 ## interface ActorCluster
 
@@ -212,7 +238,7 @@ Function: Interface that exports and un-exports distributed actors.
 ### func export()
 
 ```cangjie
-func export(name: String, a: Distributable): Bool
+func export(name: String, a: Distributable): Option<ActorProxy>
 ```
 
 Function: Exports an actor instance with a specified name.
@@ -224,7 +250,7 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
+- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor was successfully exported, `None` if the name is already taken.
 
 Exceptions:
 
@@ -249,6 +275,77 @@ Return Value:
 Exceptions:
 
 - `ActorSystemException` - Thrown for any system-specific errors.
+
+### func getHostInfo()
+
+```cangjie
+func getHostInfo(): HostInfo
+```
+
+Function: Gets the host info of the host.
+
+Return Value:
+
+- `HostInfo` - The host info that identifies this host.
+
+## interface HostInfo
+
+```cangjie
+public interface HostInfo <: Serializable<HostInfo> & TypeSerializable & Equatable<HostInfo> & Hashable & ToString
+```
+
+Function: Interface for host information that identifies a remote actor host. This interface provides methods to create clients and obtain type information for serialization.
+
+Implements:
+- `Serializable`
+- `TypeSerializable`
+- `Equatable`
+- `Hashable`
+- `ToString`
+
+### func createClient()
+
+```cangjie
+func createClient(): ActorClient
+```
+
+Function: Creates a client for connecting to this host.
+
+Return Value:
+
+- `ActorClient` - A client instance that can connect to this host.
+
+### func getTypeName()
+
+```cangjie
+func getTypeName(): String
+```
+
+Function: Gets the type name of the host info, used for serialization and deserialization.
+
+Return Value:
+
+- `String` - The type name of the host info.
+
+### func deserialize()
+
+```cangjie
+static func deserialize(dataModel: DataModel): HostInfo
+```
+
+Function: Deserializes a data model to a host info. This is a default implementation that should not be called directly. Concrete implementations of `HostInfo` should override this method.
+
+Parameters:
+
+- `dataModel: DataModel` - The data model to deserialize.
+
+Return Value:
+
+- `HostInfo` - The deserialized host info.
+
+Exceptions:
+
+- `Exception` - Thrown if this default implementation is called.
 
 ## interface Distributable
 
@@ -321,15 +418,14 @@ Function: Interface for actors that can be proxied to a typed proxy.
 ### func getProxy()
 
 ```cangjie
-static func getProxy(name: String, client: ActorClient): T
+static func getProxy(proxy: ActorProxy): T
 ```
 
-Function: Returns a typed proxy instance for the distributed actor that implements this interface.
+Function: Returns a typed proxy instance for the distributed actor from an `ActorProxy`.
 
 Parameters:
 
-- `name: String` - The remote actor name registered with the distributed system.
-- `client: ActorClient` - The client instance used to reach the remote host.
+- `proxy: ActorProxy` - The actor proxy representing the remote actor.
 
 Return Value:
 

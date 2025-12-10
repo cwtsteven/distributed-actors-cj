@@ -117,7 +117,7 @@ This document provides a comprehensive list of all public APIs in the distribute
 
 | Struct Name | Description |
 |-------------|-------------|
-| [TCPActorClientInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorclientinfo) | Information about a TCP actor client, including the client ID, address, and port. |
+| [TCPActorHostInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorhostinfo) | Information about a TCP actor host, including the host address and port. |
 
 ## actors.tcp_actor_system.cluster Package
 
