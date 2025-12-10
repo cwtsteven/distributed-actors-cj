@@ -20,6 +20,167 @@ public static mut prop logger: Logger
 
 - `Logger` — TCP Actor 系统使用的日志器实例。
 
+### static var requestTimeout
+
+```cangjie
+public static var requestTimeout: Duration
+```
+
+功能：TCP 通道中请求的超时时间。
+
+默认值：
+
+- `Duration.second * 10` - 默认超时时间为 10 秒。
+
+### static var heartbeatInterval
+
+```cangjie
+public static var heartbeatInterval: Duration
+```
+
+功能：发送心跳的间隔时间。
+
+默认值：
+
+- `Duration.second * 2` - 默认心跳间隔为 2 秒。
+
+## class TCPActorClient
+
+```cangjie
+public class TCPActorClient <: ActorClient {
+  public init(id: String, addr: String, port: UInt16)
+}
+```
+
+功能：基于 TCP 的 `ActorClient` 实现，通过 TCP 连接为远程 actor 提供访问能力。该类连接到 TCP actor 主机并启用与远程 actor 的通信。
+
+### init(String, String, UInt16)
+
+```cangjie
+public init(id: String, addr: String, port: UInt16)
+```
+
+功能：初始化为连接到指定主机与端口的客户端。
+
+参数：
+
+- `id: String` — 客户端唯一标识。
+- `addr: String` — 目标主机地址。
+- `port: UInt16` — 目标主机端口。
+
+异常：
+
+- `IllegalArgumentException` — 如果地址或端口无效则抛出。
+- `SocketException` — 如果套接字连接失败则抛出。
+- `SocketTimeoutException` — 如果套接字连接超时则抛出。
+
+### prop id
+
+```cangjie
+public prop id: String
+```
+
+功能：TCP actor 客户端的唯一标识。
+
+### func find()
+
+```cangjie
+public func find(name: String): Option<ActorInfo>
+```
+
+功能：按名称查找 actor 并返回信息。
+
+参数：
+
+- `name: String` — 要查找的 actor 名称。
+
+返回值：
+
+- `Option<ActorInfo>` — 找到则返回 `Some(ActorInfo)`，否则 `None`。
+
+异常：
+
+- `TCPActorSystemRemoteException` — 如果连接丢失则抛出。
+- `TCPActorSystemRequestTimeoutException` — 如果 TCP 请求超时则抛出。
+- `TCPActorSystemSerializationException` — 如果信封序列化失败则抛出。
+- `TCPActorSystemDeserializationException` — 如果响应信封反序列化失败则抛出。
+- `TCPActorSystemInternalException` — 对于任何内部错误则抛出。
+
+### func findAll()
+
+```cangjie
+public func findAll(): Array<ActorInfo>
+```
+
+功能：查找 TCP actor 主机中注册的全部 actor。
+
+返回值：
+
+- `Array<ActorInfo>` — 所有已注册 actor 的信息数组。
+
+异常：
+
+- `TCPActorSystemRemoteException` — 如果连接丢失则抛出。
+- `TCPActorSystemRequestTimeoutException` — 如果请求超时则抛出。
+- `TCPActorSystemSerializationException` — 如果信封序列化失败则抛出。
+- `TCPActorSystemDeserializationException` — 如果响应信封反序列化失败则抛出。
+- `TCPActorSystemInternalException` — 对于任何内部错误则抛出。
+
+### func containsActor()
+
+```cangjie
+public func containsActor(name: String): Bool
+```
+
+功能：检查服务器是否导出了指定的 actor。
+
+参数：
+
+- `name: String` — actor 的名称。
+
+返回值：
+
+- `Bool` — 如果 actor 已导出则返回 `true`，否则返回 `false`。
+
+异常：
+
+- `TCPActorSystemRemoteException` — 如果连接丢失则抛出。
+- `TCPActorSystemRequestTimeoutException` — 如果请求超时则抛出。
+- `TCPActorSystemSerializationException` — 如果信封序列化失败则抛出。
+- `TCPActorSystemDeserializationException` — 如果响应信封反序列化失败则抛出。
+- `TCPActorSystemInternalException` — 对于任何内部错误则抛出。
+
+### func remoteCall()
+
+```cangjie
+public func remoteCall(invokeInfo: InvokeInfo): Unit
+```
+
+功能：根据调用信息对某个 actor 的 receiver 发起远程调用。
+
+参数：
+
+- `invokeInfo: InvokeInfo` — 远程调用的信息。
+
+异常：
+
+- `ActorNotFoundException` — 如果找不到 actor 则抛出。
+- `ReceiverNotFoundException` — 如果找不到 receiver 则抛出。
+- `IllegalArgumentException` — 如果调用参数无效则抛出。
+- `TCPActorSystemRemoteException` — 如果连接丢失则抛出。
+- `TCPActorSystemRequestTimeoutException` — 如果请求超时则抛出。
+- `TCPActorSystemSerializationException` — 如果信封序列化失败则抛出。
+- `TCPActorSystemDeserializationException` — 如果响应信封反序列化失败则抛出。
+- `TCPActorSystemInternalException` — 对于任何内部错误则抛出。
+
+### func close()
+
+```cangjie
+public func close(): Unit
+```
+
+功能：关闭 TCP 客户端连接。可以安全地多次调用。
+
 ## class TCPActorHost
 
 ```cangjie
@@ -98,127 +259,3 @@ public func close(): Unit
 ```
 
 功能：关闭所有客户端连接与服务器套接字，以关闭主机。
-
-## class TCPActorClient
-
-```cangjie
-public class TCPActorClient <: ActorClient {
-  public init(id: String, addr: String, port: UInt16)
-}
-```
-
-功能：基于 TCP 的 `ActorClient` 实现，通过 TCP 连接为远程 actor 提供访问能力。该类连接到 TCP actor 主机并启用与远程 actor 的通信。
-
-### init(String, String, UInt16)
-
-```cangjie
-public init(id: String, addr: String, port: UInt16)
-```
-
-功能：初始化为连接到指定主机与端口的客户端。
-
-参数：
-
-- `id: String` — 客户端唯一标识。
-- `addr: String` — 目标主机地址。
-- `port: UInt16` — 目标主机端口。
-
-### prop id
-
-```cangjie
-public prop id: String
-```
-
-功能：TCP actor 客户端的唯一标识。
-
-### func find()
-
-```cangjie
-public func find(name: String): Option<ActorInfo>
-```
-
-功能：按名称查找 actor 并返回信息。
-
-参数：
-
-- `name: String` — 要查找的 actor 名称。
-
-返回值：
-
-- `Option<ActorInfo>` — 找到则返回 `Some(ActorInfo)`，否则 `None`。
-
-### func findAll()
-
-```cangjie
-public func findAll(): Array<ActorInfo>
-```
-
-功能：查找 TCP actor 主机中注册的全部 actor。
-
-返回值：
-
-- `Array<ActorInfo>` — 所有已注册 actor 的信息数组。
-
-### func remoteCall()
-
-```cangjie
-public func remoteCall(invokeInfo: InvokeInfo): Unit
-```
-
-功能：根据调用信息对某个 actor 的 receiver 发起远程调用。
-
-参数：
-
-- `invokeInfo: InvokeInfo` — 远程调用的信息。
-
-### func close()
-
-```cangjie
-public func close(): Unit
-```
-
-功能：关闭 TCP 客户端连接。
-
-## class TCPActorSystemSerializationException
-
-```cangjie
-public class TCPActorSystemSerializationException <: Exception {
-  TCPActorSystemSerializationException(message: String)
-}
-```
-
-功能：TCP Actor 系统中序列化操作失败时抛出的异常。
-
-### init(String)
-
-```cangjie
-TCPActorSystemSerializationException(message: String)
-```
-
-功能：创建带自定义错误信息的序列化异常。
-
-参数：
-
-- `message: String` — 序列化错误的描述信息。
-
-## class TCPActorSystemDeserializationException
-
-```cangjie
-public class TCPActorSystemDeserializationException <: Exception {
-  TCPActorSystemDeserializationException(message: String)
-}
-```
-
-功能：TCP Actor 系统中反序列化操作失败时抛出的异常。
-
-### init(String)
-
-```cangjie
-TCPActorSystemDeserializationException(message: String)
-```
-
-功能：创建带自定义错误信息的反序列化异常。
-
-参数：
-
-- `message: String` — 反序列化错误的描述信息。

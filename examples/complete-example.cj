@@ -41,7 +41,7 @@ main() {
     for (_ in 0..100) {
         let fut1 = spawn {
             for (_ in 0..10) {
-                account.deposit(1000.0)
+                account.deposit(1000.0, config: ReceiverConfig(priority: 10))
             }
         }
         let fut2 = spawn {

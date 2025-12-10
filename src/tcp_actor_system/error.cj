@@ -7,12 +7,16 @@ enum TCPActorSystemError <: ToString & Equatable<TCPActorSystemError> {
     | UnknownError
     | ActorNotFound
     | ReceiverNotFound
+    | DeserializationFailed
+    | IllegalArgument
 
     public override func toString(): String {
         match (this) {
             case UnknownError => "UnknownError"
             case ActorNotFound => "ActorNotFound"
             case ReceiverNotFound => "ReceiverNotFound"
+            case DeserializationFailed => "DeserializationFailed"
+            case IllegalArgument => "IllegalArgument"
         }
     }
 
@@ -21,6 +25,8 @@ enum TCPActorSystemError <: ToString & Equatable<TCPActorSystemError> {
             case (UnknownError, UnknownError) => true
             case (ActorNotFound, ActorNotFound) => true
             case (ReceiverNotFound, ReceiverNotFound) => true
+            case (DeserializationFailed, DeserializationFailed) => true
+            case (IllegalArgument, IllegalArgument) => true
             case _ => false
         }
     }

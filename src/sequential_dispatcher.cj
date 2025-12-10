@@ -44,6 +44,7 @@ public class SequentialDispatcher {
     * @param f - the task to post
     * @param config - the configuration of the task
     * @return the future of the task
+    * @throws IllegalArgumentException - if the priority is out of range
     */
     public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
         let fut = ActorFuture<T>(f)
@@ -55,6 +56,7 @@ public class SequentialDispatcher {
     * Posts a task to the dispatcher without expecting a return value
     * @param f - the task to post
     * @param config - the configuration of the task
+    * @throws IllegalArgumentException - if the priority is out of range
     */
     public func tell(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default): Unit {
         mailbox.add((this, f), config.priority)
