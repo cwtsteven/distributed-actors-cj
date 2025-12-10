@@ -11,7 +11,7 @@ import actors.distributed.*
 
 public class ActorToolManager <: ToolManager {
 
-    private let clients = HashMap<String, ActorClient>()
+    private let clients = HashMap<HostInfo, ActorClient>()
 
     public ActorToolManager(
         private let baseManager!: ToolManager = SimpleToolManager()
@@ -48,7 +48,7 @@ public class ActorToolManager <: ToolManager {
     public prop enableFilter: Bool { get() { baseManager.enableFilter } }
 
     public func addActorClient(client: ActorClient): Unit {
-        clients.put(client.id, client)
+        clients.put(client.getHostInfo(), client)
         let actorInfos = client.findAll()
         let newTools = generateMCPToolsFromActorInfos(client, actorInfos)
         for (tool in newTools) {
@@ -56,11 +56,10 @@ public class ActorToolManager <: ToolManager {
         }
     }
 
-    public func removeActorClient(clientId: String): Unit {
-        let client =
-            match (clients.remove(clientId)) {
+    public func removeActorClient(info: HostInfo): Unit {
+        let client = match (clients.remove(info)) {
                 case Some(client) => client
-                case None => throw ActorMCPException("Client ${clientId} not found")
+                case None => throw ActorMCPException("Client ${info} not found")
             }
 
         let actorInfos = client.findAll()

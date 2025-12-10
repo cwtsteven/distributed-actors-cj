@@ -61,13 +61,13 @@ import actors.macros.internal.*
  *     func foo(arg: T1, config!: ReceiverConfig, tell!: Tell): Unit
  *
  *     static func getMetadata(): Metadata
- *     static func getProxy(name: String, client: ActorClient): Service
+ *     static func getProxy(name: String, info: HostInfo): Service
  *
  *     func dispatchTell(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
  *     func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Waitable
  *   }
  *
- *   public class ServiceProxy <: ActorProxy & Service {
+ *   public class ServiceProxy <: Service {
  *     static let dispatchTellMap = HashMap<String, (Service, Array<DataModel>, ReceiverConfig) -> Unit>()
  *     static let dispatchAskMap = HashMap<String, (Service, Array<DataModel>, ReceiverConfig) -> Waitable>()
  *     static let receiverInfosArray = ArrayList<ReceiverInfo>()
@@ -85,16 +85,18 @@ import actors.macros.internal.*
  *       )
  *     }
  *
- *     public init(name: String, client: ActorClient) {
- *       super(name, client)
+ *     private let proxy: ActorProxy
+ *
+ *     public init(name: String, info: HostInfo) {
+ *       proxy = ActorProxy(name, info)
  *     }
  *
  *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<T> {
- *       dispatchAsk("foo", [arg.serialize()], config)
+ *       proxy.dispatchAsk("foo", [arg.serialize()], config)
  *     }
  *
  *     func foo(arg: T1, config!: ReceiverConfig = ReceiverConfig.default, tell!: Tell): Unit {
- *       dispatchTell("foo", [arg.serialize()], config)
+ *       proxy.dispatchTell("foo", [arg.serialize()], config)
  *     }
  *   }
  *

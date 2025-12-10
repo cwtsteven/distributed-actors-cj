@@ -8,14 +8,6 @@ public interface ActorClient
 
 Function: Interface that provide remote access to actors *exported* by the connected `ActorHost`.
 
-### prop id
-
-```cangjie
-prop id: String
-```
-
-Function: A unique identifier of the actor client.
-
 ### func find()
 
 ```cangjie
@@ -75,6 +67,28 @@ Exceptions:
 - `RemoteException` - Thrown if the remote connection fails.
 - `ActorSystemException` - Thrown for any system-specific errors.
 
+### func getActor()
+
+```cangjie
+func getActor(name: String): Option<ActorProxy>
+```
+
+Function: Gets an actor proxy for the specified actor name.
+
+Parameters:
+
+- `name: String` - The name of the actor.
+
+Return Value:
+
+- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor is found, `None` otherwise.
+
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the actor is not found on the client.
+- `RemoteException` - Thrown if the remote connection fails.
+- `ActorSystemException` - Thrown for any system-specific errors.
+
 ### func remoteCall()
 
 ```cangjie
@@ -92,8 +106,20 @@ Exceptions:
 - `ActorNotFoundException` - Thrown if the actor is not found on the client.
 - `ReceiverNotFoundException` - Thrown if the receiver is not found.
 - `RemoteException` - Thrown if the remote connection fails.
-- `SerializationException` - Thrown if the serialization fails.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
 - `ActorSystemException` - Thrown for any system-specific errors.
+
+### func getHostInfo()
+
+```cangjie
+func getHostInfo(): HostInfo
+```
+
+Function: Gets the host info of the client.
+
+Return Value:
+
+- `HostInfo` - The host info that identifies the remote host this client connects to.
 
 ## interface ActorCluster
 
@@ -120,6 +146,11 @@ Return Value:
 
 - `Option<T>` - Returns `Some(T)` with the created actor when successful, or `None` if an actor with the same name already exists or the spawn fails.
 
+Exceptions:
+
+- `RemoteException` - Thrown if the connection to the cluster fails.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
+
 ### func getActor\<T>()
 
 ```cangjie
@@ -136,26 +167,26 @@ Return Value:
 
 - `Option<T>` - Returns `Some(T)` if an actor with the given name exists and matches the requested type, `None` otherwise.
 
-### func killActor()
+### func removeActor()
 
 ```cangjie
-static func killActor(name: String): Bool
+static func removeActor(name: String): Bool
 ```
 
-Function: Removes the actor with the given name from the cluster. This does not immediately *kill* the actor as it might not be garbage collected yet.
+Function: Removes the actor with the given name from the cluster. This does not immediately *kill* the actor as it might still be referenced in the host machine locally.
 
 Parameters:
 
-- `name: String` - The name of the actor to kill.
+- `name: String` - The name of the actor to remove.
 
 Return Value:
 
 - `Bool` - Returns `true` if an actor with the given name was removed, `false` if no such actor exists.
 
-### func registerSpawnable\<T>()
+### func registerSpawningFunc\<T>()
 
 ```cangjie
-static func registerSpawnable<T>(typeName: String, spawnableFunc: (Array<SpawnArgument>) -> Option<T>): Bool where T <: Distributable & Proxyable<T> & Spawnable<T>
+static func registerSpawningFunc<T>(typeName: String, spawningFunc: (Array<SpawnArgument>) -> Option<T>): Bool where T <: Distributable & Proxyable<T> & Spawnable<T>
 ```
 
 Function: Registers a spawning function for a given actor type name so that the cluster can later spawn actors of that type.
@@ -163,19 +194,19 @@ Function: Registers a spawning function for a given actor type name so that the 
 Parameters:
 
 - `typeName: String` - The unique type name associated with the actor type.
-- `spawnableFunc: (Array<SpawnArgument>) -> Option<T>` - The function that constructs an actor instance from a list of arguments.
+- `spawningFunc: (Array<SpawnArgument>) -> Option<T>` - The function that constructs an actor instance from a list of arguments.
 
 Return Value:
 
-- `Bool` - Returns `true` if the type name was successfully registered, `false` if the type name was already present.
+- `Bool` - Returns `true` if the spawning function was registered, `false` if it was already registered.
 
-### func registerSpawnArgument\<T>()
+### func registerSpawnParameterType\<T>()
 
 ```cangjie
-static func registerSpawnArgument<T>(typeName: String): Bool where T <: Serializable<T> & TypeSerializable
+static func registerSpawnParameterType<T>(typeName: String): Bool where T <: Serializable<T> & TypeSerializable
 ```
 
-Function: Registers the serialization and type model information for a spawn argument type so that it can be safely transferred to another node in the cluster.
+Function: Registers the parameter type of a spawning function with a given type name so that it can be safely transferred to another node in the cluster.
 
 Parameters:
 
@@ -183,15 +214,15 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the type name was successfully registered, `false` if it was already present.
+- `Bool` - Returns `true` if the type was registered, `false` if it was already registered.
 
-### func getSpawnable()
+### func getSpawningFunc()
 
 ```cangjie
-static func getSpawnable(typeName: String): Option<(Array<SpawnArgument>) -> Option<Distributable>>
+static func getSpawningFunc(typeName: String): Option<(Array<SpawnArgument>) -> Option<Distributable>>
 ```
 
-Function: Looks up a previously registered spawning function by type name.
+Function: Gets a spawning function for a given type name.
 
 Parameters:
 
@@ -212,7 +243,7 @@ Function: Interface that exports and un-exports distributed actors.
 ### func export()
 
 ```cangjie
-func export(name: String, a: Distributable): Bool
+func export(name: String, a: Distributable): Option<ActorProxy>
 ```
 
 Function: Exports an actor instance with a specified name.
@@ -224,7 +255,7 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
+- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor was successfully exported, `None` if the name is already taken.
 
 Exceptions:
 
@@ -249,6 +280,77 @@ Return Value:
 Exceptions:
 
 - `ActorSystemException` - Thrown for any system-specific errors.
+
+### func getHostInfo()
+
+```cangjie
+func getHostInfo(): HostInfo
+```
+
+Function: Gets the host info of the host.
+
+Return Value:
+
+- `HostInfo` - The host info that identifies this host.
+
+## interface HostInfo
+
+```cangjie
+public interface HostInfo <: Serializable<HostInfo> & TypeSerializable & Equatable<HostInfo> & Hashable & ToString
+```
+
+Function: Interface for host information that identifies a remote actor host. This interface provides methods to create clients and obtain type information for serialization.
+
+Implements:
+- `Serializable`
+- `TypeSerializable`
+- `Equatable`
+- `Hashable`
+- `ToString`
+
+### func createClient()
+
+```cangjie
+func createClient(): ActorClient
+```
+
+Function: Creates a client for connecting to this host.
+
+Return Value:
+
+- `ActorClient` - A client instance that can connect to this host.
+
+### func getTypeName()
+
+```cangjie
+func getTypeName(): String
+```
+
+Function: Gets the type name of the host info, used for serialization and deserialization.
+
+Return Value:
+
+- `String` - The type name of the host info.
+
+### func deserialize()
+
+```cangjie
+static func deserialize(dataModel: DataModel): HostInfo
+```
+
+Function: Deserializes a data model to a host info. This is a default implementation that should not be called directly. Concrete implementations of `HostInfo` should override this method.
+
+Parameters:
+
+- `dataModel: DataModel` - The data model to deserialize.
+
+Return Value:
+
+- `HostInfo` - The deserialized host info.
+
+Exceptions:
+
+- `Exception` - Thrown if this default implementation is called.
 
 ## interface Distributable
 
@@ -321,15 +423,14 @@ Function: Interface for actors that can be proxied to a typed proxy.
 ### func getProxy()
 
 ```cangjie
-static func getProxy(name: String, client: ActorClient): T
+static func getProxy(proxy: ActorProxy): T
 ```
 
-Function: Returns a typed proxy instance for the distributed actor that implements this interface.
+Function: Returns a typed proxy instance for the distributed actor from an `ActorProxy`.
 
 Parameters:
 
-- `name: String` - The remote actor name registered with the distributed system.
-- `client: ActorClient` - The client instance used to reach the remote host.
+- `proxy: ActorProxy` - The actor proxy representing the remote actor.
 
 Return Value:
 

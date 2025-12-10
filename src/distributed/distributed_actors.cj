@@ -46,36 +46,21 @@ public interface Distributable {
 public interface Proxyable<T> where T <: Distributable {
     /*
     * Gets a typed-proxy for the actor
-    * @param name - the name of the actor
-    * @param client - the client to use for remote communication
+    * @param proxy - the actor proxy
     * @return a typed-proxy for the actor
-    * @throws ActorNotFoundException - if the actor is not found on the client
-    * @throws RemoteException - if the remote connection fails
-    * @throws ActorSystemException - for any system-specific errors
     */
-    static func getProxy(name: String, client: ActorClient): T
+    static func getProxy(proxy: ActorProxy): T
 }
 
 /*
 * Proxy for a distributed actor
 */
-public open class ActorProxy {
-    /*
-    * Checks if the actor is found on the client and creates a new ActorProxy
-    * @param name - the name of the actor
-    * @param client - the client to use for remote communication
-    * @throws ActorNotFoundException - if the actor is not found on the client
-    * @throws RemoteException - if the remote connection fails
-    * @throws ActorSystemException - for any system-specific errors
-    */
+public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
+
     public ActorProxy(
-        public let name: String,
-        public let client: ActorClient
-    ) {
-        if (!client.containsActor(name)) {
-            throw ActorNotFoundException(name)
-        }
-    }
+        public let actorName: String,
+        public let hostInfo: HostInfo
+    ) {}
 
     /*
     * Invokes a receiver function without expecting a return value
@@ -89,7 +74,7 @@ public open class ActorProxy {
     * @throws ActorSystemException - for any system-specific errors
     */
     public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
-        client.remoteCall(InvokeInfo(name: name, receiverName: receiverName, args: args, config: config, fut: None))
+        ClientManager.instance.getOrCreateClient(hostInfo).remoteCall(InvokeInfo(name: actorName, receiverName: receiverName, args: args, config: config, fut: None))
     }
 
     /*
@@ -105,77 +90,64 @@ public open class ActorProxy {
     */
     public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture {
         let fut = DistributedFuture()
-        client.remoteCall(InvokeInfo(name: name, receiverName: receiverName, args: args, config: config, fut: Some(fut)))
+        ClientManager.instance.getOrCreateClient(hostInfo).remoteCall(InvokeInfo(name: actorName, receiverName: receiverName, args: args, config: config, fut: Some(fut)))
         fut
+    }
+
+    /*
+    * Serializes the actor proxy
+    * @return the serialized actor proxy
+    */
+    public func serialize(): DataModel {
+        DataModelStruct(ArrayList([
+            Field("actorName", DataModelString(actorName)),
+            Field("hostInfoTypeName", DataModelString(hostInfo.getTypeName())),
+            Field("hostInfo", hostInfo.serialize())
+        ]))
+    }
+
+    /*
+    * Deserializes the actor proxy
+    * @param dataModel - the data model to deserialize
+    * @return the deserialized actor proxy
+    * @throws DeserializationException - if the deserialization fails
+    */
+    public static func deserialize(dataModel: DataModel): ActorProxy {
+        let structValue = match (dataModel) {
+            case dm: DataModelStruct => dm
+            case _ => throw DeserializationException("Expected DataModelStruct for ActorProxy deserialization.")
+        }
+        let actorName = match (structValue.get("actorName")) {
+            case nameField: DataModelString => nameField.getValue()
+            case _ => throw DeserializationException("Expected DataModelString for ActorProxy deserialization.")
+        }
+        let hostInfoTypeName = match (structValue.get("hostInfoTypeName")) {
+            case typeNameField: DataModelString => typeNameField.getValue()
+            case _ => throw DeserializationException("Expected DataModelString for ActorProxy deserialization.")
+        }
+        let hostInfoDeserializer = match (ClientManager.instance.getHostInfoDeserializer(hostInfoTypeName)) {
+            case Some(deserializer) => deserializer
+            case None => throw DeserializationException("Host info deserializer not found for type name ${hostInfoTypeName}.")
+        }
+        let hostInfo: HostInfo = hostInfoDeserializer(match (structValue.get("hostInfo")) {
+            case hostInfoField: DataModel => hostInfoField
+            case _ => throw DeserializationException("Expected DataModel for ActorProxy deserialization.")
+        })
+        ClientManager.instance.getOrCreateClient(hostInfo)
+        ActorProxy(actorName, hostInfo)
+    }
+
+    /*
+    * Gets the type model of the actor proxy
+    * @return the type model of the actor proxy
+    */
+    public static func typeModel(): TypeModel {
+        TypeModel.StructType([
+            FieldModel(name: "actorName", description: "Actor Name", typeModel: TypeModel.StringType),
+            FieldModel(name: "hostInfoTypeName", description: "Host Info Type Name", typeModel: TypeModel.StringType),
+            FieldModel(name: "hostInfo", description: "Host Info", typeModel: TypeModel.UnitType)
+        ])
     }
 }
 
-/*
-* Interface for actor hosts
-*/
-public interface ActorHost {
-    /*
-    * Exports an actor
-    * @param name - the name of the actor
-    * @param a - the actor to export
-    * @return true if the actor was successfully exported, false otherwise
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func export(name: String, a: Distributable): Bool
-
-    /*
-    * Un-exports an actor
-    * @param name - the name of the actor
-    * @return true if the actor was successfully un-exported, false otherwise
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func unexport(name: String): Bool
-}
-
-/*
-* Interface for actor clients
-*/
-public interface ActorClient {
-    /*
-    * A unique identifier of the actor client
-    */
-    prop id: String
-
-    /*
-    * Finds an actor
-    * @param name - the name of the actor
-    * @return the actor information if found, None otherwise
-    * @throws RemoteException - if the remote connection fails
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func find(name: String): Option<ActorInfo>
-
-    /*
-    * Finds all actors
-    * @return the actor information of all actors
-    * @throws RemoteException - if the remote connection fails
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func findAll(): Array<ActorInfo>
-
-
-    /*
-    * Checks if an actor is exported from the respective server
-    * @param name - the name of the actor
-    * @return true if the actor is exported, false otherwise
-    * @throws RemoteException - if the remote connection fails
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func containsActor(name: String): Bool
-
-    /*
-    * Makes a remote call to an actor's receiver function and fulfills the provided future with the result
-    * @param invokeInfo - the information about the invoke
-    * @throws ActorNotFoundException - if the actor is not found on the client
-    * @throws ReceiverNotFoundException - if the receiver is not found
-    * @throws RemoteException - if the remote connection fails
-    * @throws IllegalArgumentException - if the arguments are invalid
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func remoteCall(invokeInfo: InvokeInfo): Unit
-}
+// public abstract class Proxy<T> {}

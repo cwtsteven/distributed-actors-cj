@@ -23,6 +23,13 @@
 |-----------|-------------|
 | [Tell](./actors_package_api/actors_package_enums.md#enum-tell) | 单值枚举，用于绕过 ActorFuture 机制实现即发即忘；调用 Receiver 时以命名参数 `tell: True` 传入。 |
 
+### 常量
+
+| 常量名 | 描述 |
+|---------------|-------------|
+| [MAX_PRIORITY](./actors_package_api/actors_package_structs.md#const-max_priority) | Receiver 调用的最大优先级值（10）。 |
+| [MIN_PRIORITY](./actors_package_api/actors_package_structs.md#const-min_priority) | Receiver 调用的最小优先级值（1）。 |
+
 ## actors.distributed 包
 
 ### 类
@@ -30,6 +37,7 @@
 | 类名 | 描述 |
 |------------|-------------|
 | [ActorProxy](./distributed_package_api/distributed_package_classes.md#class-actorproxy) | 与远程 actor 通信的代理类，提供 Ask/Tell 两种调用方式。 |
+| [ClientManager](./distributed_package_api/distributed_package_classes.md#class-clientmanager) | 管理分布式 actor 系统中 actor client 的单例类，用于获取和注册 actor client 及其反序列化器。 |
 | [DistributedFuture](./distributed_package_api/distributed_package_classes.md#class-distributedfuture) | 表示远程 receiver 调用待处理结果的具体类，提供获取与兑现结果的方法。 |
 
 ### 结构体
@@ -51,6 +59,7 @@
 | [ActorClient](./distributed_package_api/distributed_package_interfaces.md#interface-actorclient) | actor client 实现的接口，提供用于 *查找* 分布式 actor 的方法。 |
 | [ActorCluster](./distributed_package_api/distributed_package_interfaces.md#interface-actorcluster) | 用于创建集群系统以在其中创建和发现分布式 actor 的接口。 |
 | [ActorHost](./distributed_package_api/distributed_package_interfaces.md#interface-actorhost) | actor host 实现的接口，提供用于 *导出* 分布式 actor 的方法。 |
+| [HostInfo](./distributed_package_api/distributed_package_interfaces.md#interface-hostinfo) | 标识远程 actor host 的主机信息接口，提供创建客户端和获取类型信息的方法。 |
 | [Distributable](./distributed_package_api/distributed_package_interfaces.md#interface-distributable) | 所有分布式 actor 所需实现的接口，提供将客户端远程调用分发到底层 actor 实例的方法。 |
 | [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | 所有本地 `ActorFuture<T>` 类型共用的接口，提供以序列化形式（`DataModel`）获取 Future 结果的方法。 |
 | [Proxyable](./distributed_package_api/distributed_package_interfaces.md#interface-proxyablet) | 为实现类型化代理 `getProxy` 能力的分布式 actor 接口提供的接口。 |
@@ -117,7 +126,7 @@
 
 | 结构体名 | 描述 |
 |-------------|-------------|
-| [TCPActorClientInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorclientinfo) | 关于 TCP actor 客户端的信息，包括客户端 ID、地址和端口。 |
+| [TCPActorHostInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorhostinfo) | 关于 TCP actor 主机的信息，包括主机地址和端口。 |
 
 ## actors.tcp_actor_system.cluster 包
 

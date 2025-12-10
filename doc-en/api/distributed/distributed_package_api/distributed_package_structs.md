@@ -339,7 +339,7 @@ Return Value:
 
 Exceptions:
 
-- `ActorSystemException` - Thrown when no serialization functions have been registered for the given `typeName`.
+- `SerializingFunctionsNotFoundException` - Thrown when no serialization functions have been registered for the given `typeName`.
 
 ### func deserialize()
 
@@ -359,8 +359,8 @@ Return Value:
 
 Exceptions:
 
-- `DataModelException` - Thrown when the structure or fields of the data model are invalid.
-- `ActorSystemException` - Thrown when no deserialization functions have been registered for the referenced `typeName`.
+- `DeserializationException` - Thrown when the deserialization fails or the structure or fields of the data model are invalid.
+- `SerializingFunctionsNotFoundException` - Thrown when no deserialization functions have been registered for the referenced `typeName`.
 
 ### func typeModel()
 
