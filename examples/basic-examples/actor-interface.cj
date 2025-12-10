@@ -21,5 +21,5 @@ func test(s: Service) {
 
 main() {
     let myService = MyService()
-    println(test(myService))
+    println(test(myService)) // 42
 }

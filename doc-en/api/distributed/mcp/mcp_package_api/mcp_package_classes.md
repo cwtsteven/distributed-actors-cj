@@ -3,7 +3,7 @@
 ## class ActorMCPException
 
 ```cangjie
-public class ActorMCPException <: Exception {
+public class ActorMCPException <: ActorSystemException {
   public init(msg: String)
 }
 ```
@@ -154,14 +154,14 @@ Parameters:
 ### func removeActorClient()
 
 ```cangjie
-public func removeActorClient(clientId: String): Unit
+public func removeActorClient(info: HostInfo): Unit
 ```
 
 Function: Removes an actor client from the tool manager, making its actors no longer available as MCP tools.
 
 Parameters:
 
-- `clientId: String` - The ID of the actor client to remove.
+- `info: HostInfo` - The host info of the actor client to remove.
 
 Exceptions:
 
@@ -175,7 +175,7 @@ public class ReceiverTool <: Tool
 
 Function: MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. This class handles the conversion from MCP tool parameters into arguments of the respective actor call, and manages the execution of actor receiver functions.
 
-### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, ActorClient, ReceiverInfo)
+### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, HostInfo, ReceiverInfo)
 
 ```cangjie
 public init(
@@ -185,7 +185,7 @@ public init(
   retType!: TypeSchema,
   examples!: Array<String>,
   extra!: HashMap<String, String>,
-  client!: ActorClient,
+  hostInfo!: HostInfo,
   info!: ReceiverInfo
 )
 ```
@@ -200,7 +200,7 @@ Parameters:
 - `retType!: TypeSchema` - The return type schema for the tool.
 - `examples!: Array<String>` - Example usage strings for the tool.
 - `extra!: HashMap<String, String>` - Extra metadata for the tool.
-- `client!: ActorClient` - The actor client to use for communication.
+- `hostInfo!: HostInfo` - The host info to use for creating actor proxies.
 - `info!: ReceiverInfo` - The receiver information for the actor function.
 
 ### prop name
@@ -251,13 +251,13 @@ public prop extra: HashMap<String, String>
 
 Function: Extra metadata for the MCP tool.
 
-### prop client
+### prop hostInfo
 
 ```cangjie
-public prop client: ActorClient
+public prop hostInfo: HostInfo
 ```
 
-Function: The actor client used for communication.
+Function: The host info used for creating actor proxies.
 
 ### prop info
 
@@ -286,6 +286,10 @@ Return Value:
 Exceptions:
 
 - `ActorMCPException` - Thrown if the tool name format is invalid or required arguments are missing.
+- `DeserializationException` - Thrown if the deserialization fails.
+- `ActorNotFoundException` - Thrown if the receiver is not found on the client.
+- `ReceiverNotFoundException` - Thrown if the receiver is not found on the actor.
+- `RemoteException` - Thrown if the remote connection fails.
 
 ### func toString()
 

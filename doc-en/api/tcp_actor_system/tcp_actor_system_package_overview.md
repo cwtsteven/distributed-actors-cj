@@ -30,4 +30,4 @@ This package enables building real distributed actor systems where actors can be
 
 | Struct Name | Function |
 |-------------|----------|
-| [TCPActorClientInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorclientinfo) | Information about a TCP actor client, including the client ID, address, and port. |
+| [TCPActorHostInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorhostinfo) | Information about a TCP actor host, including the host address and port. |

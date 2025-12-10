@@ -132,14 +132,14 @@ public func addActorClient(client: ActorClient): Unit
 ### func removeActorClient()
 
 ```cangjie
-public func removeActorClient(clientId: String): Unit
+public func removeActorClient(info: HostInfo): Unit
 ```
 
 功能：从工具管理器移除 Actor 客户端，使其 Actor 不再作为 MCP 工具提供。
 
 参数：
 
-- `clientId: String` — 要移除的 Actor 客户端 ID。
+- `info: HostInfo` — 要移除的 Actor 客户端的主机信息。
 
 异常：
 
@@ -153,7 +153,7 @@ public class ReceiverTool <: Tool
 
 功能：将 Actor 的 Receiver 封装为 MCP 工具；负责将 MCP 形参转换为 Actor Receiver 调用的实参，并管理 Receiver 函数的执行。
 
-### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, ActorClient, ReceiverInfo)
+### init(String, String, Array<ToolParameter>, TypeSchema, Array<String>, HashMap<String, String>, HostInfo, ReceiverInfo)
 
 ```cangjie
 public init(
@@ -163,7 +163,7 @@ public init(
   retType!: TypeSchema,
   examples!: Array<String>,
   extra!: HashMap<String, String>,
-  client!: ActorClient,
+  hostInfo!: HostInfo,
   info!: ReceiverInfo
 )
 ```
@@ -178,7 +178,7 @@ public init(
 - `retType!: TypeSchema` — 工具返回类型的架构。
 - `examples!: Array<String>` — 示例用法。
 - `extra!: HashMap<String, String>` — 额外元数据。
-- `client!: ActorClient` — 用于通信的 Actor 客户端。
+- `hostInfo!: HostInfo` — 用于创建 actor 代理的主机信息。
 - `info!: ReceiverInfo` — Receiver 的元信息，包含类型，返回值类型等。
 
 ### prop name
@@ -229,13 +229,13 @@ public prop extra: HashMap<String, String>
 
 功能：额外元数据。
 
-### prop client
+### prop hostInfo
 
 ```cangjie
-public prop client: ActorClient
+public prop hostInfo: HostInfo
 ```
 
-功能：用于通信的 Actor 客户端。
+功能：用于创建 actor 代理的主机信息。
 
 ### prop info
 
@@ -264,6 +264,10 @@ public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse
 异常：
 
 - `ActorMCPException` — 工具名格式非法或缺少必要参数。
+- `DeserializationException` — 如果反序列化失败则抛出。
+- `ActorNotFoundException` — 如果在客户端找不到 receiver 则抛出。
+- `ReceiverNotFoundException` — 如果在 actor 上找不到 receiver 则抛出。
+- `RemoteException` — 如果远程连接失败则抛出。
 
 ### func toString()
 
@@ -280,7 +284,7 @@ public override func toString(): String
 ## class ActorMCPException
 
 ```cangjie
-public class ActorMCPException <: Exception {
+public class ActorMCPException <: ActorSystemException {
   public init(msg: String)
 }
 ```

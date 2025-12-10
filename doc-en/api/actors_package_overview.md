@@ -26,3 +26,10 @@ This package serves as the foundation for actor-based systems, with additional f
 | Enumeration Name |      Function       |
 | ---------------- | ------------------- |
 | [Tell](./actors_package_api/actors_package_enums.md#enum-tell) | Single-valued enumeration that enables fire-and-forget messaging by bypassing the `ActorFuture` mechanism. Use `tell: True` as a named argument when calling receivers. |
+
+### Constants
+
+| Constant Name |      Function       |
+| ---------------- | ------------------- |
+| [MAX_PRIORITY](./actors_package_api/actors_package_structs.md#const-max_priority) | The maximum priority value for receiver calls (10). |
+| [MIN_PRIORITY](./actors_package_api/actors_package_structs.md#const-min_priority) | The minimum priority value for receiver calls (1). |

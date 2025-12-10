@@ -65,3 +65,21 @@ public override operator func !=(other: ReceiverConfig): Bool
 返回值：
 
 - `Bool` — 若任一字段不同则返回 `true`，否则返回 `false`。
+
+## 常量
+
+### const MAX_PRIORITY
+
+```cangjie
+public const MAX_PRIORITY = 10
+```
+
+功能：Receiver 调用的最大优先级值。优先级值必须在 `MIN_PRIORITY` 和 `MAX_PRIORITY` 之间。
+
+### const MIN_PRIORITY
+
+```cangjie
+public const MIN_PRIORITY = 1
+```
+
+功能：Receiver 调用的最小优先级值。优先级值必须在 `MIN_PRIORITY` 和 `MAX_PRIORITY` 之间。

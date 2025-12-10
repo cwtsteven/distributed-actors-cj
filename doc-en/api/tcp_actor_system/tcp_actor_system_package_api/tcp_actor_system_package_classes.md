@@ -4,25 +4,29 @@
 
 ```cangjie
 public class TCPActorClient <: ActorClient {
-  public init(id: String, addr: String, port: UInt16)
+  public static func create(addr: String, port: UInt16): TCPActorClient
+  public let hostInfo: TCPActorHostInfo
 }
 ```
 
 Function: TCP-based implementation of ActorClient that provides remote access to actors over TCP connections. This class connects to a TCP actor host and enables communication with remote actors.
 
-### init(String, String, UInt16)
+### static func create()
 
 ```cangjie
-public init(id: String, addr: String, port: UInt16)
+public static func create(addr: String, port: UInt16): TCPActorClient
 ```
 
-Function: Initializes the TCP actor client to connect to the specified host and port.
+Function: Creates a TCP actor client to connect to the specified host and port. This method uses the `ClientManager` to ensure that only one client exists per host.
 
 Parameters:
 
-- `id: String` - The unique identifier for this client.
 - `addr: String` - The address of the TCP actor host to connect to.
 - `port: UInt16` - The port of the TCP actor host to connect to.
+
+Return Value:
+
+- `TCPActorClient` - A TCP actor client instance connected to the specified host.
 
 Exceptions:
 
@@ -30,13 +34,13 @@ Exceptions:
 - `SocketException` - Thrown if the socket connection fails.
 - `SocketTimeoutException` - Thrown if the socket connection times out.
 
-### prop id
+### prop hostInfo
 
 ```cangjie
-public prop id: String
+public let hostInfo: TCPActorHostInfo
 ```
 
-Function: The unique identifier of the TCP actor client.
+Function: The host information about the TCP actor host this client connects to.
 
 ### func find()
 
@@ -106,6 +110,31 @@ Exceptions:
 - `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
 - `TCPActorSystemInternalException` - Thrown for any internal errors.
 
+### func getActor()
+
+```cangjie
+public func getActor(name: String): Option<ActorProxy>
+```
+
+Function: Gets an actor proxy for the specified actor name.
+
+Parameters:
+
+- `name: String` - The name of the actor.
+
+Return Value:
+
+- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor is found, `None` otherwise.
+
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the actor is not found on the client.
+- `TCPActorSystemRemoteException` - Thrown if the connection is lost.
+- `TCPActorSystemRequestTimeoutException` - Thrown if the TCP request has timed out.
+- `TCPActorSystemSerializationException` - Thrown if the envelope serialization fails.
+- `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
+- `TCPActorSystemInternalException` - Thrown for any internal errors.
+
 ### func remoteCall()
 
 ```cangjie
@@ -129,6 +158,18 @@ Exceptions:
 - `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
 - `TCPActorSystemInternalException` - Thrown for any internal errors.
 
+### func getHostInfo()
+
+```cangjie
+public func getHostInfo(): HostInfo
+```
+
+Function: Gets the host info of the client.
+
+Return Value:
+
+- `HostInfo` - The host info that identifies the remote host this client connects to.
+
 ### func close()
 
 ```cangjie
@@ -141,28 +182,29 @@ Function: Closes the TCP actor client connection. Can be called multiple times s
 
 ```cangjie
 public class TCPActorHost <: ActorHost {
-  public init(bindAt!: UInt16)
+  public init(addr!: String, bindAt!: UInt16)
 }
 ```
 
 Function: TCP-based implementation of ActorHost that manages actor registration and handles remote calls over TCP connections. This class provides a server that accepts client connections and manages actor communication over the network.
 
-### init(UInt16)
+### init(String, UInt16)
 
 ```cangjie
-public init(bindAt!: UInt16)
+public init(addr!: String, bindAt!: UInt16)
 ```
 
-Function: Initializes the TCP actor host to bind to the specified port.
+Function: Initializes the TCP actor host to bind to the specified address and port.
 
 Parameters:
 
+- `addr!: String` - The address to bind the server to.
 - `bindAt!: UInt16` - The port to bind the server to.
 
 ### func export()
 
 ```cangjie
-public func export(name: String, a: Distributable): Bool
+public func export(name: String, a: Distributable): Option<ActorProxy>
 ```
 
 Function: Exports an actor instance under the specified name.
@@ -174,7 +216,7 @@ Parameters:
 
 Return Value:
 
-- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
+- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor was successfully exported, `None` if the name is already taken.
 
 ### func unexport()
 
@@ -207,6 +249,18 @@ Return Value:
 Exceptions:
 
 - `SocketException` - Thrown if the server socket fails to bind.
+
+### func getHostInfo()
+
+```cangjie
+public func getHostInfo(): HostInfo
+```
+
+Function: Gets the host info of the host.
+
+Return Value:
+
+- `HostInfo` - The host info that identifies this host.
 
 ### func close()
 

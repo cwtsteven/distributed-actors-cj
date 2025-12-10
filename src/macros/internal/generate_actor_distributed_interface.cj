@@ -51,6 +51,12 @@ protected class GenerateDistributedActorInterface {
         decl.superTypes.append(RefType(quote(
             $proxyableTypeToken<$interfaceName>
         )))
+        decl.superTypes.append(RefType(quote(
+            $serializableTypeToken<$interfaceName>
+        )))
+        decl.superTypes.append(RefType(quote(
+            $typeSerializableTypeToken
+        )))
 
         let proxyClassDecl = generateProxyClassDecl()
         let staticInit = FuncDecl(quote(
@@ -87,6 +93,9 @@ protected class GenerateDistributedActorInterface {
         decl.body.decls.append(newDispatchTellFunc())
         decl.body.decls.append(newDispatchAskFunc())
         decl.body.decls.append(getProxyFunc())
+        decl.body.decls.append(newSerializeFunc())
+        decl.body.decls.append(newDeserializeFunc())
+        decl.body.decls.append(newTypeModelFunc())
 
         headDecl.toTokens() + proxyClassDecl.toTokens()
     }
@@ -278,24 +287,63 @@ protected class GenerateDistributedActorInterface {
 
     private func getProxyFunc(): FuncDecl {
         FuncDecl(quote(
-            static func getProxy(name: String, client: ActorClient): $interfaceName {
-                if (!client.containsActor(name)) {
-                    throw ActorNotFoundException(name)
-                }
-                $proxyClassIdent(name, client)
+            static func getProxy(proxy: ActorProxy): $interfaceName {
+                $proxyClassIdent(proxy)
+            }
+        ))
+    }
+
+    private func newSerializeFunc(): FuncDecl {
+        FuncDecl(quote(
+            func serialize(): DataModel {
+                // TODO
+                throw Exception("Serialization not supported for actor interface.")
+            }
+        ))
+    }
+
+    private func newDeserializeFunc(): FuncDecl {
+        FuncDecl(quote(
+            static func deserialize(dataModel: DataModel): $interfaceName {
+                $proxyClassIdent.deserialize(dataModel)
+            }
+        ))
+    }
+
+    private func newTypeModelFunc(): FuncDecl {
+        FuncDecl(quote(
+            static func typeModel(): TypeModel {
+                $proxyClassIdent.typeModel()
             }
         ))
     }
 
     private func generateProxyClassDecl(): ClassDecl {
         ClassDecl(quote(
-            private class $proxyClassIdent <: ActorProxy & $interfaceName {
+            private class $proxyClassIdent <: $interfaceName {
                 static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
                 static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> LocalWaitable>()
                 static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
 
-                public init(name: String, client: ActorClient) {
-                    super(name, client)
+                private let proxy: ActorProxy
+
+                public init(proxy: ActorProxy) {
+                    this.proxy = proxy
+                }
+
+                public func serialize(): DataModel {
+                    proxy.serialize()
+                }
+
+                public static func deserialize(dataModel: DataModel): $interfaceName {
+                    let proxy = ActorProxy.deserialize(dataModel)
+                    $proxyClassIdent(proxy)
+                }
+
+                public static func typeModel(): TypeModel {
+                    TypeModel.StructType([
+                        FieldModel(name: "proxy", description: "ActorProxy", typeModel: ActorProxy.typeModel())
+                    ])
                 }
             }
         ))
@@ -352,7 +400,7 @@ protected class GenerateDistributedActorInterface {
         match (behaviour) {
             case Ask =>
                 fd.block.nodes.append(CallExpr(quote(
-                    this.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
+                    proxy.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
                 )))
             case Tell =>
                 let discardTellParam = VarDecl(quote(let dummy = tell))
@@ -361,7 +409,7 @@ protected class GenerateDistributedActorInterface {
                 discardTellParam.identifier = Token(WILDCARD)
                 fd.block.nodes.append(discardTellParam)
                 fd.block.nodes.append(CallExpr(quote(
-                    this.tell($(fd.identifier.value), $args, config: config)
+                    proxy.tell($(fd.identifier.value), $args, config: config)
                 )))
         }
     }
@@ -422,6 +470,80 @@ protected class GenerateDistributedActorInterface {
                 )))
         }
     }
+
+    // private func generateExtendTypedProxyDecl(): ExtendDecl {
+    //     ExtendDecl(quote(
+    //         extend TypedProxy<$interfaceName> {
+    //             public static func deserialize(dataModel: DataModel): TypedProxy<$interfaceName> {
+    //                 $proxyClassIdent.deserialize(dataModel)
+    //             }
+
+    //             public static func typeModel(): TypeModel {
+    //                 $proxyClassIdent.typeModel()
+    //             }
+    //         }
+    //     ))
+    // }
+
+    // private func newExtendTypedProxyReceiver(mDecl: MacroExpandDecl, rOpts: MacroOptionSet, behaviour!: Behaviour): Decl {
+    //     let headDecl: Decl = parseDecl(mDecl.macroInputs)
+    //     let fd = match (findDeclUnderMacro<FuncDecl>(headDecl)) {
+    //         case Some(fd) => fd
+    //         case None =>
+    //             errors.add(ReceiverMacroInvalidDecl)
+    //             errors.doThrow()
+    //     }
+
+    //     modifyExtendTypedProxyFuncDecl(rOpts, fd, behaviour)
+    //     headDecl
+    // }
+
+    // private func modifyExtendTypedProxyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
+    //     var args = quote([)
+    //     for (i in 0..fd.funcParams.size) {
+    //         let fp = fd.funcParams[i]
+    //         args += quote($(fp.identifier).serialize())
+    //         if (i < fd.funcParams.size - 1) {
+    //             args += quote(, )
+    //         }
+    //     }
+    //     args += quote(])
+
+    //     let defaultPriority = rOpts.getPriority()
+    //     fd.funcParams.append(FuncParam(quote(
+    //         config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
+    //     )))
+
+    //     if (let Tell <- behaviour) {
+    //         // Add the `tell` parameter
+    //         fd.funcParams.append(FuncParam(quote(
+    //             tell!: $tellTypeToken
+    //         )))
+    //     }
+
+    //     let declaredType = fd.declType
+
+    //     fd.declType = match (behaviour) {
+    //         case Ask => RefType(quote(ActorFuture<$declaredType>))
+    //         case Tell => PrimitiveType(quote(Unit))
+    //     }
+
+    //     fd.modifiers.append(Modifier(Token(PUBLIC)))
+    //     fd.block = Block()
+    //     fd.block.lBrace = Token(LCURL)
+    //     fd.block.rBrace = Token(RCURL)
+
+    //     match (behaviour) {
+    //         case Ask =>
+    //             fd.block.nodes.append(CallExpr(quote(
+    //                 (this as $proxyClassIdent).getOrThrow().$(fd.identifier)($args, config: config)
+    //             )))
+    //         case Tell =>
+    //             fd.block.nodes.append(CallExpr(quote(
+    //                 (this as $proxyClassIdent).getOrThrow().$(fd.identifier)($args, config: config, tell: tell)
+    //             )))
+    //     }
+    // }
 }
 
 private func buildParamSchema(fd: FuncDecl): Tokens {

@@ -1,0 +1,1 @@
+package serializable_proxy_example

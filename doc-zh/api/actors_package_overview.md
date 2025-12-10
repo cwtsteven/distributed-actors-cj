@@ -26,3 +26,10 @@
 | 枚举名 | 功能 |
 | --- | --- |
 | [Tell](./actors_package_api/actors_package_enums.md#enum-tell) | 单值枚举，用于绕过 ActorFuture 机制实现即发即忘；调用 Receiver 时以命名参数 `tell: True` 传入。 |
+
+### 常量
+
+| 常量名 | 功能 |
+| --- | --- |
+| [MAX_PRIORITY](./actors_package_api/actors_package_structs.md#const-max_priority) | Receiver 调用的最大优先级值（10）。 |
+| [MIN_PRIORITY](./actors_package_api/actors_package_structs.md#const-min_priority) | Receiver 调用的最小优先级值（1）。 |

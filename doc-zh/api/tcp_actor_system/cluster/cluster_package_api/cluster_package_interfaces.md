@@ -49,7 +49,7 @@ func leave(clientId: String): Bool
 
 ```cangjie
 @Receiver[mode: AskOnly]
-func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>): Option<TCPActorClientInfo>
+func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>): Option<ActorProxy>
 ```
 
 功能：按照简单的轮询（round-robin）策略，在已注册的工作节点上创建分布式 actor。
@@ -62,13 +62,13 @@ func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>)
 
 返回值：
 
-- `Option<TCPActorClientInfo>` — 成功时返回 `Some(TCPActorClientInfo)`，包含托管该 actor 的工作节点客户端信息；若无可用工作节点或多次尝试均失败，则返回 `None`。
+- `Option<ActorProxy>` — 成功时返回 `Some(ActorProxy)`，包含托管该 actor 的工作节点代理；若无可用工作节点或多次尝试均失败，则返回 `None`。
 
 ### func getActor()
 
 ```cangjie
 @Receiver[mode: AskOnly]
-func getActor(actorName: String): Option<TCPActorClientInfo>
+func getActor(actorName: String): Option<ActorProxy>
 ```
 
 功能：解析给定名称的 actor 当前所在的工作节点。
@@ -79,7 +79,7 @@ func getActor(actorName: String): Option<TCPActorClientInfo>
 
 返回值：
 
-- `Option<TCPActorClientInfo>` — 若 actor 存在且在某个工作节点上仍然存活，则返回 `Some(TCPActorClientInfo)`，否则返回 `None`。
+- `Option<ActorProxy>` — 若 actor 存在且在某个工作节点上仍然存活，则返回 `Some(ActorProxy)`，否则返回 `None`。
 
 ### func killActor()
 
