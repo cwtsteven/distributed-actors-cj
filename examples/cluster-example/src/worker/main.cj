@@ -21,5 +21,5 @@ main(args: Array<String>) {
     let workerAddr = args[3]
     let workerPort = UInt16.parse(args[4])
 
-    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort).get()
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, workerId: workerId, workerAddr: workerAddr, workerPort: workerPort).get()
 }

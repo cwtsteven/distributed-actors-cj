@@ -26,12 +26,13 @@
 ### 项目计划
 
 - [x] 类型安全的 Actor 代理
-- [ ] 可序列化的代理
+- [x] 可序列化的代理
+- [ ] 同地协作 actor 的快捷 receiver 调用
 - [ ] 消息传递语义（至少一次 vs 最多一次）
 - [ ] 失败消息传递的重试机制
 - [ ] 增强异常与错误处理
 - [ ] 可重入的 Actor
-- [x] Cluster
+- [x] 集群
 
 ## 项目架构
 
@@ -187,15 +188,21 @@ const PORT: UInt16 = 52165
 
 main() {
     // Host side
-    let tcpHost = TCPActorHost(bindAt: PORT)
+    let tcpHost = TCPActorHost(addr: "localhost", bindAt: PORT)
     tcpHost.serve() // start the server
 
     let bankService = BankServiceImpl()
-    tcpHost.export("bank-service", bankService)
+    match (tcpHost.export("bank-service", bankService)) {
+        case Some(_) => println("Bank service exported")
+        case None => println("Failed to export: name already taken")
+    }
 
     // Client side
-    let tcpClient = TCPActorClient("client-1", "localhost", PORT)
-    let bankProxy = ActorProxy("bank-service", tcpClient)
+    let tcpClient = TCPActorClient.create("localhost", PORT)
+    let bankProxy = match (tcpClient.getActor("bank-service")) {
+        case Some(proxy) => proxy
+        case None => throw Exception("Actor not found")
+    }
 
     let transferFut: DistributedFuture = bankProxy.ask("transfer", [
         "alice".serialize(),
@@ -206,7 +213,7 @@ main() {
     transferFut.get()
     println("Transfer completed")
 
-    let typedProxy = BankService.getProxy("bank-service", tcpClient)
+    let typedProxy = BankService.getProxy(bankProxy)
     let fut2: ActorFuture<Bool> = typedProxy.transfer("alice", "bob", 100.0)
     fut2.get()
     println("Second transfer completed")
@@ -243,7 +250,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = AssistantAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")

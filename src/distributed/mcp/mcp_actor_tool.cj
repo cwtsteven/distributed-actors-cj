@@ -34,7 +34,7 @@ public class ReceiverTool <: Tool {
     private let __retType: TypeSchema
     private let __examples: Array<String>
     private let __extra: HashMap<String, String>
-    private let __client: ActorClient
+    private let __hostInfo: HostInfo
     private let __info: ReceiverInfo
 
     /*
@@ -53,7 +53,7 @@ public class ReceiverTool <: Tool {
         retType!: TypeSchema,
         examples!: Array<String>,
         extra!: HashMap<String, String>,
-        client!: ActorClient,
+        hostInfo!: HostInfo,
         info!: ReceiverInfo
     ) {
         __name = name
@@ -62,7 +62,7 @@ public class ReceiverTool <: Tool {
         __retType = retType
         __examples = examples
         __extra = extra
-        __client = client
+        __hostInfo = hostInfo
         __info = info
     }
 
@@ -72,7 +72,7 @@ public class ReceiverTool <: Tool {
     public prop retType: TypeSchema { get() { __retType } }
     public prop examples: Array<String> { get() { __examples } }
     public prop extra: HashMap<String, String> { get() { __extra } }
-    public prop client: ActorClient { get() { __client } }
+    public prop hostInfo: HostInfo { get() { __hostInfo } }
     public prop info: ReceiverInfo { get() { __info } }
 
     /*
@@ -93,7 +93,7 @@ public class ReceiverTool <: Tool {
         let actorName = names[0]
         let receiverName = names[1]
 
-        let proxy = ActorProxy(actorName, __client)
+        let proxy = ActorProxy(actorName, __hostInfo)
 
         try {
             let config = match (args.get("config")) {
@@ -218,7 +218,7 @@ func generateMCPToolsFromActorInfo(client: ActorClient, actorInfo: ActorInfo): A
                 retType: generateTypeSchemaFromTypeModel(receiver.retTypeModel),
                 examples: [],
                 extra: HashMap<String, String>(),
-                client: client,
+                hostInfo: client.getHostInfo(),
                 info: receiver
             )
         )

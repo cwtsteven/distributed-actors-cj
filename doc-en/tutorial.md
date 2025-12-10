@@ -499,15 +499,15 @@ To create distributed actors, you first need to define an *actor interface* usin
 
 ```cangjie
 @ActorInterface[distributed: true]
-public interface BankService {
+public interface BankAccount {
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool
+    func deposit(amount: Float64): Bool
 
     @Receiver
-    public func getBalance(accountId: String): Float64
+    func withdraw(amount: Float64): Bool
 
     @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Bool
+    func getBalance(): Float64
 }
 ```
 
@@ -519,33 +519,33 @@ Once you have an actor interface, you can implement it using the [@Actor](./api/
 
 ```cangjie
 @Actor
-public class BankServiceImpl <: BankService {
-    private let accounts = ConcurrentHashMap<String, Float64>()
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
 
-    public init() {}
+    public init(name: String, balance: Float64) {
+        this.name = name
+        this.balance = balance
+    }
 
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool {
-        let fromBalance = accounts.get(fromAccount).getOrElse(0.0)
-        if (fromBalance < amount) {
-            throw InsufficientFundsException(fromAccount)
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
         }
-
-        let toBalance = accounts.get(toAccount).getOrElse(0.0)
-        accounts.put(fromAccount, fromBalance - amount)
-        accounts.put(toAccount, toBalance + amount)
+        balance -= amount
         true
     }
 
     @Receiver
-    public func getBalance(accountId: String): Float64 {
-        accounts.get(accountId).getOrElse(0.0)
-    }
-
-    @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Bool {
-        accounts.put(accountId, initialBalance)
-        true
+    public func getBalance(): Float64 {
+        balance
     }
 }
 ```
@@ -560,14 +560,17 @@ let actorHost: ActorHost
 
 // Create and export the actor
 let bankService = BankServiceImpl()
-let registered = actorHost.export("bank-service", bankService)
-if (!registered) {
-    println("Failed to export bank service")
-    return
+match (actorHost.export("alice", bankService)) {
+    case Some(proxy) =>
+        println("Bank account exported successfully")
+        // The proxy can be used directly if needed
+    case None =>
+        println("Failed to export bank account: name already taken")
+        return
 }
 ```
 
-The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this paricular actor host. Exporting twice with the same name should return `false`.
+The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this particular actor host. Exporting twice with the same name returns `None`. On successful export, it returns `Some(ActorProxy)` which can be used directly for local communication.
 
 Once an actor has been exported, it can be found by a corresponding actor client.
 
@@ -578,22 +581,35 @@ Once an actor has been exported, it can be found by a corresponding actor client
 let actorClient: ActorClient
 ```
 
-To obtain a proxy to an exported distributed actor, you can simply create an `ActorProxy` with the *name* of the actor and the corresponding actor client:
+To obtain a proxy to an exported distributed actor, you can use the `getActor()` method of the actor client:
 
 ```cangjie
 // Create a proxy to communicate with the remote actor
-let bankProxy = ActorProxy("bank-service", actorClient)
+match (actorClient.getActor("alice")) {
+    case Some(bankProxy) =>
+        // Use the proxy
+    case None =>
+        println("Actor not found")
+}
 ```
 
-This constructor call will throw `ActorNotFoundException` if the actor name cannot be found in the actor client, and `RemoteException` if the connect to the client has failed.
+The `getActor()` method will return `None` if the actor is not found, and will throw `RemoteException` if the connection to the client has failed.
+
+Alternatively, you can create an `ActorProxy` directly with the actor name and host info:
+
+```cangjie
+// Create a proxy to communicate with the remote actor
+let bankProxy = ActorProxy("alice", tcpClient.getHostInfo())
+```
+
+However this does not check if the actor exists or not.
 
 Once we obtain an actor proxy, we can use the `ask` or `tell` function to make a remote call to a particular receiver:
 
 ```cangjie
 // Call remote methods - these return DistributedFuture objects
-let createFut: DistributedFuture = bankProxy.ask("createAccount", [
-    "account1".serialize(),
-    1000.0.serialize()
+let depositFut: DistributedFuture = bankProxy.ask("deposit", [
+    500.0.serialize()
 ])
 ```
 
@@ -628,29 +644,126 @@ This function will also throw a `RemoteException` when connection has failed and
 For more convenient use of actor proxy, users can get a typed-proxy from the actor interface and call its remote receivers using normal receiver call syntax. For example:
 
 ```cangjie
+// First get an ActorProxy
+let actorProxy = match (actorClient.getActor("alice")) {
+    case Some(proxy) => proxy
+    case None => throw Exception("Actor not found")
+}
+
 // Create a typed-proxy to communicate with the remote actor
-let bankProxy: BankService = BankService.getProxy("bank-service", actorClient)
+let bankProxy: BankAccount = BankAccount.getProxy(actorProxy)
 ```
 
-This is similar to creating an untyped `ActorProxy` in the sense that it will throw `ActorNotFoundException` if the actor name cannot be found in the actor client, and `RemoteException` if the connect to the client has failed.
-
-After obtaining a typed-proxy, we can invoke its remote receives as if it were a local actor:
+After obtaining a typed-proxy, we can invoke its remote receivers as if it were a local actor:
 
 ```cangjie
 // Call remote methods - these return ActorFuture objects
-let createFut: ActorFuture<Unit> = bankProxy.createAccount("account1", 1000.0)
-let balanceFut: ActorFuture<Float64> = bankProxy.getBalance("account1")
+let depositFut: ActorFuture<Bool> = bankProxy.deposit(500.0)
+let balanceFut: ActorFuture<Float64> = bankProxy.getBalance()
 ```
 
 Calling remote receivers using a typed-proxy essentially calls the `ask` or `tell` functions of the underlying `ActorProxy`, which will throw a `RemoteException` when connection has failed and a `ActorSystemException` for any actor system specific errors that has occured.
 
 This function returns an `ActorFuture<T>` that can be used to obtain the result of the remote receiver call.
 
-```
-createFut.get()
+```cangjie
+depositFut.get()
 let balance = balanceFut.get()
-println("Account1 balance: ${balance}") // Output: 1000.0
+println("Alice's balance: ${balance}") // Output: 1500.0
 ```
+
+## Passing proxy as parameters
+
+Since typed proxies (like `BankAccount`) are serializable, they can be passed as parameters to receiver functions. This enables actors to communicate with each other by passing references, which is useful for building complex distributed systems where actors need to coordinate.
+
+For example, you can define a receiver that accepts a typed proxy as a parameter:
+
+```cangjie
+@ActorInterface[distributed: true]
+public interface BankAccount {
+    @Receiver
+    func deposit(amount: Float64): Bool
+
+    @Receiver
+    func withdraw(amount: Float64): Bool
+
+    @Receiver
+    func getBalance(): Float64
+
+    @Receiver
+    func transfer(to: BankAccount, amount: Float64): Bool
+}
+```
+
+The `transfer` method takes a `BankAccount` typed proxy as a parameter. When implementing this receiver:
+
+```cangjie
+@Actor
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    public init(name: String, balance: Float64) {
+        this.name = name
+        this.balance = balance
+    }
+
+    @Receiver
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
+        }
+        balance -= amount
+        true
+    }
+
+    @Receiver
+    public func getBalance(): Float64 {
+        balance
+    }
+
+    @Receiver
+    public func transfer(to: BankAccount, amount: Float64): Bool {
+        if (amount > balance) {
+            return false
+        }
+        balance -= amount
+        to.deposit(amount).get()
+        true
+    }
+}
+```
+
+When calling such a receiver, you can pass a typed proxy directly:
+
+```cangjie
+// On the host side, export multiple actors
+let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
+let stevenAccount = BankAccountImpl("Steven", 100.0)
+let federicoAccount = BankAccountImpl("Federico", 0.0)
+tcpHost.export("Steven", stevenAccount)
+tcpHost.export("Federico", federicoAccount)
+tcpHost.serve()
+
+// On the client side, get typed proxies and pass them as parameters
+let tcpClient = TCPActorClient.create("localhost", 8080)
+let steven = BankAccount.getProxy(tcpClient.getActor("Steven").getOrThrow())
+let federico = BankAccount.getProxy(tcpClient.getActor("Federico").getOrThrow())
+
+// Transfer money from Steven to Federico by passing federico as a parameter
+steven.transfer(federico, 50.0).get()
+
+println("Steven balance: ${steven.getBalance().get()}") // 50.0
+println("Federico balance: ${federico.getBalance().get()}") // 50.0
+```
+
+The typed proxy will be automatically serialized when passed as a parameter and deserialized on the receiving side, allowing the remote actor to obtain a proxy to communicate back with the original actor. This enables actors to establish bidirectional communication channels and build complex distributed coordination patterns.
 
 ## Key Differences from Local Actors
 
@@ -668,12 +781,15 @@ To create a TCP actor host that can accept connections from remote clients:
 ```cangjie
 import actors.tcp_actor_system.*
 
-// Create a TCP actor host that listens on port 8080
-let tcpHost = TCPActorHost(bindAt: 8080)
+// Create a TCP actor host that listens on localhost:8080
+let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
 
 // Export actors with the host
 let bankService = BankServiceImpl()
-tcpHost.export("bank-service", bankService)
+match (tcpHost.export("bank-service", bankService)) {
+    case Some(_) => println("Bank service exported")
+    case None => println("Failed to export: name already taken")
+}
 
 // Start the server to accept client connections
 let serverFuture = tcpHost.serve()
@@ -689,10 +805,13 @@ To create a TCP actor client that connects to a remote TCP actor host:
 import actors.tcp_actor_system.*
 
 // Create a TCP actor client that connects to localhost:8080
-let tcpClient = TCPActorClient(id: "client-1", addr: "localhost", port: 8080)
+let tcpClient = TCPActorClient.create("localhost", 8080)
 
-// Create a proxy for remote communication
-let bankProxy = ActorProxy("bank-service", tcpClient)
+// Get a proxy for remote communication
+let bankProxy = match (tcpClient.getActor("bank-service")) {
+    case Some(proxy) => proxy
+    case None => throw Exception("Actor not found")
+}
 
 // Use the proxy to make remote calls
 let createFut: DistributedFuture = bankProxy.ask("createAccount", [
@@ -742,12 +861,15 @@ const PORT: UInt16 = 52165
 
 main() {
     // Create and start the TCP actor host
-    let tcpHost = TCPActorHost(bindAt: PORT)
+    let tcpHost = TCPActorHost(addr: "localhost", bindAt: PORT)
     let serverFuture = tcpHost.serve()
 
     // Export the bank service
     let bankService = BankServiceImpl()
-    tcpHost.export("bank-service", bankService)
+    match (tcpHost.export("bank-service", bankService)) {
+        case Some(_) => println("Bank service exported")
+        case None => println("Failed to export: name already taken")
+    }
 
     println("TCP Actor Host is running on port ${PORT}")
     println("Press Ctrl+C to stop the server")
@@ -770,10 +892,13 @@ import serialization.serialization.*
 const PORT: UInt16 = 52165
 
 main() {
-    let tcpClient = TCPActorClient("client-1", "localhost", PORT)
+    let tcpClient = TCPActorClient.create("localhost", PORT)
 
     try {
-        let bankProxy = ActorProxy("bank-service", tcpClient)
+        let bankProxy = match (tcpClient.getActor("bank-service")) {
+            case Some(proxy) => proxy
+            case None => throw Exception("Actor not found")
+        }
 
         let transferFut: DistributedFuture = bankProxy.ask("transfer", [
             "alice".serialize(),
@@ -975,9 +1100,9 @@ Worker nodes host the actual actors. Each worker needs to connect to the head se
 TCPCluster.createWorker(
     headServerAddr: headServerAddr,
     headServerPort: headServerPort,
-    selfId: workerId,
-    selfAddr: workerAddr,
-    selfPort: workerPort
+    workerId: workerId,
+    workerAddr: workerAddr,
+    workerPort: workerPort
 )
 ```
 
@@ -1030,6 +1155,28 @@ match (account) {
     case None => println("Actor 'alice' not found")
 }
 ```
+
+## Removing Actors
+
+You can remove actors from the cluster using the `removeActor` method:
+
+```cangjie
+// Remove an actor from the cluster
+let removed = TCPCluster.removeActor("alice")
+if (removed) {
+    println("Actor 'alice' has been removed from the cluster")
+} else {
+    println("Actor 'alice' was not found or could not be removed")
+}
+```
+
+The `removeActor` method returns `true` if the actor was successfully removed, and `false` if the actor was not found. Note that removing an actor from the cluster does not immediately *kill* the actor, as it might still be referenced locally on the host machine. The actor will be garbage collected when there are no more references to it.
+
+**Exceptions:**
+- `ActorNotFoundException` - Thrown if the worker actor is not found on the specified client
+- `RemoteException` - Thrown if the remote connection fails
+- `TCPClusterException` - Thrown if the cluster is not initialized
+- `ActorSystemException` - Thrown for any unknown internal errors
 
 ## Complete Cluster Example
 
@@ -1136,8 +1283,8 @@ public func entry() {
     println("Alice's balance: ${alice.getBalance().get()}")
     println("Bob's balance: ${bob.getBalance().get()}")
 
-    TCPCluster.killActor("alice")
-    TCPCluster.killActor("bob")
+    TCPCluster.removeActor("alice")
+    TCPCluster.removeActor("bob")
 
     return 0
 }
@@ -1194,7 +1341,7 @@ main(args: Array<String>) {
     let workerAddr = args[3]
     let workerPort = UInt16.parse(args[4])
 
-    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort).get()
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, workerId: workerId, workerAddr: workerAddr, workerPort: workerPort).get()
 }
 ```
 
@@ -1224,7 +1371,7 @@ main(args: Array<String>) {
     let workerId = args[2]
     let workerAddr = args[3]
     let workerPort = UInt16.parse(args[4])
-    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort)
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, workerId: workerId, workerAddr: workerAddr, workerPort: workerPort)
 
     entry()
 }
@@ -1277,7 +1424,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = MyAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")

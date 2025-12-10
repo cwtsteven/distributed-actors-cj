@@ -43,12 +43,14 @@ public static func createHeadServer(headServerAddr!: String, headServerPort!: UI
 
 异常：
 
+- `SocketException` — 如果服务器套接字绑定失败则抛出。
+- `ActorSystemException` — 对于任何未知的内部错误则抛出。
 - `TCPClusterException` — 当集群已被初始化时抛出。
 
 ### static func createWorker()
 
 ```cangjie
-public static func createWorker(headServerAddr!: String, headServerPort!: UInt16, selfId!: String, selfAddr!: String, selfPort!: UInt16): Future<Unit>
+public static func createWorker(headServerAddr!: String, headServerPort!: UInt16, workerId!: String, workerAddr!: String, workerPort!: UInt16): Future<Unit>
 ```
 
 功能：启动一个工作节点，连接到头节点，并初始化全局 `TCPCluster` 实例。
@@ -57,9 +59,9 @@ public static func createWorker(headServerAddr!: String, headServerPort!: UInt16
 
 - `headServerAddr!: String` — 要连接的头节点地址。
 - `headServerPort!: UInt16` — 要连接的头节点端口。
-- `selfId!: String` — 当前工作节点的唯一标识。
-- `selfAddr!: String` — 头节点访问当前工作节点时使用的地址。
-- `selfPort!: UInt16` — 当前工作节点通过 `TCPActorHost` 暴露 actor 的端口。
+- `workerId!: String` — 当前工作节点的唯一标识。
+- `workerAddr!: String` — 头节点访问当前工作节点时使用的地址。
+- `workerPort!: UInt16` — 当前工作节点通过 `TCPActorHost` 暴露 actor 的端口。
 
 返回值：
 
@@ -67,7 +69,11 @@ public static func createWorker(headServerAddr!: String, headServerPort!: UInt16
 
 异常：
 
+- `SocketException` — 如果服务器套接字绑定失败则抛出。
+- `ActorSystemException` — 对于任何未知的内部错误则抛出。
 - `TCPClusterException` — 当集群已被初始化时抛出。
+- `ActorNotFoundException` — 如果找不到头服务器 actor 则抛出。
+- `RemoteException` — 如果远程连接失败则抛出。
 
 ### static func join()
 
@@ -86,6 +92,14 @@ public static func join(headServerAddr!: String, headServerPort!: UInt16): Bool
 
 - `Bool` — 连接并加入成功返回 `true`；若集群已初始化则返回 `false`。
 
+异常：
+
+- `SocketException` — 如果服务器套接字绑定失败则抛出。
+- `ActorSystemException` — 对于任何未知的内部错误则抛出。
+- `TCPClusterException` — 当集群已被初始化时抛出。
+- `ActorNotFoundException` — 如果找不到头服务器 actor 则抛出。
+- `RemoteException` — 如果远程连接失败则抛出。
+
 ### static func spawnActor\<T>()
 
 ```cangjie
@@ -103,6 +117,13 @@ public static func spawnActor<T>(name: String, args: Array<SpawnArgument>): Opti
 
 - `Option<T>` — 创建成功时返回 `Some(T)`（类型化代理），否则返回 `None`。
 
+异常：
+
+- `ActorNotFoundException` — 如果在指定客户端找不到工作 actor 则抛出。
+- `RemoteException` — 如果远程连接失败则抛出。
+- `TCPClusterException` — 如果集群未初始化则抛出。
+- `ActorSystemException` — 对于任何未知的内部错误则抛出。
+
 ### static func getActor\<T>()
 
 ```cangjie
@@ -119,13 +140,20 @@ public static func getActor<T>(name: String): Option<T> where T <: Distributable
 
 - `Option<T>` — 找到时返回 `Some(T)`（类型化代理），否则返回 `None`。
 
-### static func killActor()
+异常：
+
+- `ActorNotFoundException` — 如果在指定客户端找不到工作 actor 则抛出。
+- `RemoteException` — 如果远程连接失败则抛出。
+- `TCPClusterException` — 如果集群未初始化则抛出。
+- `ActorSystemException` — 对于任何未知的内部错误则抛出。
+
+### static func removeActor()
 
 ```cangjie
-public static func killActor(name: String): Bool
+public static func removeActor(name: String): Bool
 ```
 
-功能：请求集群头节点从集群中移除指定名称的 actor。
+功能：从集群中移除 actor。
 
 参数：
 
