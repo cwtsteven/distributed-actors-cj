@@ -26,7 +26,8 @@ A distributed actor framework designed for the Cangjie programming language, pro
 ### Roadmap
 
 - [x] Typed distributed actor proxy
-- [ ] Serializable proxy
+- [x] Serializable proxy
+- [ ] Short-cut receiver calls for co-located actors
 - [ ] Message delivery semantics (at-least-once vs at-most-once)
 - [ ] Retry mechanisms for failed message delivery
 - [ ] Enhanced exception and error handling
@@ -116,7 +117,6 @@ A comprehensive tutorial can be found at [Tutorial](doc-en/tutorial.md).
 For more detailed examples please refers to
 
 - **[Examples](examples/)**: Working examples demonstrating various features
-- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**: Example AI-powered applications demonstrating distributed actors with agent integration on HarmonyOS
 
 #### Local Actor
 
@@ -167,18 +167,45 @@ import encoding.json.*
 import serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
-public interface BankService {
-    @Receiver[description: "Transfer money between accounts"]
-    func transfer(from: String, to: String, amount: Float64): Bool
+public interface BankAccount {
+    @Receiver[description: "Deposit money into the account"]
+    func deposit(amount: Float64): Bool
+
+    @Receiver[description: "Withdraw money from the account"]
+    func withdraw(amount: Float64): Bool
+
+    @Receiver[description: "Get the balance of the account"]
+    func getBalance(): Float64
 }
 
 @Actor
-public class BankServiceImpl <: BankService {
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    public init(name: String, balance: Float64) {
+        this.name = name
+        this.balance = balance
+    }
+
     @Receiver
-    public func transfer(from: String, to: String, amount: Float64): Bool {
-        // Transfer logic here
-        println("Transferred ${amount} from ${from} to ${to}")
+    public func deposit(amount: Float64): Bool {
+        balance += amount
         true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
+        }
+        balance -= amount
+        true
+    }
+
+    @Receiver
+    public func getBalance(): Float64 {
+        balance
     }
 }
 
@@ -186,37 +213,34 @@ const PORT: UInt16 = 52165
 
 main() {
     // Host side
-    let tcpHost = TCPActorHost(bindAt: PORT)
-    tcpHost.serve() // start the server
+    let tcpHost = TCPActorHost(addr: "localhost", bindAt: PORT)
+    let serverFuture = tcpHost.serve() // start the server
 
-    let bankService = BankServiceImpl()
-    tcpHost.export("bank-service", bankService)
+    let bankAccount = BankAccountImpl("Steven", 0.0)
+    tcpHost.export("Steven", bankAccount)
 
     // Client side
-    let tcpClient = TCPActorClient("client-1", "localhost", PORT)
-    let bankProxy = ActorProxy("bank-service", tcpClient)
+    let tcpClient = TCPActorClient.create("localhost", PORT)
+    let proxy = tcpClient.getActor("Steven").getOrThrow()
 
-    let transferFut: DistributedFuture = bankProxy.ask("transfer", [
-        "alice".serialize(),
-        "bob".serialize(),
-        100.0.serialize()
-    ])
+    // Using untyped proxy
+    proxy.ask("deposit", [100.0.serialize()]).get()
+    let res = Float64.deserialize(proxy.ask("getBalance", []).get())
+    println("Steven balance: ${res}") // 100.0
 
-    transferFut.get()
-    println("Transfer completed")
-
-    let typedProxy = BankService.getProxy("bank-service", tcpClient)
-    let fut2: ActorFuture<Bool> = typedProxy.transfer("alice", "bob", 100.0)
-    fut2.get()
-    println("Second transfer completed")
+    // Using typed proxy
+    let steven = BankAccount.getProxy(proxy)
+    steven.deposit(100.0).get()
+    let res2 = steven.getBalance().get()
+    println("Steven balance: ${res2}") // 200.0
 }
 ```
 
 The execution result is as follows:
 
 ```shell
-Transfer completed
-Second transfer completed
+Steven balance: 100.0
+Steven balance: 200.0
 ```
 
 ### AI Agent Integration
@@ -242,7 +266,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = AssistantAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")

@@ -19,15 +19,14 @@ type FutMap = ConcurrentHashMap<UInt64, DistributedFuture>
 */
 public class TCPActorClient <: ActorClient {
 
+    public static func create(addr: String, port: UInt16): TCPActorClient {
+        (ClientManager.instance.getOrCreateClient(TCPActorHostInfo(addr, port)) as TCPActorClient).getOrThrow()
+    }
+
     /*
     * The information about the TCP actor client
     */
-    public let info: TCPActorClientInfo
-
-    /*
-    * The ID of the TCP actor client
-    */
-    public prop id: String { get() { info.id } }
+    public let hostInfo: TCPActorHostInfo
 
     private let conn: TCPConnection
     private let nextFutId = AtomicUInt64(0)
@@ -38,16 +37,14 @@ public class TCPActorClient <: ActorClient {
 
     /*
     * Creates a new TCP actor client and connects to the specified TCP actor host
-    * @param id - the ID of the TCP actor client
-    * @param addr - the address of the TCP actor host
-    * @param port - the port of the TCP actor host
+    * @param hostInfo - the host info of the TCP actor host
     * @throws IllegalArgumentException - if the address or port is invalid
     * @throws SocketException - if the socket connection fails
     * @throws SocketTimeoutException - if the socket connection times out
     */
-    public init(id: String, addr: String, port: UInt16) {
-        this.info = TCPActorClientInfo(id, addr, port)
-        this.conn = TCPConnection(addr, port)
+    init(hostInfo: TCPActorHostInfo) {
+        this.hostInfo = hostInfo
+        this.conn = TCPConnection(hostInfo.addr, hostInfo.port)
 
         this.logger = TCPActorLoggerWrapper("[TCPActorClient (${conn.localAddress} -- ${conn.remoteAddress})]")
 
@@ -83,7 +80,7 @@ public class TCPActorClient <: ActorClient {
 
         let iter = futMap.iterator()
         while (let Some((futId, fut)) <- iter.next()) {
-            fut.exn(TCPActorSystemRemoteException("[Client ${id}] Connection to ${conn.remoteAddress} has been lost."))
+            fut.exn(TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost."))
         }
     }
 
@@ -99,7 +96,7 @@ public class TCPActorClient <: ActorClient {
     */
     public func find(name: String): Option<ActorInfo> {
         if (isClosed.load()) {
-            throw TCPActorSystemRemoteException("[Client ${id}] Connection to ${conn.remoteAddress} has been lost.")
+            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
         }
         let resp = conn.sendSync(Payload.Find(name))
         match (resp) {
@@ -131,7 +128,7 @@ public class TCPActorClient <: ActorClient {
     */
     public func findAll(): Array<ActorInfo> {
         if (isClosed.load()) {
-            throw TCPActorSystemRemoteException("[Client ${id}] Connection to ${conn.remoteAddress} has been lost.")
+            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
         }
         let resp = conn.sendSync(Payload.FindAll)
         match (resp) {
@@ -163,7 +160,7 @@ public class TCPActorClient <: ActorClient {
     */
     public func containsActor(name: String): Bool {
         if (isClosed.load()) {
-            throw TCPActorSystemRemoteException("[Client ${id}] Connection to ${conn.remoteAddress} has been lost.")
+            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
         }
         let resp = conn.sendSync(Payload.ContainsActor(name))
         match (resp) {
@@ -171,6 +168,26 @@ public class TCPActorClient <: ActorClient {
             case _ =>
                 logger.error("Unexpected response.")
                 throw TCPActorSystemInternalException("Unexpected response.")
+        }
+    }
+
+    /*
+    * Gets an actor
+    * @param name - the name of the actor
+    * @return the actor proxy if found, None otherwise
+    * @throws TCPActorSystemRemoteException - if the connection is lost
+    * @throws TCPActorSystemRequestTimeoutException - if the request has timed out
+    * @throws TCPActorSystemSerializationException - if the envelope serialization fails
+    * @throws TCPActorSystemDeserializationException - if the response envelope deserialization fails
+    * @throws TCPActorSystemInternalException - for any internal errors
+    */
+    public func getActor(name: String): Option<ActorProxy> {
+        if (isClosed.load()) {
+            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
+        }
+        match (this.find(name)) {
+            case Some(_) => Some(ActorProxy(name, hostInfo))
+            case None => None
         }
     }
 
@@ -188,7 +205,7 @@ public class TCPActorClient <: ActorClient {
     */
     public func remoteCall(invokeInfo: InvokeInfo): Unit {
         if (isClosed.load()) {
-            throw TCPActorSystemRemoteException("[Client ${id}] Connection to ${conn.remoteAddress} has been lost.")
+            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
         }
         match (invokeInfo.fut) {
             case Some(fut) => remoteAsk(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config, fut)
@@ -312,5 +329,14 @@ public class TCPActorClient <: ActorClient {
             return
         }
         conn.close()
+        ClientManager.instance.removeClient(hostInfo)
+    }
+
+    /*
+    * Gets the host info of the client
+    * @return the host info of the client
+    */
+    public func getHostInfo(): HostInfo {
+        hostInfo
     }
 }

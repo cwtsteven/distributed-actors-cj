@@ -43,12 +43,14 @@ Return Value:
 
 Exceptions:
 
+- `SocketException` - Thrown if the server socket fails to bind.
+- `ActorSystemException` - Thrown for any unknown internal errors.
 - `TCPClusterException` - Thrown if the cluster has already been initialized.
 
 ### static func createWorker()
 
 ```cangjie
-public static func createWorker(headServerAddr!: String, headServerPort!: UInt16, selfId!: String, selfAddr!: String, selfPort!: UInt16): Future<Unit>
+public static func createWorker(headServerAddr!: String, headServerPort!: UInt16, workerId!: String, workerAddr!: String, workerPort!: UInt16): Future<Unit>
 ```
 
 Function: Starts a worker node, connects it to the head server, and initializes the global `TCPCluster` instance.
@@ -57,9 +59,9 @@ Parameters:
 
 - `headServerAddr!: String` - The address of the head server to connect to.
 - `headServerPort!: UInt16` - The port of the head server to connect to.
-- `selfId!: String` - The unique identifier of this worker node.
-- `selfAddr!: String` - The address where this worker node can be reached by the head server.
-- `selfPort!: UInt16` - The port where this worker node exposes actors via `TCPActorHost`.
+- `workerId!: String` - The unique identifier of this worker node.
+- `workerAddr!: String` - The address where this worker node can be reached by the head server.
+- `workerPort!: UInt16` - The port where this worker node exposes actors via `TCPActorHost`.
 
 Return Value:
 
@@ -67,7 +69,11 @@ Return Value:
 
 Exceptions:
 
+- `SocketException` - Thrown if the server socket fails to bind.
+- `ActorSystemException` - Thrown for any unknown internal errors.
 - `TCPClusterException` - Thrown if the cluster has already been initialized.
+- `ActorNotFoundException` - Thrown if the head server actor is not found.
+- `RemoteException` - Thrown if the remote connection fails.
 
 ### static func join()
 
@@ -86,6 +92,14 @@ Return Value:
 
 - `Bool` - Returns `true` if the cluster was successfully joined, `false` if the cluster was already initialized.
 
+Exceptions:
+
+- `SocketException` - Thrown if the server socket fails to bind.
+- `ActorSystemException` - Thrown for any unknown internal errors.
+- `TCPClusterException` - Thrown if the cluster has already been initialized.
+- `ActorNotFoundException` - Thrown if the head server actor is not found.
+- `RemoteException` - Thrown if the remote connection fails.
+
 ### static func spawnActor\<T>()
 
 ```cangjie
@@ -103,6 +117,13 @@ Return Value:
 
 - `Option<T>` - Returns `Some(T)` with a typed proxy to the created actor when successful, or `None` if spawning fails.
 
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the worker actor is not found on the specified client.
+- `RemoteException` - Thrown if the remote connection fails.
+- `TCPClusterException` - Thrown if the cluster is not initialized.
+- `ActorSystemException` - Thrown for any unknown internal errors.
+
 ### static func getActor\<T>()
 
 ```cangjie
@@ -118,6 +139,13 @@ Parameters:
 Return Value:
 
 - `Option<T>` - Returns `Some(T)` with a typed proxy when the actor is found, or `None` otherwise.
+
+Exceptions:
+
+- `ActorNotFoundException` - Thrown if the worker actor is not found on the specified client.
+- `RemoteException` - Thrown if the remote connection fails.
+- `TCPClusterException` - Thrown if the cluster is not initialized.
+- `ActorSystemException` - Thrown for any unknown internal errors.
 
 ### static func removeActor()
 

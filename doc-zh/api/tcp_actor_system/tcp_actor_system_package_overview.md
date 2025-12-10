@@ -38,4 +38,4 @@
 
 | 结构体名 | 功能 |
 | --- | --- |
-| [TCPActorClientInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorclientinfo) | 关于 TCP actor 客户端的信息，包括客户端 ID、地址和端口。 |
+| [TCPActorHostInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorhostinfo) | 关于 TCP actor 主机的信息，包括主机地址和端口。 |

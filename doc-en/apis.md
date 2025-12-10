@@ -23,6 +23,13 @@ This document provides a comprehensive list of all public APIs in the distribute
 |-----------|-------------|
 | [Tell](./actors_package_api/actors_package_enums.md#enum-tell) | Single-valued enumeration that enables fire-and-forget messaging by bypassing the `ActorFuture` mechanism. Use `tell: True` as a named argument when calling receivers. |
 
+### Constants
+
+| Constant Name | Description |
+|---------------|-------------|
+| [MAX_PRIORITY](./actors_package_api/actors_package_structs.md#const-max_priority) | The maximum priority value for receiver calls (10). |
+| [MIN_PRIORITY](./actors_package_api/actors_package_structs.md#const-min_priority) | The minimum priority value for receiver calls (1). |
+
 ## actors.distributed Package
 
 ### Classes
@@ -30,6 +37,7 @@ This document provides a comprehensive list of all public APIs in the distribute
 | Class Name | Description |
 |------------|-------------|
 | [ActorProxy](./distributed_package_api/distributed_package_classes.md#class-actorproxy) | Proxy class for communicating with remote actors. Provides methods for both *ask* and *tell* patterns. |
+| [ClientManager](./distributed_package_api/distributed_package_classes.md#class-clientmanager) | Singleton class that manages actor clients in the distributed actor system. Used to get and register actor clients and their deserializers. |
 | [DistributedFuture](./distributed_package_api/distributed_package_classes.md#class-distributedfuture) | Concrete class representing the pending result of remote receiver call. Provides methods for obtaining and fulfilling the result. |
 
 ### Structs
@@ -51,6 +59,7 @@ This document provides a comprehensive list of all public APIs in the distribute
 | [ActorClient](./distributed_package_api/distributed_package_interfaces.md#interface-actorclient) | Interface for actor client implementations. Provides methods for *finding* a distributed actor. |
 | [ActorCluster](./distributed_package_api/distributed_package_interfaces.md#interface-actorcluster) | Interface for creating a cluster system for spawning and discovering distributed actors. |
 | [ActorHost](./distributed_package_api/distributed_package_interfaces.md#interface-actorhost) | Interface for actor host implementations. Provides methods for *exporting* a distributed actor. |
+| [HostInfo](./distributed_package_api/distributed_package_interfaces.md#interface-hostinfo) | Interface for host information that identifies a remote actor host. Provides methods to create clients and obtain type information. |
 | [Distributable](./distributed_package_api/distributed_package_interfaces.md#interface-distributable) | Interface implemented by all distributed actors, provides methods to dispatch remote calls from client to the underlying actor instance. |
 | [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`. |
 | [Proxyable](./distributed_package_api/distributed_package_interfaces.md#interface-proxyablet) | Interface for distributed actor interfaces that can be proxied to a typed proxy via `getProxy`. |
@@ -117,7 +126,7 @@ This document provides a comprehensive list of all public APIs in the distribute
 
 | Struct Name | Description |
 |-------------|-------------|
-| [TCPActorClientInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorclientinfo) | Information about a TCP actor client, including the client ID, address, and port. |
+| [TCPActorHostInfo](./tcp_actor_system_package_api/tcp_actor_system_package_structs.md#struct-tcpactorhostinfo) | Information about a TCP actor host, including the host address and port. |
 
 ## actors.tcp_actor_system.cluster Package
 

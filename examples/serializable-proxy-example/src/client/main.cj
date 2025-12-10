@@ -1,0 +1,25 @@
+package serializable_proxy_example.client
+
+import std.log.*
+
+import actors.distributed.*
+import actors.tcp_actor_system.*
+
+import serializable_proxy_example.common.*
+
+const PORT: UInt16 = 52165
+
+main() {
+    TCPActorSystem.logger.level = LogLevel.DEBUG
+
+    let client = TCPActorClient.create("localhost", PORT)
+    let steven = BankAccount.getProxy(client.getActor("Steven").getOrThrow())
+    steven.deposit(50.0).get()
+    println("Steven balance: ${steven.getBalance().get()}")
+
+    let federico = BankAccount.getProxy(client.getActor("Federico").getOrThrow())
+    steven.transfer(federico, 50.0).get()
+
+    println("Steven balance: ${steven.getBalance().get()}") // 100.0
+    println("Federico balance: ${federico.getBalance().get()}") // 50.0
+}

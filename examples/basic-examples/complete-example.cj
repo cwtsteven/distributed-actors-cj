@@ -55,5 +55,5 @@ main() {
     for (f in futs) {
         f.get()
     }
-    println("Balance: ${account.getBalance().get()}")
+    println("Balance: ${account.getBalance().get()}") // non-deterministic because some of the withdraw calls may throw BalanceNotEnoughException
 }

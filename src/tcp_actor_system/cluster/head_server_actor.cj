@@ -13,57 +13,56 @@ import serialization.serialization.*
 private var __instance: ?HeadServer = None
 
 const HEAD_SERVER_NAME = "head-server"
-const HEAD_SERVER_CLIENT_NAME = "head-server-client"
 const MAX_TRIALS = 10
 
 /*
 * Head server interface
 */
 @ActorInterface[distributed: true]
-interface HeadServer {
+public interface HeadServer {
     /*
-    * Joins a client to the head server
-    * @param clientId - the id of the client
-    * @param clientAddr - the address of the client
-    * @param clientPort - the port of the client
-    * @return true if the client joined successfully, false otherwise
-    * @throws ActorNotFoundException - if the worker actor is not found on the specified client
+    * Joins as a worker to the head server
+    * @param workerId - the id of the worker
+    * @param workerAddr - the address of the worker
+    * @param workerPort - the port of the worker
+    * @return true if the worker joined successfully, false otherwise
+    * @throws ActorNotFoundException - if the worker actor is not found on the specified worker
     * @throws RemoteException - if the remote connection fails
     */
     @Receiver[mode: AskOnly]
-    func join(clientId: String, clientAddr: String, clientPort: UInt16): Bool
+    func join(workerId: String, workerAddr: String, workerPort: UInt16): Bool
 
     /*
-    * Leaves a client from the head server
-    * @param clientId - the id of the client
-    * @return true if the client left successfully, false otherwise
+    * Leaves from the head server
+    * @param workerId - the id of the worker
+    * @return true if the worker left successfully, false otherwise
     */
     @Receiver[mode: AskOnly]
-    func leave(clientId: String): Bool
+    func leave(workerId: String): Bool
 
     /*
-    * Spawns an actor on a client
+    * Spawns an actor on a worker
     * @param typeName - the type name of the actor
     * @param actorName - the name of the actor
     * @param args - the arguments of the actor
-    * @return the client info if the actor spawned successfully, None otherwise
-    * @throws ActorNotFoundException - if the worker actor is not found on the specified client
+    * @return the host info if the actor spawned successfully, None otherwise
+    * @throws ActorNotFoundException - if the worker actor is not found on the specified worker
     * @throws RemoteException - if the remote connection fails
     * @throws ActorSystemException - for any unknown internal errors
     */
     @Receiver[mode: AskOnly]
-    func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>): Option<TCPActorClientInfo>
+    func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>): Option<ActorProxy>
 
     /*
     * Gets an actor by name
     * @param actorName - the name of the actor
-    * @return the client info if the actor is found, None otherwise
+    * @return the host info if the actor is found, None otherwise
     * @throws ActorNotFoundException - if the actor is not found
     * @throws RemoteException - if the remote connection fails
     * @throws ActorSystemException - for any unknown internal errors
     */
     @Receiver[mode: AskOnly]
-    func getActor(actorName: String): Option<TCPActorClientInfo>
+    func getActor(actorName: String): Option<ActorProxy>
 
     /*
     * Removes an actor by name
@@ -97,9 +96,9 @@ interface HeadServer {
     * @throws SocketException - if the server socket fails to bind
     * @throws ActorSystemException - for any unknown internal errors
     */
-    static func start(bindAt!: UInt16): Future<Unit> {
+    static func start(headServerAddr!: String, bindAt!: UInt16): Future<Unit> {
         __instance = Some(HeadServerImpl())
-        let tcpHost = TCPActorHost(bindAt: bindAt)
+        let tcpHost = TCPActorHost(addr: headServerAddr, bindAt: bindAt)
         tcpHost.export(HEAD_SERVER_NAME, instance)
         tcpHost.serve()
     }
@@ -114,16 +113,17 @@ interface HeadServer {
     * @throws ActorSystemException - for any unknown internal errors
     */
     static func connect(headServerAddr!: String, port!: UInt16): Unit {
-        let client = TCPActorClient(HEAD_SERVER_CLIENT_NAME, headServerAddr, port)
-        __instance = Some(HeadServer.getProxy(HEAD_SERVER_NAME, client))
+        let hostInfo = TCPActorHostInfo(headServerAddr, port)
+        let client = ClientManager.instance.getOrCreateClient(hostInfo)
+        __instance = Some(HeadServer.getProxy(client.getActor(HEAD_SERVER_NAME).getOrThrow()))
     }
 }
 
 @Actor
 class HeadServerImpl <: HeadServer {
-    private var clients = HashMap<String, (TCPActorClient, WorkerActor)>()
-    private var clientsList = ArrayList<String>() // client id list
-    private var actors = HashMap<String, String>() // actor name -> client id
+    private let workerMap = HashMap<String, (TCPActorHostInfo, WorkerActor)>()
+    private let workerList = ArrayList<String>() // worker id list
+    private let actorMap = HashMap<String, String>() // actor name -> worker id
     private var index = 0
     private let logger: TCPActorLoggerWrapper
 
@@ -133,84 +133,86 @@ class HeadServerImpl <: HeadServer {
 
     /*
     * Joins a client to the head server
-    * @param clientId - the id of the client
-    * @param clientAddr - the address of the client
-    * @param clientPort - the port of the client
-    * @return true if the client joined successfully, false otherwise
-    * @throws ActorNotFoundException - if the worker actor is not found on the specified client
+    * @param workerId - the id of the worker
+    * @param workerAddr - the address of the worker
+    * @param workerPort - the port of the worker
+    * @return true if the worker joined successfully, false otherwise
+    * @throws ActorNotFoundException - if the worker actor is not found on the specified worker
     * @throws RemoteException - if the remote connection fails
     */
     @Receiver[mode: AskOnly]
-    public func join(clientId: String, clientAddr: String, clientPort: UInt16): Bool {
-        logger.debug("joining client ${clientId} to the head server.")
-        if (clients.contains(clientId)) {
-            logger.debug("client ${clientId} already joined to the head server.")
+    public func join(workerId: String, workerAddr: String, workerPort: UInt16): Bool {
+        logger.debug("joining worker ${workerId}:${workerAddr}:${workerPort} to the head server.")
+        if (workerMap.contains(workerId)) {
+            logger.debug("worker ${workerId} already joined to the head server.")
             return false
         }
-        let client = TCPActorClient(clientId, clientAddr, clientPort)
-        clients.put(clientId, (client, WorkerActor.getProxy(clientId, client)))
-        clientsList.append(clientId)
-        logger.debug("client ${clientId} joined to the head server.")
+        let hostInfo = TCPActorHostInfo(workerAddr, workerPort)
+        let client = ClientManager.instance.getOrCreateClient(hostInfo)
+        let workerActor = WorkerActor.getProxy(client.getActor(workerId).getOrThrow())
+        workerMap.put(workerId, (hostInfo, workerActor))
+        workerList.append(workerId)
+        logger.debug("worker ${workerId} joined to the head server.")
         true
     }
 
     /*
-    * Leaves a client from the head server
-    * @param clientId - the id of the client
-    * @return true if the client left successfully, false otherwise
+    * Leaves a worker from the head server
+    * @param workerId - the id of the worker
+    * @return true if the worker left successfully, false otherwise
     */
     @Receiver[mode: AskOnly]
-    public func leave(clientId: String): Bool {
-        if (!clients.contains(clientId)) {
-            logger.debug("client ${clientId} not found in the head server.")
+    public func leave(workerId: String): Bool {
+        if (!workerList.contains(workerId)) {
+            logger.debug("worker ${workerId} not found in the head server.")
             return false
         }
-        let c = clients.remove(clientId)
-        clientsList.removeIf{ it => it == clientId }
-        logger.debug("client ${clientId} left from the head server.")
+        workerMap.remove(workerId)
+        workerList.removeIf{ it => it == workerId }
+        logger.debug("worker ${workerId} left from the head server.")
         true
     }
 
     /*
-    * Spawns an actor on a client
+    * Spawns an actor on a worker
     * @param typeName - the type name of the actor
     * @param actorName - the name of the actor
     * @param args - the arguments of the actor
-    * @return the client info if the actor spawned successfully, None otherwise
-    * @throws ActorNotFoundException - if the worker actor is not found on the specified client
+    * @return the worker info if the actor spawned successfully, None otherwise
+    * @throws ActorNotFoundException - if the worker actor is not found on the specified worker
     * @throws RemoteException - if the remote connection fails
     * @throws ActorSystemException - for any unknown internal errors
     */
     @Receiver[mode: AskOnly]
-    public func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>): Option<TCPActorClientInfo> {
+    public func spawnActor(typeName: String, actorName: String, args: Array<SpawnArgument>): Option<ActorProxy> {
         logger.debug("spawning actor ${actorName} with type name ${typeName}.")
-        if (clientsList.size == 0) {
+        if (workerList.size == 0) {
             logger.debug("no clients found in the head server.")
             return None
         }
-        logger.debug("clientsList size: ${clientsList.size}.")
+        logger.debug("workerList size: ${workerList.size}.")
 
         // simple round robin scheduling
         var trial = 0
         while (trial < MAX_TRIALS) {
-            if (index >= clientsList.size) {
-                index = index % clientsList.size
+            if (index >= workerList.size) {
+                index = index % workerList.size
             }
-            let clientId = clientsList[index]
-            logger.debug("spawning actor ${actorName} on client ${clientId} with type name ${typeName}.")
-            match (clients.get(clientId)) {
-                case Some((client, workerActor)) =>
+            let workerId = workerList[index]
+            logger.debug("spawning actor ${actorName} on worker ${workerId} with type name ${typeName}.")
+            match (workerMap.get(workerId)) {
+                case Some((info, workerActor)) =>
                     if (workerActor.spawnActor(typeName, actorName, args).get()) {
-                        index = (index + 1) % clientsList.size
-                        actors.put(actorName, clientId)
-                        logger.debug("spawning actor ${actorName} on client ${clientId} with type name ${typeName} success.")
-                        return Some(TCPActorClientInfo(client.id, client.info.addr, client.info.port))
+                        index = (index + 1) % workerList.size
+                        actorMap.put(actorName, workerId)
+                        logger.debug("spawning actor ${actorName} on worker ${workerId} with type name ${typeName} success.")
+                        return Some(ActorProxy(actorName, info))
                     }
-                    logger.debug("spawning actor ${actorName} on client ${clientId} with type name ${typeName} failed.")
-                    index = (index + 1) % clientsList.size
+                    logger.debug("spawning actor ${actorName} on worker ${workerId} with type name ${typeName} failed.")
+                    index = (index + 1) % workerList.size
                 case None =>
-                    logger.debug("client ${clientId} not found.")
-                    index = (index + 1) % clientsList.size
+                    logger.debug("worker ${workerId} not found.")
+                    index = (index + 1) % workerList.size
             }
             trial++
         }
@@ -221,26 +223,26 @@ class HeadServerImpl <: HeadServer {
     /*
     * Gets an actor by name
     * @param actorName - the name of the actor
-    * @return the client info if the actor is found, None otherwise
+    * @return the worker info if the actor is found, None otherwise
     * @throws ActorNotFoundException - if the actor is not found
     * @throws RemoteException - if the remote connection fails
     * @throws ActorSystemException - for any unknown internal errors
     */
     @Receiver[mode: AskOnly]
-    public func getActor(actorName: String): Option<TCPActorClientInfo> {
+    public func getActor(actorName: String): Option<ActorProxy> {
         logger.debug("getting actor ${actorName}.")
-        match (actors.get(actorName)) {
-            case Some(clientId) =>
-                match (clients.get(clientId)) {
-                    case Some((client, workerActor)) =>
+        match (actorMap.get(actorName)) {
+            case Some(workerId) =>
+                match (workerMap.get(workerId)) {
+                    case Some((info, workerActor)) =>
                         if (workerActor.containsActor(actorName).get()) {
                             logger.debug("actor ${actorName} found and alive.")
-                            return Some(TCPActorClientInfo(client.id, client.info.addr, client.info.port))
+                            return Some(ActorProxy(actorName, info))
                         }
                         logger.debug("actor ${actorName} found but not alive.")
                         None
                     case None =>
-                        logger.debug("client ${clientId} not found.")
+                        logger.debug("worker ${workerId} not found.")
                         None
                 }
             case None =>
@@ -260,14 +262,14 @@ class HeadServerImpl <: HeadServer {
     @Receiver[mode: AskOnly]
     public func removeActor(actorName: String): Bool {
         logger.debug("removing actor ${actorName}.")
-        match (actors.get(actorName)) {
-            case Some(clientId) =>
-                match (clients.get(clientId)) {
+        match (actorMap.get(actorName)) {
+            case Some(workerId) =>
+                match (workerMap.get(workerId)) {
                     case Some((_, workerActor)) =>
                         workerActor.removeActor(actorName).get()
                         true
                     case None =>
-                        logger.debug("client ${clientId} not found.")
+                        logger.debug("worker ${workerId} not found.")
                         false
                 }
             case None =>

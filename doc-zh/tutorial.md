@@ -498,15 +498,15 @@ Actor 模型可以扩展到在分布式系统的多个节点（进程、机器�
 
 ```cangjie
 @ActorInterface[distributed: true]
-public interface BankService {
+public interface BankAccount {
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool
+    func deposit(amount: Float64): Bool
 
     @Receiver
-    public func getBalance(accountId: String): Float64
+    func withdraw(amount: Float64): Bool
 
     @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Bool
+    func getBalance(): Float64
 }
 ```
 
@@ -518,53 +518,60 @@ public interface BankService {
 
 ```cangjie
 @Actor
-public class BankServiceImpl <: BankService {
-    private let accounts = ConcurrentHashMap<String, Float64>()
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
 
-    public init() {}
+    public init(name: String, balance: Float64) {
+        this.name = name
+        this.balance = balance
+    }
 
     @Receiver
-    public func transfer(fromAccount: String, toAccount: String, amount: Float64): Bool {
-        let fromBalance = accounts.get(fromAccount).getOrElse(0.0)
-        if (fromBalance < amount) {
-            throw InsufficientFundsException(fromAccount)
+    public func deposit(amount: Float64): Bool {
+        balance += amount
+        true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
         }
-
-        let toBalance = accounts.get(toAccount).getOrElse(0.0)
-        accounts.put(fromAccount, fromBalance - amount)
-        accounts.put(toAccount, toBalance + amount)
+        balance -= amount
         true
     }
 
     @Receiver
-    public func getBalance(accountId: String): Float64 {
-        accounts.get(accountId).getOrElse(0.0)
-    }
-
-    @Receiver
-    public func createAccount(accountId: String, initialBalance: Float64): Bool {
-        accounts.put(accountId, initialBalance)
-        true
+    public func getBalance(): Float64 {
+        balance
     }
 }
 ```
 
 ## ActorHost
 
-要管理分布式 actor，您需要一个 actor host 和 client。Actor host 处理 actor 注册，actor client 提供远程通信：
+要管理分布式 actor，您需要一个 actor host 和 client。Actor host 可用于导出 actor，用户可以通过 actor client 获取代理：
 
 ```cangjie
 // 创建 actor host（实现取决于您的分布式设置）
 let actorHost: ActorHost
 
-// 创建并注册 actor
-let bankService = BankServiceImpl()
-let registered = actorHost.export("bank-service", bankService)
-if (!registered) {
-    println("Failed to export bank service")
-    return
+// 创建并导出 actor
+let bankAccount = BankAccountImpl("alice", 1000.0)
+match (actorHost.export("alice", bankAccount)) {
+    case Some(proxy) =>
+        println("Bank account exported successfully")
+        // 如果需要，可以直接使用代理
+    case None =>
+        println("Failed to export bank account: name already taken")
+        return
 }
 ```
+
+`export` 函数使用 *name* 导出分布式 actor。此名称在该特定 actor host 的导出 actor 中应该是唯一的。使用相同名称导出两次将返回 `None`。成功导出时，它返回 `Some(ActorProxy)`，可直接用于本地通信。
+
+一旦 actor 被导出，相应的 actor client 就可以找到它。
 
 ## Actor Client 和远程 Actor 通信
 
@@ -573,75 +580,164 @@ if (!registered) {
 let actorClient: ActorClient
 ```
 
-要与远程 actor 通信，您使用 `ActorProxy`：
+要获取已导出分布式 actor 的代理，您可以使用 actor client 的 `getActor()` 方法：
 
 ```cangjie
 // 创建代理以与远程 actor 通信
-let bankProxy = ActorProxy("bank-service", actorClient)
+match (actorClient.getActor("alice")) {
+    case Some(bankProxy) =>
+        // 使用代理
+    case None =>
+        println("Actor not found")
+}
+```
 
+如果找不到 actor，`getActor()` 方法将返回 `None`，如果与客户端的连接失败，将抛出 `RemoteException`。
+
+或者，您可以直接使用 actor 名称和 host info 创建 `ActorProxy`：
+
+```cangjie
+// 创建代理以与远程 actor 通信
+let bankProxy = ActorProxy("alice", actorClient.getHostInfo())
+```
+
+但这不会检查 actor 是否存在。
+
+一旦我们获得 actor 代理，我们可以使用 `ask` 或 `tell` 函数对特定 receiver 进行远程调用：
+
+```cangjie
 // 调用远程方法 - 这些返回 DistributedFuture 对象
-let createFut: DistributedFuture = bankProxy.ask("createAccount", [
-    "account1".serialize(),
-    1000.0.serialize()
-])
-
-let transferFut: DistributedFuture = bankProxy.ask("transfer", [
-    "account1".serialize(),
-    "account2".serialize(),
+let depositFut: DistributedFuture = bankProxy.ask("deposit", [
     500.0.serialize()
 ])
-
-let balanceFut: DistributedFuture = bankProxy.ask("getBalance", [
-    "account1".serialize()
-])
-
-// 等待操作完成
-createFut.get()
-transferFut.get()
-let balance = Float64.deserialize(balanceFut.get())
-println("Account1 balance: ${balance}") // 输出: 500.0
 ```
+
+`ask` 函数具有以下签名：
+
+```cangjie
+public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
+```
+
+如果 actor 之前已从 host 取消导出（使用 `unexport` 函数），此函数将抛出 `ActorNotFoundException`。
+
+`receiverName` 对应于在 actor 接口中声明的 receiver 名称。请注意，这意味着 actor 接口声明中不允许函数重载，如果违反，将抛出宏错误。如果找不到匹配的 receiver，此函数将抛出 `ReceiverNotFoundException`。
+
+`args` 是 `DataModel` 数组，这是该特定 receiver 的序列化参数。如果提供的参数无效，例如数量不匹配或类型不匹配，此函数将抛出 `IllegalArgumentException`。
+
+当远程连接失败时，此函数还会抛出 `RemoteException`，对于来自特定 actor 系统的任何潜在错误，会抛出 `ActorSystemException`。
+
+`tell` 函数类似，只是它不返回 `DistributedFuture`。
+
+远程 receiver 的执行顺序与本地 receiver 相同，从同一线程在同一 actor 上调用两个（远程）receiver 时，这些 receiver 将按调用顺序执行。
+
+```cangjie
+depositFut.get()
+```
+
+如果 receiver 的执行抛出任何异常或错误，此函数将抛出 `RemoteReceiverException`，它包装了原始异常（或错误）的消息和堆栈跟踪。
+
+当连接失败时，此函数还会抛出 `RemoteException`，对于任何 actor 系统特定错误，会抛出 `ActorSystemException`。
 
 ## 类型化代理（Typed-proxy）
 
-为了更方便地使用 actor 代理，用户可以从 actor 接口中获取类型化代理，并使用普通的 receiver 调用语法来调用其远程 receiver。例如：
+为了更方便地使用 actor 代理，用户可以从 actor 接口获取类型化代理，并使用普通的 receiver 调用语法调用其远程 receiver。例如：
 
 ```cangjie
+// 首先获取 ActorProxy
+let actorProxy = match (actorClient.getActor("alice")) {
+    case Some(proxy) => proxy
+    case None => throw Exception("Actor not found")
+}
+
 // 创建类型化代理以与远程 actor 通信
-let bankProxy: BankService = BankService.getProxy("bank-service", actorClient)
-
-// 调用远程方法——这些调用返回 ActorFuture 对象
-let createFut: ActorFuture<Unit> = bankProxy.createAccount("account1", 1000.0)
-
-let transferFut: ActorFuture<Unit> = bankProxy.transfer("account1", "account2", 500.0)
-
-let balanceFut: ActorFuture<Float64> = bankProxy.getBalance("account1")
-
-// 等待操作完成
-createFut.get()
-transferFut.get()
-let balance = balanceFut.get()
-println("Account1 balance: ${balance}") // 输出: 500.0
+let bankProxy: BankAccount = BankAccount.getProxy(actorProxy)
 ```
 
-## 分布式 Actor 的 Tell 模式
-
-您还可以在分布式 actor 中使用 Tell 模式进行即发即忘操作：
+获取类型化代理后，我们可以像调用本地 actor 一样调用其远程 receiver：
 
 ```cangjie
-// Tell 模式 - 无返回值，无同步
-bankProxy.tell("createAccount", [
-    "account3".serialize(),
-    2000.0.serialize()
-])
+// 调用远程方法 - 这些返回 ActorFuture 对象
+let depositFut: ActorFuture<Bool> = bankProxy.deposit(500.0)
+let balanceFut: ActorFuture<Float64> = bankProxy.getBalance()
 ```
+
+使用类型化代理调用远程 receiver 本质上会调用底层 `ActorProxy` 的 `ask` 或 `tell` 函数，当连接失败时会抛出 `RemoteException`，对于任何 actor 系统特定错误会抛出 `ActorSystemException`。
+
+此函数返回一个 `ActorFuture<T>`，可用于获取远程 receiver 调用的结果。
+
+```cangjie
+depositFut.get()
+let balance = balanceFut.get()
+println("Alice's balance: ${balance}") // 输出: 500.0
+```
+
+## 传递代理作为参数
+
+由于类型化代理（如 `BankAccount`）是可序列化的，它们可以作为参数传递给 receiver 函数。这使 actor 能够通过传递引用来相互通信，这对于构建需要协调的复杂分布式系统非常有用。
+
+例如，您可以定义一个接受类型化代理作为参数的 receiver：
+
+```cangjie
+@ActorInterface[distributed: true]
+public interface BankAccount {
+    @Receiver
+    func deposit(amount: Float64): Bool
+
+    @Receiver
+    func withdraw(amount: Float64): Bool
+
+    @Receiver
+    func getBalance(): Float64
+
+    @Receiver
+    func transfer(to: BankAccount, amount: Float64): Bool
+}
+```
+
+`transfer` 方法接受一个 `BankAccount` 类型化代理作为参数。实现此 receiver 时：
+
+```cangjie
+@Receiver
+public func transfer(to: BankAccount, amount: Float64): Bool {
+    if (amount > balance) {
+        return false
+    }
+    balance -= amount
+    to.deposit(amount).get()
+    true
+}
+```
+
+调用这样的 receiver 时，您可以直接传递类型化代理：
+
+```cangjie
+// 在 host 端，导出多个 actor
+let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
+let stevenAccount = BankAccountImpl("Steven", 100.0)
+let federicoAccount = BankAccountImpl("Federico", 0.0)
+tcpHost.export("Steven", stevenAccount)
+tcpHost.export("Federico", federicoAccount)
+tcpHost.serve()
+
+// 在 client 端，获取类型化代理并将它们作为参数传递
+let tcpClient = TCPActorClient.create("localhost", 8080)
+let steven = BankAccount.getProxy(tcpClient.getActor("Steven").getOrThrow())
+let federico = BankAccount.getProxy(tcpClient.getActor("Federico").getOrThrow())
+
+// 通过将 federico 作为参数传递，从 Steven 转账到 Federico
+steven.transfer(federico, 50.0).get()
+
+println("Steven balance: ${steven.getBalance().get()}") // 50.0
+println("Federico balance: ${federico.getBalance().get()}") // 50.0
+```
+
+类型化代理在作为参数传递时会自动序列化，并在接收端反序列化，使远程 actor 能够获取代理以与原始 actor 通信。这使 actor 能够建立双向通信通道并构建复杂的分布式协调模式。
 
 
 ## 与本地 Actor 的主要区别
 
 1. **序列化**：receiver 的所有参数和返回值都必须可序列化
-2. **网络通信**：调用通过网络进行，因此可能具有更高的延迟
-4. **无直接引用**：您不能持有远程 actor 的直接引用，远程 actor 的生命周期不受创建的代理影响
+2. **网络通信**：调用通过网络进行，因此可能具有更高的延迟，并且容易受到分布式系统故障的影响
 
 
 # 使用 TCPActorSystem
@@ -655,12 +751,15 @@ TCPActorSystem 提供了使用 TCP 套接字进行网络通信的分布式 actor
 ```cangjie
 import actors.tcp_actor_system.*
 
-// 创建在端口 8080 上监听的 TCP actor host
-let tcpHost = TCPActorHost(bindAt: 8080)
+// 创建在 localhost:8080 上监听的 TCP actor host
+let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
 
-// 向 host 注册 actor
-let bankService = BankServiceImpl()
-tcpHost.export("bank-service", bankService)
+// 向 host 导出 actor
+let bankAccount = BankAccountImpl("Steven", 0.0)
+match (tcpHost.export("Steven", bankAccount)) {
+    case Some(_) => println("Bank account exported")
+    case None => println("Failed to export: name already taken")
+}
 
 // 启动服务器以接受客户端连接
 let serverFuture = tcpHost.serve()
@@ -676,20 +775,24 @@ println("TCP Actor Host is running on port 8080")
 import actors.tcp_actor_system.*
 
 // 创建连接到 localhost:8080 的 TCP actor client
-let tcpClient = TCPActorClient(id: "client-1", addr: "localhost", port: 8080)
+let tcpClient = TCPActorClient.create("localhost", 8080)
 
-// 创建用于远程通信的代理
-let bankProxy = ActorProxy("bank-service", tcpClient)
+// 获取用于远程通信的代理
+let proxy = match (tcpClient.getActor("Steven")) {
+    case Some(proxy) => proxy
+    case None => throw Exception("Actor not found")
+}
 
-// 使用代理进行远程调用
-let createFut: DistributedFuture = bankProxy.ask("createAccount", [
-    "alice".serialize(),
-    1000.0.serialize()
-])
+// 使用未类型化代理进行远程调用
+proxy.ask("deposit", [100.0.serialize()]).get()
+let res = Float64.deserialize(proxy.ask("getBalance", []).get())
+println("Steven balance: ${res}") // 100.0
 
-// 等待操作完成
-createFut.get()
-println("Account created successfully")
+// 使用类型化代理
+let steven = BankAccount.getProxy(proxy)
+steven.deposit(100.0).get()
+let res2 = steven.getBalance().get()
+println("Steven balance: ${res2}") // 200.0
 ```
 
 ## 完整的 TCP Actor 系统示例
@@ -710,18 +813,45 @@ import encoding.json.*
 import serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
-public interface BankService {
-    @Receiver[description: "Transfer money between accounts"]
-    func transfer(from: String, to: String, amount: Float64): Bool
+public interface BankAccount {
+    @Receiver[description: "Deposit money into the account"]
+    func deposit(amount: Float64): Bool
+
+    @Receiver[description: "Withdraw money from the account"]
+    func withdraw(amount: Float64): Bool
+
+    @Receiver[description: "Get the balance of the account"]
+    func getBalance(): Float64
 }
 
 @Actor
-public class BankServiceImpl <: BankService {
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    public init(name: String, balance: Float64) {
+        this.name = name
+        this.balance = balance
+    }
+
     @Receiver
-    public func transfer(from: String, to: String, amount: Float64): Bool {
-        // 转账逻辑
-        println("Transferred ${amount} from ${from} to ${to}")
+    public func deposit(amount: Float64): Bool {
+        balance += amount
         true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
+        }
+        balance -= amount
+        true
+    }
+
+    @Receiver
+    public func getBalance(): Float64 {
+        balance
     }
 }
 
@@ -729,12 +859,12 @@ const PORT: UInt16 = 52165
 
 main() {
     // 创建并启动 TCP actor host
-    let tcpHost = TCPActorHost(bindAt: PORT)
+    let tcpHost = TCPActorHost(addr: "localhost", bindAt: PORT)
     let serverFuture = tcpHost.serve()
 
-    // 注册银行服务
-    let bankService = BankServiceImpl()
-    tcpHost.export("bank-service", bankService)
+    // 导出银行账户
+    let bankAccount = BankAccountImpl("Steven", 0.0)
+    tcpHost.export("Steven", bankAccount)
 
     println("TCP Actor Host is running on port ${PORT}")
     println("Press Ctrl+C to stop the server")
@@ -756,27 +886,24 @@ import serialization.serialization.*
 
 const PORT: UInt16 = 52165
 
+import distributed_actors_example.common.*
+
+const PORT: UInt16 = 52165
+
 main() {
-    let tcpClient = TCPActorClient("client-1", "localhost", PORT)
+    let tcpClient = TCPActorClient.create("localhost", PORT)
 
-    try {
-        let bankProxy = ActorProxy("bank-service", tcpClient)
+    // 使用未类型化代理
+    let proxy = tcpClient.getActor("Steven").getOrThrow()
+    proxy.ask("deposit", [100.0.serialize()]).get()
+    let res = Float64.deserialize(proxy.ask("getBalance", []).get())
+    println("Steven balance: ${res}") // 100.0
 
-        let transferFut: DistributedFuture = bankProxy.ask("transfer", [
-            "alice".serialize(),
-            "bob".serialize(),
-            100.0.serialize()
-        ])
-
-        transferFut.get()
-        println("Transfer completed")
-
-    } catch (e: Exception) {
-        println("Unexpected error: ${e.message}")
-    } finally {
-        // 关闭客户端连接
-        tcpClient.close()
-    }
+    // 使用类型化代理
+    let steven = BankAccount.getProxy(proxy)
+    steven.deposit(100.0).get()
+    let res2 = steven.getBalance().get()
+    println("Steven balance: ${res2}") // 200.0
 }
 ```
 
@@ -930,16 +1057,16 @@ public class BankAccountImpl <: BankAccount {
 请注意，此 actor 类中的三个构造函数对应于 `spawnWith` 函数中的三种情况。用户还需要使用以下方式注册生成函数：
 
 ```cangjie
-// 注册可生成类型
-ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+// 注册生成函数
+ActorCluster.registerSpawningFunc<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
 ```
 
-并注册传递给构造函数的参数：
+并注册可在 `SpawnArgument` 中使用的参数类型：
 
 ```cangjie
 // 注册可在 SpawnArgument 中使用的参数类型
-ActorCluster.registerSpawnArgument<String>("String")
-ActorCluster.registerSpawnArgument<Float64>("Float64")
+ActorCluster.registerSpawnParameterType<String>("String")
+ActorCluster.registerSpawnParameterType<Float64>("Float64")
 ```
 
 这些注册必须在使用分布式 actor 之前完成，并且**必须**在所有工作节点上执行。
@@ -962,9 +1089,9 @@ TCPCluster.createHeadServer(headServerAddr: headServerAddr, headServerPort: head
 TCPCluster.createWorker(
     headServerAddr: headServerAddr,
     headServerPort: headServerPort,
-    selfId: workerId,
-    selfAddr: workerAddr,
-    selfPort: workerPort
+    workerId: workerId,
+    workerAddr: workerAddr,
+    workerPort: workerPort
 )
 ```
 
@@ -1074,9 +1201,9 @@ public class BankAccountImpl <: BankAccount {
     private var balance: Float64
 
     static init() {
-        ActorCluster.registerSpawnable<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
-        ActorCluster.registerSpawnArgument<String>("String")
-        ActorCluster.registerSpawnArgument<Float64>("Float64")
+        ActorCluster.registerSpawningFunc<BankAccount>(BankAccount.typeName(), BankAccount.spawnWith)
+        ActorCluster.registerSpawnParameterType<String>("String")
+        ActorCluster.registerSpawnParameterType<Float64>("Float64")
     }
 
     public init(name: String, initialBalance: Float64) {
@@ -1123,8 +1250,8 @@ public func entry() {
     println("Alice's balance: ${alice.getBalance().get()}")
     println("Bob's balance: ${bob.getBalance().get()}")
 
-    TCPCluster.killActor("alice")
-    TCPCluster.killActor("bob")
+    TCPCluster.removeActor("alice")
+    TCPCluster.removeActor("bob")
 
     return 0
 }
@@ -1181,7 +1308,7 @@ main(args: Array<String>) {
     let workerAddr = args[3]
     let workerPort = UInt16.parse(args[4])
 
-    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort).get()
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, workerId: workerId, workerAddr: workerAddr, workerPort: workerPort).get()
 }
 ```
 
@@ -1211,7 +1338,7 @@ main(args: Array<String>) {
     let workerId = args[2]
     let workerAddr = args[3]
     let workerPort = UInt16.parse(args[4])
-    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, selfId: workerId, selfAddr: workerAddr, selfPort: workerPort)
+    TCPCluster.createWorker(headServerAddr: headServerAddr, headServerPort: headServerPort, workerId: workerId, workerAddr: workerAddr, workerPort: workerPort)
 
     entry()
 }
@@ -1264,7 +1391,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = MyAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")
