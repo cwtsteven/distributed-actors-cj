@@ -89,6 +89,10 @@ public func post<T>(f: () -> T, config!: ReceiverConfig = ReceiverConfig.default
 
 - [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) — 提供用于获取该闭包结果的待处理对象。
 
+异常：
+
+- `IllegalArgumentException` — 如果优先级超出范围则抛出。
+
 ### func tell(() -> Unit, ReceiverConfig)
 
 ```cangjie
@@ -101,3 +105,7 @@ public func tell(f: () -> Unit, config!: ReceiverConfig = ReceiverConfig.default
 
 - `f: () -> Unit` — 提交给调度器的闭包。
 - `config!: ReceiverConfig` — 提交任务的配置，默认为 `ReceiverConfig.default`。
+
+异常：
+
+- `IllegalArgumentException` — 如果优先级超出范围则抛出。

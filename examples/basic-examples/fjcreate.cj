@@ -47,6 +47,6 @@ main(): Unit {
         if (finalCount.load() == numRuns) {
             break
         }
-        println("Final count: ${finalCount.load()}")
+        println("Final count: ${finalCount.load()}") // 100
     }
 }

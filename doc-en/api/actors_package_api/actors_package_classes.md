@@ -90,6 +90,10 @@ Return Value:
 
 - [ActorFuture\<T>](actors_package_classes.md#class-actorfuture) - Pending result of the submitted closure.
 
+Exceptions:
+
+- `IllegalArgumentException` - Thrown if the priority is out of range.
+
 ### func tell(() -> Unit, ReceiverConfig)
 
 ```cangjie
@@ -102,3 +106,7 @@ Parameters:
 
 - `f: () -> Unit` - The closure submitted to the dispatcher.
 - `config!: ReceiverConfig` - The configuration for the submitted task, defaults to `ReceiverConfig.default`.
+
+Exceptions:
+
+- `IllegalArgumentException` - Thrown if the priority is out of range.

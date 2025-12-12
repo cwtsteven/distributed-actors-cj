@@ -65,3 +65,21 @@ Parameters:
 Return Value:
 
 - `Bool` - Returns `true` if any of the values inside the `ReceiverConfig`s is not equal, `false` otherwise.
+
+## Constants
+
+### const MAX_PRIORITY
+
+```cangjie
+public const MAX_PRIORITY = 10
+```
+
+Function: The maximum priority value for receiver calls. Priority values must be between `MIN_PRIORITY` and `MAX_PRIORITY`.
+
+### const MIN_PRIORITY
+
+```cangjie
+public const MIN_PRIORITY = 1
+```
+
+Function: The minimum priority value for receiver calls. Priority values must be between `MIN_PRIORITY` and `MAX_PRIORITY`.

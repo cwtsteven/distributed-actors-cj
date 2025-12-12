@@ -26,12 +26,13 @@
 ### 项目计划
 
 - [x] 类型安全的 Actor 代理
-- [ ] 可序列化的代理
+- [x] 可序列化的代理
+- [ ] 同地协作 actor 的快捷 receiver 调用
 - [ ] 消息传递语义（至少一次 vs 最多一次）
 - [ ] 失败消息传递的重试机制
 - [ ] 增强异常与错误处理
 - [ ] 可重入的 Actor
-- [x] Cluster
+- [x] 集群
 
 ## 项目架构
 
@@ -117,7 +118,6 @@ make test
 有关更详细的示例，请参考
 
 - **[示例](examples/)**：演示各项功能的示例
-- **[Impresario Demo](https://github.com/Huawei-Edinburgh-Programming-Languages/impresario-demo/)**：展示在 HarmonyOS 上使用分布式 Actor 和智能体集成的 AI 应用示例
 
 #### 本地 Actor
 
@@ -168,18 +168,45 @@ import encoding.json.*
 import serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
-public interface BankService {
-    @Receiver[description: "Transfer money between accounts"]
-    func transfer(from: String, to: String, amount: Float64): Bool
+public interface BankAccount {
+    @Receiver[description: "Deposit money into the account"]
+    func deposit(amount: Float64): Bool
+
+    @Receiver[description: "Withdraw money from the account"]
+    func withdraw(amount: Float64): Bool
+
+    @Receiver[description: "Get the balance of the account"]
+    func getBalance(): Float64
 }
 
 @Actor
-public class BankServiceImpl <: BankService {
+public class BankAccountImpl <: BankAccount {
+    private let name: String
+    private var balance: Float64
+
+    public init(name: String, balance: Float64) {
+        this.name = name
+        this.balance = balance
+    }
+
     @Receiver
-    public func transfer(from: String, to: String, amount: Float64): Bool {
-        // Transfer logic here
-        println("Transferred ${amount} from ${from} to ${to}")
+    public func deposit(amount: Float64): Bool {
+        balance += amount
         true
+    }
+
+    @Receiver
+    public func withdraw(amount: Float64): Bool {
+        if (balance < amount) {
+            return false
+        }
+        balance -= amount
+        true
+    }
+
+    @Receiver
+    public func getBalance(): Float64 {
+        balance
     }
 }
 
@@ -187,37 +214,34 @@ const PORT: UInt16 = 52165
 
 main() {
     // Host side
-    let tcpHost = TCPActorHost(bindAt: PORT)
-    tcpHost.serve() // start the server
+    let tcpHost = TCPActorHost(addr: "localhost", bindAt: PORT)
+    let serverFuture = tcpHost.serve() // start the server
 
-    let bankService = BankServiceImpl()
-    tcpHost.export("bank-service", bankService)
+    let bankAccount = BankAccountImpl("Steven", 0.0)
+    tcpHost.export("Steven", bankAccount)
 
     // Client side
-    let tcpClient = TCPActorClient("client-1", "localhost", PORT)
-    let bankProxy = ActorProxy("bank-service", tcpClient)
+    let tcpClient = TCPActorClient.create("localhost", PORT)
+    let proxy = tcpClient.getActor("Steven").getOrThrow()
 
-    let transferFut: DistributedFuture = bankProxy.ask("transfer", [
-        "alice".serialize(),
-        "bob".serialize(),
-        100.0.serialize()
-    ])
+    // Using untyped proxy
+    proxy.ask("deposit", [100.0.serialize()]).get()
+    let res = Float64.deserialize(proxy.ask("getBalance", []).get())
+    println("Steven balance: ${res}") // 100.0
 
-    transferFut.get()
-    println("Transfer completed")
-
-    let typedProxy = BankService.getProxy("bank-service", tcpClient)
-    let fut2: ActorFuture<Bool> = typedProxy.transfer("alice", "bob", 100.0)
-    fut2.get()
-    println("Second transfer completed")
+    // Using typed proxy
+    let steven = BankAccount.getProxy(proxy)
+    steven.deposit(100.0).get()
+    let res2 = steven.getBalance().get()
+    println("Steven balance: ${res2}") // 200.0
 }
 ```
 
 执行结果如下：
 
 ```shell
-Transfer completed
-Second transfer completed
+Steven balance: 100.0
+Steven balance: 200.0
 ```
 
 #### AI 智能体整合
@@ -243,7 +267,7 @@ main() {
     let toolManager = ActorToolManager()
     let agent = AssistantAgent(toolManager: toolManager)
 
-    let tcpClient = TCPActorClient("service", "localhost", 8080)
+    let tcpClient = TCPActorClient.create("localhost", 8080)
     toolManager.addActorClient(tcpClient)
 
     let response = agent.chat("Transfer $100 from Alice to Bob")
