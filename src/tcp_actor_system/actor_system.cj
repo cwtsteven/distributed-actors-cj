@@ -1,20 +1,22 @@
 package actors.tcp_actor_system
 
-import std.log.*
+import stdx.log.*
+import stdx.logger.SimpleLogger
 import std.time.*
 import std.io.*
+import std.env.*
 
 /*
 * Stores the configuration of the TCP actor system
 */
 public class TCPActorSystem {
-    private static var __logger: ?Logger = None
-    public static mut prop logger: Logger {
+    private static var __logger: ?SimpleLogger = None
+    public static mut prop logger: SimpleLogger {
         get() {
             match (__logger) {
                 case Some(l) => l
                 case None =>
-                    let l = SimpleLogger()
+                    let l = SimpleLogger(getStdOut())
                     __logger = Some(l)
                     l
             }
@@ -38,7 +40,7 @@ public class TCPActorSystem {
 /*
 * A wrapper for the logger that adds a header to the log messages
 */
-class TCPActorLoggerWrapper <: Logger {
+class TCPActorLoggerWrapper {
     private let header: String
 
     public mut prop level: LogLevel {
@@ -51,27 +53,29 @@ class TCPActorLoggerWrapper <: Logger {
     }
 
     public func setOutput(output: OutputStream) {
-        TCPActorSystem.logger.setOutput(output)
+        let l = SimpleLogger(output)
+        l.level = TCPActorSystem.logger.level
+        TCPActorSystem.logger = l
     }
 
     public func trace(message: String) {
-        formatLog(message, TCPActorSystem.logger.trace)
+        formatLog(message, { str => TCPActorSystem.logger.trace(str) })
     }
 
     public func debug(message: String) {
-        formatLog(message, TCPActorSystem.logger.debug)
+        formatLog(message, { str => TCPActorSystem.logger.debug(str) })
     }
 
     public func info(message: String) {
-        formatLog(message, TCPActorSystem.logger.info)
+        formatLog(message, { str => TCPActorSystem.logger.info(str) })
     }
 
     public func warn(message: String) {
-        formatLog(message, TCPActorSystem.logger.warn)
+        formatLog(message, { str => TCPActorSystem.logger.warn(str) })
     }
 
     public func error(message: String) {
-        formatLog(message, TCPActorSystem.logger.error)
+        formatLog(message, { str => TCPActorSystem.logger.error(str) })
     }
 
     public func log(level: LogLevel, message: String) {

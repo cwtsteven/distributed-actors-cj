@@ -1,6 +1,6 @@
 package serializable_proxy_example.host
 
-import std.log.*
+import stdx.log.*
 
 import actors.tcp_actor_system.*
 

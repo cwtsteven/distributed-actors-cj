@@ -1,7 +1,7 @@
 package chat_app_example.server.head
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import chat_app_example.common.*
 

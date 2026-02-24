@@ -3,7 +3,7 @@ package actors.tcp_actor_system
 import std.collection.*
 
 import actors.distributed.*
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * Information about a TCP actor host, including the host address and port

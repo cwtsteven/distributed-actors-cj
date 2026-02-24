@@ -3,7 +3,7 @@ package actors.tcp_actor_system.tests
 import std.unittest.*
 import std.unittest.testmacro.*
 import std.collection.*
-import encoding.json.*
+import stdx.encoding.json.*
 
 import actors.*
 import actors.distributed.*
@@ -16,8 +16,8 @@ public class MetadataSerializationTest {
     func testMetadataSerializationRoundTrip() {
         // Create test metadata with different receiver modes
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "message", typeModel: TypeModel.StringType, description: "Message to echo"))
-        paramSchema.append(ReceiverParameter(name: "count", typeModel: TypeModel.IntType, description: "Number of times to echo"))
+        paramSchema.add(ReceiverParameter(name: "message", typeModel: TypeModel.StringType, description: "Message to echo"))
+        paramSchema.add(ReceiverParameter(name: "count", typeModel: TypeModel.IntType, description: "Number of times to echo"))
 
         let receiverInfo1 = ReceiverInfo(
             description: "Echo a message multiple times",
@@ -29,7 +29,7 @@ public class MetadataSerializationTest {
         )
 
         let paramSchema2 = ArrayList<ReceiverParameter>()
-        paramSchema2.append(ReceiverParameter(name: "value", typeModel: TypeModel.IntType, description: "Value to increment by"))
+        paramSchema2.add(ReceiverParameter(name: "value", typeModel: TypeModel.IntType, description: "Value to increment by"))
 
         let receiverInfo2 = ReceiverInfo(
             description: "Increment counter",
@@ -41,8 +41,8 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo1)
-        receivers.append(receiverInfo2)
+        receivers.add(receiverInfo1)
+        receivers.add(receiverInfo2)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),
@@ -106,7 +106,7 @@ public class MetadataSerializationTest {
             )
 
             let receivers = ArrayList<ReceiverInfo>()
-            receivers.append(receiverInfo)
+            receivers.add(receiverInfo)
 
             let metadata = Metadata(
                 receivers: receivers.toArray(),
@@ -128,13 +128,13 @@ public class MetadataSerializationTest {
         // Test with empty receivers
         let metadata = Metadata(
             receivers: Array<ReceiverInfo>(
-                0, item: ReceiverInfo(
+                0, { _ => ReceiverInfo(
                             description: "",
                             customInfo: JsonObject.fromStr("{}").asObject(),
                             methodName: "",
-                            paramSchema: Array<ReceiverParameter>(0, item: ReceiverParameter(name: "", typeModel: TypeModel.UnitType, description: "")),
+                            paramSchema: Array<ReceiverParameter>(0, { _ => ReceiverParameter(name: "", typeModel: TypeModel.UnitType, description: "") }),
                             retTypeModel: TypeModel.UnitType,
-                            mode: ReceiverMode.AskOnly)),
+                            mode: ReceiverMode.AskOnly)}),
             description: "Empty actor",
             customInfo: JsonObject.fromStr("{\"empty\": true}").asObject()
         )
@@ -152,10 +152,10 @@ public class MetadataSerializationTest {
     func testComplexMetadataSerialization() {
         // Test with complex parameter schemas and different types
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "name", typeModel: TypeModel.StringType, description: "User's name"))
-        paramSchema.append(ReceiverParameter(name: "age", typeModel: TypeModel.IntType, description: "User's age"))
-        paramSchema.append(ReceiverParameter(name: "height", typeModel: TypeModel.FloatType, description: "User's height"))
-        paramSchema.append(ReceiverParameter(name: "isActive", typeModel: TypeModel.BoolType, description: "Whether user is active"))
+        paramSchema.add(ReceiverParameter(name: "name", typeModel: TypeModel.StringType, description: "User's name"))
+        paramSchema.add(ReceiverParameter(name: "age", typeModel: TypeModel.IntType, description: "User's age"))
+        paramSchema.add(ReceiverParameter(name: "height", typeModel: TypeModel.FloatType, description: "User's height"))
+        paramSchema.add(ReceiverParameter(name: "isActive", typeModel: TypeModel.BoolType, description: "Whether user is active"))
 
         let receiverInfo = ReceiverInfo(
             description: "Complex receiver with multiple parameter types",
@@ -167,7 +167,7 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo)
+        receivers.add(receiverInfo)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),
@@ -206,16 +206,16 @@ public class MetadataSerializationTest {
     func testStructTypeSerialization() {
         // Create a StructType with multiple fields
         let structFields = ArrayList<FieldModel>()
-        structFields.append(FieldModel(name: "id", description: "User ID", typeModel: TypeModel.IntType))
-        structFields.append(FieldModel(name: "name", description: "User name", typeModel: TypeModel.StringType))
-        structFields.append(FieldModel(name: "isActive", description: "Active status", typeModel: TypeModel.BoolType))
-        structFields.append(FieldModel(name: "score", description: "User score", typeModel: TypeModel.FloatType))
+        structFields.add(FieldModel(name: "id", description: "User ID", typeModel: TypeModel.IntType))
+        structFields.add(FieldModel(name: "name", description: "User name", typeModel: TypeModel.StringType))
+        structFields.add(FieldModel(name: "isActive", description: "Active status", typeModel: TypeModel.BoolType))
+        structFields.add(FieldModel(name: "score", description: "User score", typeModel: TypeModel.FloatType))
 
         let structType = TypeModel.StructType(structFields.toArray())
 
         // Create a receiver parameter using the StructType
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "user", typeModel: structType, description: "User information"))
+        paramSchema.add(ReceiverParameter(name: "user", typeModel: structType, description: "User information"))
 
         let receiverInfo = ReceiverInfo(
             description: "Process user with struct parameter",
@@ -227,7 +227,7 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo)
+        receivers.add(receiverInfo)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),
@@ -272,18 +272,18 @@ public class MetadataSerializationTest {
     func testNestedStructTypeSerialization() {
         // Create a nested StructType (StructType containing another StructType)
         let innerFields = ArrayList<FieldModel>()
-        innerFields.append(FieldModel(name: "x", description: "X coordinate", typeModel: TypeModel.FloatType))
-        innerFields.append(FieldModel(name: "y", description: "Y coordinate", typeModel: TypeModel.FloatType))
+        innerFields.add(FieldModel(name: "x", description: "X coordinate", typeModel: TypeModel.FloatType))
+        innerFields.add(FieldModel(name: "y", description: "Y coordinate", typeModel: TypeModel.FloatType))
         let innerStruct = TypeModel.StructType(innerFields.toArray())
 
         let outerFields = ArrayList<FieldModel>()
-        outerFields.append(FieldModel(name: "position", description: "Entity position", typeModel: innerStruct))
-        outerFields.append(FieldModel(name: "name", description: "Entity name", typeModel: TypeModel.StringType))
+        outerFields.add(FieldModel(name: "position", description: "Entity position", typeModel: innerStruct))
+        outerFields.add(FieldModel(name: "name", description: "Entity name", typeModel: TypeModel.StringType))
         let outerStruct = TypeModel.StructType(outerFields.toArray())
 
         // Create a receiver parameter using the nested StructType
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "entity", typeModel: outerStruct, description: "Entity with nested position"))
+        paramSchema.add(ReceiverParameter(name: "entity", typeModel: outerStruct, description: "Entity with nested position"))
 
         let receiverInfo = ReceiverInfo(
             description: "Process entity with nested struct",
@@ -295,7 +295,7 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo)
+        receivers.add(receiverInfo)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),
@@ -344,11 +344,11 @@ public class MetadataSerializationTest {
     @TestCase
     func testEmptyStructTypeSerialization() {
         // Create an empty StructType (no fields)
-        let emptyStruct = TypeModel.StructType(Array<FieldModel>(0, item: FieldModel(name: "", description: "", typeModel: TypeModel.UnitType)))
+        let emptyStruct = TypeModel.StructType(Array<FieldModel>(0, { _ => FieldModel(name: "", description: "", typeModel: TypeModel.UnitType) }))
 
         // Create a receiver parameter using the empty StructType
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "empty", typeModel: emptyStruct, description: "Empty struct"))
+        paramSchema.add(ReceiverParameter(name: "empty", typeModel: emptyStruct, description: "Empty struct"))
 
         let receiverInfo = ReceiverInfo(
             description: "Process empty struct",
@@ -360,7 +360,7 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo)
+        receivers.add(receiverInfo)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),
@@ -392,23 +392,23 @@ public class MetadataSerializationTest {
     func testComplexStructTypeSerialization() {
         // Create a complex StructType with all basic types and nested structures
         let addressFields = ArrayList<FieldModel>()
-        addressFields.append(FieldModel(name: "street", description: "Street address", typeModel: TypeModel.StringType))
-        addressFields.append(FieldModel(name: "city", description: "City name", typeModel: TypeModel.StringType))
-        addressFields.append(FieldModel(name: "zipCode", description: "ZIP code", typeModel: TypeModel.IntType))
+        addressFields.add(FieldModel(name: "street", description: "Street address", typeModel: TypeModel.StringType))
+        addressFields.add(FieldModel(name: "city", description: "City name", typeModel: TypeModel.StringType))
+        addressFields.add(FieldModel(name: "zipCode", description: "ZIP code", typeModel: TypeModel.IntType))
         let addressStruct = TypeModel.StructType(addressFields.toArray())
 
         let personFields = ArrayList<FieldModel>()
-        personFields.append(FieldModel(name: "id", description: "Person ID", typeModel: TypeModel.IntType))
-        personFields.append(FieldModel(name: "name", description: "Person name", typeModel: TypeModel.StringType))
-        personFields.append(FieldModel(name: "age", description: "Person age", typeModel: TypeModel.IntType))
-        personFields.append(FieldModel(name: "height", description: "Person height", typeModel: TypeModel.FloatType))
-        personFields.append(FieldModel(name: "isActive", description: "Active status", typeModel: TypeModel.BoolType))
-        personFields.append(FieldModel(name: "address", description: "Person address", typeModel: addressStruct))
+        personFields.add(FieldModel(name: "id", description: "Person ID", typeModel: TypeModel.IntType))
+        personFields.add(FieldModel(name: "name", description: "Person name", typeModel: TypeModel.StringType))
+        personFields.add(FieldModel(name: "age", description: "Person age", typeModel: TypeModel.IntType))
+        personFields.add(FieldModel(name: "height", description: "Person height", typeModel: TypeModel.FloatType))
+        personFields.add(FieldModel(name: "isActive", description: "Active status", typeModel: TypeModel.BoolType))
+        personFields.add(FieldModel(name: "address", description: "Person address", typeModel: addressStruct))
         let personStruct = TypeModel.StructType(personFields.toArray())
 
         // Create a receiver parameter using the complex StructType
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "person", typeModel: personStruct, description: "Complex person with address"))
+        paramSchema.add(ReceiverParameter(name: "person", typeModel: personStruct, description: "Complex person with address"))
 
         let receiverInfo = ReceiverInfo(
             description: "Process complex person data",
@@ -420,7 +420,7 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo)
+        receivers.add(receiverInfo)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),
@@ -488,15 +488,15 @@ public class MetadataSerializationTest {
 
         // List of struct type
         let itemFields = ArrayList<FieldModel>()
-        itemFields.append(FieldModel(name: "id", description: "Item ID", typeModel: TypeModel.IntType))
-        itemFields.append(FieldModel(name: "label", description: "Item label", typeModel: TypeModel.StringType))
+        itemFields.add(FieldModel(name: "id", description: "Item ID", typeModel: TypeModel.IntType))
+        itemFields.add(FieldModel(name: "label", description: "Item label", typeModel: TypeModel.StringType))
         let itemStruct = TypeModel.StructType(itemFields.toArray())
         let listOfStruct = TypeModel.ListType(itemStruct)
 
         // Two parameters to exercise both cases
         let paramSchema = ArrayList<ReceiverParameter>()
-        paramSchema.append(ReceiverParameter(name: "numbers", typeModel: listOfInt, description: "List of numbers"))
-        paramSchema.append(ReceiverParameter(name: "items", typeModel: listOfStruct, description: "List of items"))
+        paramSchema.add(ReceiverParameter(name: "numbers", typeModel: listOfInt, description: "List of numbers"))
+        paramSchema.add(ReceiverParameter(name: "items", typeModel: listOfStruct, description: "List of items"))
 
         let receiverInfo = ReceiverInfo(
             description: "Receiver with list parameters",
@@ -508,7 +508,7 @@ public class MetadataSerializationTest {
         )
 
         let receivers = ArrayList<ReceiverInfo>()
-        receivers.append(receiverInfo)
+        receivers.add(receiverInfo)
 
         let metadata = Metadata(
             receivers: receivers.toArray(),

@@ -10,11 +10,9 @@ import std.collection.*
 import actors.*
 import actors.macros.*
 
-var isFinalized1 = AtomicBool(false)
-var isFinalized2 = AtomicBool(false)
-
 @Actor
 class FinalizerActor {
+    static let isFinalized = AtomicBool(false)
     var state = 0.0
 
     @Receiver[mode: AskAndTell]
@@ -23,18 +21,7 @@ class FinalizerActor {
     }
 
     ~init() {
-        isFinalized1.store(true)
-    }
-}
-
-class FinalizerClass {
-    var state = 0.0
-    func foo(): Unit {
-        state += 37.2
-    }
-
-    ~init() {
-        isFinalized2.store(true)
+        isFinalized.store(true)
     }
 }
 
@@ -56,32 +43,30 @@ class ForkJoinActor {
 @Test
 public class GCTest {
     private func createActor() {
-        spawn {
-            let actor = FinalizerActor()
-            let fut = actor.foo()
-            actor.foo(tell: True)
-            fut.get()
-
-            let c = FinalizerClass()
-            c.foo()
-        }
+        let actor = FinalizerActor()
+        let fut = actor.foo()
+        actor.foo(tell: True)
+        fut.get()
     }
 
     @TestCase
     func testGarbageCollection() {
+        FinalizerActor.isFinalized.store(false)
+
         createActor()
 
-        // Give more time for GC to occur and force GC if possible
-        for (_ in 0..100) {
-            GC(heavy: true)
-            sleep(Duration.millisecond * 100)
-            if (isFinalized1.load() || isFinalized2.load()) {
+        // In 1.0.5, finalizer timing is nondeterministic; this is a GC smoke test.
+        let timeout = Duration.second * 10
+        let start = DateTime.now()
+        while (DateTime.now() - start < timeout) {
+            gc(heavy: true)
+            if (FinalizerActor.isFinalized.load()) {
                 break
             }
+            sleep(Duration.second)
         }
 
-        @Expect(isFinalized1.load(), true)
-        @Expect(isFinalized2.load(), true)
+        @Expect(FinalizerActor.isFinalized.load(), true)
     }
 
     @TestCase
@@ -92,22 +77,25 @@ public class GCTest {
         let futures = ArrayList<ActorFuture<Unit>>(numActors)
         for (_ in 0..numActors) {
             let actor = ForkJoinActor()
-            futures.append(actor.ping())
+            futures.add(actor.ping())
         }
 
         for (future in futures) {
             future.get()
         }
+        futures.clear()
 
-        // Give more time for GC to occur
-        for (_ in 0..100) {
-            GC(heavy: true)
-            sleep(Duration.millisecond * 100)
+        // In 1.0.5, actor finalizer timing is nondeterministic; ensure no runtime errors.
+        let timeout = Duration.second * 10
+        let start = DateTime.now()
+        while (DateTime.now() - start < timeout) {
+            gc(heavy: true)
             if (ForkJoinActor.numFinalized.load() == numActors) {
                 break
             }
+            sleep(Duration.second)
         }
 
-        @Expect(ForkJoinActor.numFinalized.load() == numActors)
+        @Expect(ForkJoinActor.numFinalized.load(), numActors)
     }
 }

@@ -1,6 +1,5 @@
 import std.runtime.*
 import std.sync.*
-import std.time.*
 
 import actors.*
 import actors.macros.*
@@ -50,10 +49,10 @@ main() {
     createActor()
 
     // Give more time for GC to occur and force GC if possible
-    for (_ in 0..100) {
-        GC(heavy: true)
-        sleep(Duration.millisecond * 100)
-        if (isFinalized1.load() || isFinalized2.load()) {
+    while (true) {
+        gc(heavy: true)
+        sleep(Duration.second)
+        if (isFinalized1.load() && isFinalized2.load()) {
             break
         }
     }

@@ -477,8 +477,8 @@ main() {
                 account.withdraw(1000.0)
             }
         }
-        futs.append(fut1)
-        futs.append(fut2)
+        futs.add(fut1)
+        futs.add(fut2)
     }
     for (f in futs) {
         f.get()
@@ -809,8 +809,8 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
 public interface BankAccount {
@@ -881,8 +881,8 @@ import std.collection.*
 import actors.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 const PORT: UInt16 = 52165
 
@@ -912,7 +912,7 @@ main() {
 TCP actor 系统提供可配置的日志记录：
 
 ```cangjie
-import std.log.*
+import stdx.log.*
 
 // 为 TCP actor 系统配置日志记录
 TCPActorSystem.logger = SimpleLogger()
@@ -1162,8 +1162,8 @@ import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true]
 public interface BankAccount <: Spawnable<BankAccount> {
@@ -1263,14 +1263,14 @@ public func entry() {
 package cluster_example.head_server
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 import cluster_example.common.*
 
@@ -1288,14 +1288,14 @@ main(args: Array<String>) {
 package cluster_example.worker
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 import cluster_example.common.*
 
@@ -1318,15 +1318,15 @@ main(args: Array<String>) {
 package cluster_example.entry
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import actors.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 import cluster_example.common.*
 
