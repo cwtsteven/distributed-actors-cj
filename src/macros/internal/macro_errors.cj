@@ -6,7 +6,7 @@ protected class MacroErrors {
     private let errors = HashSet<String>()
 
     func add(e: MacroError): Unit {
-        errors.put(e.toString())
+        errors.add(e.toString())
     }
 
     func report(): Unit {

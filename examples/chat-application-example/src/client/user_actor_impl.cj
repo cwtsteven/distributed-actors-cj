@@ -2,14 +2,14 @@ package chat_app_example.client
 
 import chat_app_example.common.*
 
-import std.console.*
+import std.env.*
 
 import actors.*
 import actors.macros.*
 import actors.distributed.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @Actor
 public class UserActorImpl <: UserActor {
@@ -24,6 +24,6 @@ public class UserActorImpl <: UserActor {
         if (sender == userId) {
             return
         }
-        Console.stdOut.writeln<String>("[${sender}] ${message}")
+        getStdOut().writeln<String>("[${sender}] ${message}")
     }
 }

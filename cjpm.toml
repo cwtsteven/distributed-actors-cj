@@ -8,16 +8,19 @@
     compile-option = "-B \"${DEVECO_CANGJIE_HOME}/compiler/third_party/llvm/bin\" -B \"${DEVECO_CANGJIE_HOME}/musl/usr/lib/x86_64-linux-ohos\" -L \"${DEVECO_CANGJIE_HOME}/musl/usr/lib/x86_64-linux-ohos\" -L \"${DEVECO_CANGJIE_HOME}/build/linux_ohos_x86_64_llvm/openssl\" --sysroot \"${DEVECO_CANGJIE_HOME}/musl\""
     [target.x86_64-linux-ohos.bin-dependencies]
       path-option = [ "${X86_64_OHOS_LIBS}", "${X86_64_OHOS_MACRO_LIBS}" ]
+  [target.aarch64-apple-darwin]
+    [target.aarch64-apple-darwin.bin-dependencies]
+      path-option = ["/Users/s00915696/cangjie-1.0.5/darwin_aarch64_cjnative/dynamic/stdx"]
 
 [dependencies]
-  magic = { git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git", tag = "harmony_os_edition" }
+  magic = { path = "third_party/CangjieMagic" }
 
 [package]
-  cjc-version = "0.53.18"
+  cjc-version = "1.0.5"
   description = "A distributed actors framework."
   version = "0.0.1"
   name = "actors"
-  compile-option = "--debug-macro -Woff unused"
+  compile-option = "-Woff unused"
   output-type = "dynamic"
 
 [package.package-configuration."actors.macros.internal"]

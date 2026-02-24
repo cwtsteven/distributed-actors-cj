@@ -1,8 +1,8 @@
 package actors.distributed
 
 import actors.*
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 /*
 * Information about an actor including its name and metadata

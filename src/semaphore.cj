@@ -7,7 +7,14 @@ import std.sync.*
 */
 class SingleConsumerSemaphore {
     private let cnt = AtomicUInt64(0)
-    private let mtx = Monitor()
+    private let mtx = Mutex()
+    private let cond: Condition
+
+    init() {
+        synchronized(mtx) {
+            cond = mtx.condition()
+        }
+    }
 
     /*
     * Increments cnt by 1
@@ -17,7 +24,7 @@ class SingleConsumerSemaphore {
         let n = cnt.fetchAdd(1)
         if (n == 0) {
             synchronized(mtx) {
-                mtx.notifyAll()
+                cond.notifyAll()
             }
         }
     }
@@ -30,7 +37,7 @@ class SingleConsumerSemaphore {
         if (n == 0) {
             synchronized(mtx) {
                 while (cnt.load() == 0) {
-                    mtx.wait()
+                    cond.wait()
                 }
             }
         }
