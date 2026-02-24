@@ -1,5 +1,7 @@
 package actors
 
+import std.time.*
+
 /*
 * A dispatcher that executes closures sequentially
 */
@@ -33,8 +35,10 @@ public class SequentialDispatcher {
                     return
                 }
 
-                let (_, f) = mailbox.removeBlock()
-                f()
+                match (mailbox.remove(timeout: Duration.second * 5)) {
+                    case Some((_, f)) => f()
+                    case None => ()
+                }
             }
         }
     }
@@ -69,7 +73,5 @@ public class SequentialDispatcher {
         while (!threadHandle.thread.hasPendingCancellation) {
             threadHandle.cancel()
         }
-        // to activate the loop and trigger the cancellation
-        mailbox.add((unsafe { zeroValue<SequentialDispatcher>() }, { => () }), 10)
     }
 }

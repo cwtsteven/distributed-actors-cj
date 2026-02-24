@@ -1,7 +1,7 @@
 package chat_app_example.server.worker
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import chat_app_example.common.*
 
@@ -9,8 +9,8 @@ import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 
 main(args: Array<String>) {

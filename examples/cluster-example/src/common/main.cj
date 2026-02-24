@@ -1,15 +1,15 @@
 package cluster_example.common
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import actors.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 public func entry() {
     let alice = TCPCluster.spawnActor<BankAccount>("alice", [SpawnArgument.create<String>("String", "alice"), SpawnArgument.create<Float64>("Float64", 100.0)]).getOrThrow()

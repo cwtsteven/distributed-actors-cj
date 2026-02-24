@@ -5,12 +5,11 @@ import std.net.*
 import std.sync.*
 import std.time.*
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 import actors.*
 import actors.macros.*
 import actors.distributed.*
-import std.socket.SocketAddress
 
 type FutMap = ConcurrentHashMap<UInt64, DistributedFuture>
 
@@ -233,7 +232,7 @@ public class TCPActorClient <: ActorClient {
         logger.debug("remoteCall(${name}) begins.")
 
         let futId = nextFutId.fetchAdd(1)
-        futMap.put(futId, fut)
+        futMap.add(futId, fut)
 
         let resp = conn.sendSync(Payload.Ask(name, receiverName, args, config, futId))
         handleResponse(resp, name, receiverName)

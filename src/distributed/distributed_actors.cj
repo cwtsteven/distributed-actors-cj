@@ -5,7 +5,7 @@ import std.sync.*
 import std.time.*
 
 import actors.*
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * Interface for actors that can be distributed

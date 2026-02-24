@@ -43,15 +43,15 @@ protected class GenerateActorClass {
         let newDecls = ArrayList<Decl>()
         processReceivers(
             decl.body.decls,
-            { d => newDecls.append(d) },
+            { d => newDecls.add(d) },
             { mDecl =>
                 let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
                 checkReceiverOptions(rOpts)
                 if (rOpts.shouldAsk()) {
-                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Ask))
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
                 }
                 if (rOpts.shouldTell()) {
-                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Tell))
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Tell))
                 }
             }
         )
@@ -79,7 +79,7 @@ protected class GenerateActorClass {
             $seqDispatcherTypeToken($enableReceiverPriorityToken: $(aOpts.hasEnabledReceiverPriority()))
         )
 
-        decl.body.decls.append(VarDecl(quote(
+        decl.body.decls.add(VarDecl(quote(
             private let $dispatcherToken = $dInit
         )))
     }
@@ -115,7 +115,7 @@ protected class GenerateActorClass {
 
     private func modifyFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         let defaultPriority = rOpts.getPriority()
-        fd.funcParams.append(FuncParam(quote(
+        fd.funcParams.add(FuncParam(quote(
             config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
         )))
 
@@ -149,16 +149,16 @@ protected class GenerateActorClass {
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
-            fd.funcParams.append(FuncParam(quote(
+            fd.funcParams.add(FuncParam(quote(
                 tell!: $tellTypeToken
             )))
             let discardTellParam = VarDecl(quote(let dummy = tell))
             // For some reason VarDecl parses "let _ = tell" as "let = tell"
             // so we add the wildcard manually instead
             discardTellParam.identifier = Token(WILDCARD)
-            fd.block.nodes.append(discardTellParam)
+            fd.block.nodes.add(discardTellParam)
         }
 
-        fd.block.nodes.append(retExpr)
+        fd.block.nodes.add(retExpr)
     }
 }
