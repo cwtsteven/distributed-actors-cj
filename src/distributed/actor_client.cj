@@ -1,6 +1,6 @@
 package actors.distributed
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * Interface for actor clients

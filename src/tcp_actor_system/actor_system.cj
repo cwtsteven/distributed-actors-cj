@@ -1,8 +1,11 @@
 package actors.tcp_actor_system
 
-import std.log.*
+import stdx.log.*
+import stdx.logger.SimpleLogger
+import std.collection.*
 import std.time.*
 import std.io.*
+import std.env.*
 
 /*
 * Stores the configuration of the TCP actor system
@@ -14,7 +17,7 @@ public class TCPActorSystem {
             match (__logger) {
                 case Some(l) => l
                 case None =>
-                    let l = SimpleLogger()
+                    let l = SimpleLogger(getStdOut())
                     __logger = Some(l)
                     l
             }
@@ -50,38 +53,22 @@ class TCPActorLoggerWrapper <: Logger {
         this.header = header
     }
 
-    public func setOutput(output: OutputStream) {
-        TCPActorSystem.logger.setOutput(output)
+    public func withAttrs(attrs: Array<Attr>): Logger {
+        TCPActorLoggerWrapper(header)
     }
 
-    public func trace(message: String) {
-        formatLog(message, TCPActorSystem.logger.trace)
+    public func isClosed(): Bool {
+        TCPActorSystem.logger.isClosed()
     }
 
-    public func debug(message: String) {
-        formatLog(message, TCPActorSystem.logger.debug)
+    public func close(): Unit {
+        // do nothing
     }
 
-    public func info(message: String) {
-        formatLog(message, TCPActorSystem.logger.info)
-    }
-
-    public func warn(message: String) {
-        formatLog(message, TCPActorSystem.logger.warn)
-    }
-
-    public func error(message: String) {
-        formatLog(message, TCPActorSystem.logger.error)
-    }
-
-    public func log(level: LogLevel, message: String) {
-        formatLog(message, { str => TCPActorSystem.logger.log(level, str) })
-    }
-
-    func formatLog(message: String, logFunc: (String) -> Unit): Unit {
-        let strs = message.split("\n")
+    public func log(record: LogRecord): Unit {
+        let strs = record.message.split("\n")
         for (str in strs) {
-            logFunc(header + " " + str)
+            TCPActorSystem.logger.log(LogRecord(record.time, record.level, header + " " + str, record.attrs))
         }
     }
 

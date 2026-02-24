@@ -69,14 +69,14 @@ Parameters:
 ### func addTools()
 
 ```cangjie
-public override func addTools(tools: Array<Tool>): Unit
+public override func addTools(tools: Collection<Tool>): Unit
 ```
 
 Function: Adds multiple tools to the tool manager.
 
 Parameters:
 
-- `tools: Array<Tool>` - The tools to add.
+- `tools: Collection<Tool>` - The tools to add.
 
 ### func clear()
 
@@ -102,22 +102,26 @@ Return Value:
 
 - `Option<Tool>` - Some(tool) if found, None otherwise.
 
-### func getTools()
+### prop name
 
 ```cangjie
-public override func getTools(): Array<Tool>
+public override prop name: String
+```
+
+Function: Gets the tool manager name.
+
+### prop tools
+
+```cangjie
+public override prop tools: Array<Tool>
 ```
 
 Function: Gets all available tools in the tool manager.
 
-Return Value:
-
-- `Array<Tool>` - An array of all available tools.
-
 ### func filterTool()
 
 ```cangjie
-public override func filterTool(question: String, config: ToolSearchConfig): Array<Tool>
+public override func filterTool(question: String, filter: ToolFilter): Array<Tool>
 ```
 
 Function: Filters tools based on a question and search configuration.
@@ -125,7 +129,7 @@ Function: Filters tools based on a question and search configuration.
 Parameters:
 
 - `question: String` - The search question.
-- `config: ToolSearchConfig` - The search configuration.
+- `filter: ToolFilter` - The tool filter configuration.
 
 Return Value:
 
@@ -170,7 +174,7 @@ Exceptions:
 ## class ReceiverTool
 
 ```cangjie
-public class ReceiverTool <: Tool
+public class ReceiverTool <: AbsTool
 ```
 
 Function: MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. This class handles the conversion from MCP tool parameters into arguments of the respective actor call, and manages the execution of actor receiver functions.
@@ -243,14 +247,6 @@ public prop examples: Array<String>
 
 Function: Example usage strings for the MCP tool.
 
-### prop extra
-
-```cangjie
-public prop extra: HashMap<String, String>
-```
-
-Function: Extra metadata for the MCP tool.
-
 ### prop hostInfo
 
 ```cangjie
@@ -270,14 +266,14 @@ Function: The receiver information for the actor function.
 ### func invoke()
 
 ```cangjie
-public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse
+public func invoke(args: HashMap<String, JsonValue>): ToolResponse
 ```
 
 Function: Invokes the MCP tool with the provided arguments, converting them to actor parameters and executing the receiver function. The tool name is parsed to extract the actor name and receiver name, then an ActorProxy is created to call the receiver.
 
 Parameters:
 
-- `args: HashMap<String, ToJsonValue>` - The arguments for the tool invocation, including an optional "config" parameter for ReceiverConfig.
+- `args: HashMap<String, JsonValue>` - The arguments for the tool invocation, including an optional "config" parameter for ReceiverConfig.
 
 Return Value:
 
@@ -294,7 +290,7 @@ Exceptions:
 ### func toString()
 
 ```cangjie
-public override func toString(): String
+public func toString(): String
 ```
 
 Function: Converts the ReceiverTool to a string representation.

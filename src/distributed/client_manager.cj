@@ -3,7 +3,7 @@ package actors.distributed
 import std.collection.concurrent.*
 import std.sync.*
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * A class that manages the actor clients in the distributed actor system.
@@ -15,7 +15,7 @@ public class ClientManager {
 
     private let clients = ConcurrentHashMap<HostInfo, ActorClient>()
     private let hostInfoDeserializer = ConcurrentHashMap<String, (DataModel) -> HostInfo>()
-    private let mtx = ReentrantMutex()
+    private let mtx = Mutex()
 
     /*
     * The singleton instance of the client manager
@@ -48,7 +48,7 @@ public class ClientManager {
                         return client
                 }
                 let client = hostInfo.createClient()
-                clients.put(hostInfo, client)
+                clients.add(hostInfo, client)
                 client
             }
         }
@@ -69,7 +69,7 @@ public class ClientManager {
     * @param deserializer - the deserializer to register
     */
     public func registerHostInfoDeserializer(typeName: String, deserializer: (DataModel) -> HostInfo): Unit {
-        hostInfoDeserializer.put(typeName, deserializer)
+        hostInfoDeserializer.add(typeName, deserializer)
     }
 
     /*

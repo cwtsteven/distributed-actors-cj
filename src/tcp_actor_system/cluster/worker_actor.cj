@@ -7,8 +7,8 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 /*
 * Worker actor interface
@@ -88,7 +88,7 @@ class WorkerActorImpl <: WorkerActor {
             let opt = f(args)
             if (let Some(res) <- opt) {
                 logger.debug("spawning actor ${actorName} with type name ${typeName} success.")
-                actors.put(actorName, res)
+                actors.add(actorName, res)
                 tcpHost.export(actorName, res)
                 return true
             }

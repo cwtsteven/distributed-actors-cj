@@ -1,15 +1,15 @@
 package cluster_example.entry
 
 import std.convert.*
-import std.log.*
+import stdx.log.*
 
 import actors.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 import cluster_example.common.*
 

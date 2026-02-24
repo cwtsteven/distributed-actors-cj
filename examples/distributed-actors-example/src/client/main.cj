@@ -1,15 +1,15 @@
 package distributed_actors_example.client
 
 import std.collection.*
-import std.log.*
+import stdx.log.*
 import std.io.*
 import std.fs.*
 
 import actors.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 import distributed_actors_example.common.*
 
