@@ -1,11 +1,8 @@
 import actors.*
 import actors.macros.*
 
-import std.collection.ArrayList
-
-import std.runtime.*
 import std.sync.*
-import std.time.*
+import std.runtime.*
 
 let finalCount = AtomicInt64(0)
 
@@ -42,8 +39,9 @@ main(): Unit {
 
     createActor(numRuns)
 
-    for (_ in 0..numRuns) {
-        sleep(Duration.millisecond * 100)
+    while (true) {
+        gc(heavy: true)
+        sleep(Duration.second)
         if (finalCount.load() == numRuns) {
             break
         }

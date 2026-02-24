@@ -5,3 +5,4 @@ cjpm.lock
 /.cache/
 *.log
 **/log.txt
+.cursorrules

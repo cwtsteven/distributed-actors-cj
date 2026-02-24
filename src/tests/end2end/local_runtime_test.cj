@@ -13,7 +13,7 @@ class Bag {
 
     @Receiver[mode: AskAndTell]
     func add(x: Int64): Int64 {
-        items.append(x)
+        items.add(x)
         items.size
     }
 

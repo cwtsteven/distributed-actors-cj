@@ -11,8 +11,8 @@ import actors.*
 import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
-import serialization.serialization.*
-import encoding.json.*
+import stdx.serialization.serialization.*
+import stdx.encoding.json.*
 
 @Test
 public class SerializationTest {
@@ -27,7 +27,7 @@ public class SerializationTest {
         @Expect(serializedBytes.size > 4, true)  // Should have at least 4 bytes for length prefix + data
 
         // Verify the length prefix is correctly encoded
-        let lengthBytes = Array<Byte>(4, item: 0)
+        let lengthBytes = Array<Byte>(4, { _ => 0 })
         lengthBytes[0..4] = serializedBytes[0..4]
         let encodedLength = Int32.readLittleEndian(lengthBytes)
         @Expect(Int64(encodedLength + 4), serializedBytes.size)  // Total size should be length + 4
@@ -121,8 +121,8 @@ public class SerializationTest {
 
         // Test with Ask payload
         let args = ArrayList<DataModel>()
-        args.append(DataModelString("test"))
-        args.append(DataModelInt(42))
+        args.add(DataModelString("test"))
+        args.add(DataModelInt(42))
         let config = ReceiverConfig(priority: 5)
         let askPayload = Payload.Ask("testActor", "testMethod", args.toArray(), config, 123)
         let envelope5 = Envelope(5, askPayload)
@@ -141,7 +141,7 @@ public class SerializationTest {
 
         // Test with Tell payload
         let tellArgs = ArrayList<DataModel>()
-        tellArgs.append(DataModelBool(true))
+        tellArgs.add(DataModelBool(true))
         let tellConfig = ReceiverConfig(priority: 3)
         let tellPayload = Payload.Tell("testActor", "testMethod", tellArgs.toArray(), tellConfig)
         let envelope6 = Envelope(6, tellPayload)
@@ -189,11 +189,11 @@ public class SerializationTest {
         @Expect(largeBytes.size > smallBytes.size, true)
 
         // Verify length prefixes are different
-        let smallLengthBytes = Array<Byte>(4, item: 0)
+        let smallLengthBytes = Array<Byte>(4, { _ => 0 })
         smallLengthBytes[0..4] = smallBytes[0..4]
         let smallLength = Int32.readLittleEndian(smallLengthBytes)
 
-        let largeLengthBytes = Array<Byte>(4, item: 0)
+        let largeLengthBytes = Array<Byte>(4, { _ => 0 })
         largeLengthBytes[0..4] = largeBytes[0..4]
         let largeLength = Int32.readLittleEndian(largeLengthBytes)
 
@@ -203,9 +203,9 @@ public class SerializationTest {
     @TestCase
     func testEnvelopeDeserializationErrorHandling() {
         // Test deserialization with invalid data
-        let emptyBytes = Array<Byte>(0, item: 0)
-        let tooShortBytes = Array<Byte>(2, item: 0)
-        let invalidLengthBytes = Array<Byte>(8, item: 0)
+        let emptyBytes = Array<Byte>(0, { _ => 0 })
+        let tooShortBytes = Array<Byte>(2, { _ => 0 })
+        let invalidLengthBytes = Array<Byte>(8, { _ => 0 })
         // Set invalid length (larger than actual data)
         invalidLengthBytes[0] = 100
         invalidLengthBytes[1] = 0
@@ -240,7 +240,7 @@ public class SerializationTest {
     @TestCase
     func testEnvelopeSerializationConsistency() {
         // Test that multiple serializations of the same envelope produce consistent results
-        let envelope = Envelope(999, Payload.Ask("test", "method", Array<DataModel>(0, item: DataModelNull()), ReceiverConfig(priority: 1), 123))
+        let envelope = Envelope(999, Payload.Ask("test", "method", Array<DataModel>(0, { _ => DataModelNull() }), ReceiverConfig(priority: 1), 123))
 
         let serialized1 = serializeEnvelope(envelope)
         let serialized2 = serializeEnvelope(envelope)

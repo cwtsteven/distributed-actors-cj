@@ -1,7 +1,7 @@
 package serializable_proxy_example.common
 
 import std.collection.*
-import std.log.*
+import stdx.log.*
 import std.io.*
 import std.fs.*
 import std.sync.*
@@ -12,8 +12,8 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
 public interface BankAccount {
