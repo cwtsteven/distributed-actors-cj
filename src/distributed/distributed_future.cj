@@ -6,7 +6,7 @@ import std.time.*
 
 import actors.*
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * A class representing a distributed future obtained from calling a remote receiver.
@@ -14,9 +14,14 @@ import serialization.serialization.*
 public class DistributedFuture {
     private var result: FutureResult<DataModel> = unsafe { zeroValue<FutureResult<DataModel>>() }
     private let isReady = AtomicBool(false)
-    private let mtx = Monitor()
+    private let mtx = Mutex()
+    private let cond: Condition
 
-    init() {}
+    init() {
+        synchronized(mtx) {
+            cond = mtx.condition()
+        }
+    }
 
     /*
     * Blocks the current thread until the result is ready and returns the result
@@ -29,10 +34,9 @@ public class DistributedFuture {
         if (isReady.load()) {
             return result.getOrThrow()
         }
-
         synchronized(mtx) {
             while (!isReady.load()) {
-                mtx.wait()
+                cond.wait()
             }
             return result.getOrThrow()
         }
@@ -64,10 +68,10 @@ public class DistributedFuture {
                     break
                 }
                 let d = timeout - timeElapsed
-                mtx.wait(timeout: d)
+                cond.wait(timeout: d)
             }
         }
-        return tryGet()
+        tryGet()
     }
 
     /*
@@ -127,16 +131,13 @@ public class DistributedFuture {
     * @return true if the future was successfully set, false if it was already set
     */
     func setResult(result: FutureResult<DataModel>): Bool {
-        if (isReady.load()) {
-            return false
-        }
         synchronized(mtx) {
             if (isReady.load()) {
                 return false
             }
             this.result = result
             isReady.store(true)
-            mtx.notifyAll()
+            cond.notifyAll()
             true
         }
     }
@@ -181,18 +182,18 @@ func serializeFutureResult(result: FutureResult<DataModel>): DataModel {
     match (result) {
         case Okay(value) =>
             let fields = ArrayList<Field>()
-            fields.append(Field("type", DataModelString("Okay")))
-            fields.append(Field("value", value))
+            fields.add(Field("type", DataModelString("Okay")))
+            fields.add(Field("value", value))
             DataModelStruct(fields)
         case Exc(exception) =>
             let fields = ArrayList<Field>()
-            fields.append(Field("type", DataModelString("Exc")))
-            fields.append(Field("message", DataModelString(exception.message)))
+            fields.add(Field("type", DataModelString("Exc")))
+            fields.add(Field("message", DataModelString(exception.message)))
             DataModelStruct(fields)
         case Err(error) =>
             let fields = ArrayList<Field>()
-            fields.append(Field("type", DataModelString("Err")))
-            fields.append(Field("message", DataModelString(error.message)))
+            fields.add(Field("type", DataModelString("Err")))
+            fields.add(Field("message", DataModelString(error.message)))
             DataModelStruct(fields)
     }
 }

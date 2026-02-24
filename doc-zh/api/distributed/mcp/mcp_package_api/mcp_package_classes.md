@@ -69,14 +69,14 @@ public override func delTool(tool: Tool): Unit
 ### func addTools()
 
 ```cangjie
-public override func addTools(tools: Array<Tool>): Unit
+public override func addTools(tools: Collection<Tool>): Unit
 ```
 
 功能：批量添加工具。
 
 参数：
 
-- `tools: Array<Tool>` — 待添加的工具集合。
+- `tools: Collection<Tool>` — 待添加的工具集合。
 
 ### func clear()
 
@@ -102,22 +102,26 @@ public override func findTool(name: String): Option<Tool>
 
 - `Option<Tool>` — 找到则 `Some(tool)`，否则 `None`。
 
-### func getTools()
+### prop name
 
 ```cangjie
-public override func getTools(): Array<Tool>
+public override prop name: String
+```
+
+功能：获取工具管理器名称。
+
+### prop tools
+
+```cangjie
+public override prop tools: Array<Tool>
 ```
 
 功能：获取所有可用工具。
 
-返回值：
-
-- `Array<Tool>` — 可用工具数组。
-
 ### func filterTool()
 
 ```cangjie
-public override func filterTool(question: String, config: ToolSearchConfig): Array<Tool>
+public override func filterTool(question: String, filter: ToolFilter): Array<Tool>
 ```
 
 功能：根据问题与搜索配置筛选工具。
@@ -125,7 +129,7 @@ public override func filterTool(question: String, config: ToolSearchConfig): Arr
 参数：
 
 - `question: String` — 搜索问题。
-- `config: ToolSearchConfig` — 搜索配置。
+- `filter: ToolFilter` — 工具筛选配置。
 
 返回值：
 
@@ -170,7 +174,7 @@ public func removeActorClient(info: HostInfo): Unit
 ## class ReceiverTool
 
 ```cangjie
-public class ReceiverTool <: Tool
+public class ReceiverTool <: AbsTool
 ```
 
 功能：将 Actor 的 Receiver 封装为 MCP 工具；负责将 MCP 形参转换为 Actor Receiver 调用的实参，并管理 Receiver 函数的执行。
@@ -243,14 +247,6 @@ public prop examples: Array<String>
 
 功能：示例用法。
 
-### prop extra
-
-```cangjie
-public prop extra: HashMap<String, String>
-```
-
-功能：额外元数据。
-
 ### prop hostInfo
 
 ```cangjie
@@ -270,14 +266,14 @@ public prop info: ReceiverInfo
 ### func invoke()
 
 ```cangjie
-public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse
+public func invoke(args: HashMap<String, JsonValue>): ToolResponse
 ```
 
 功能：以给定参数调用 MCP 工具，将其转换为 Actor 参数并执行 Receiver。解析工具名以提取 Actor 与 Receiver 名称，创建 `ActorProxy` 进行调用。
 
 参数：
 
-- `args: HashMap<String, ToJsonValue>` — 工具调用参数；可包含可选 `"config"` 字段来传入 `ReceiverConfig`。
+- `args: HashMap<String, JsonValue>` — 工具调用参数；可包含可选 `"config"` 字段来传入 `ReceiverConfig`。
 
 返回值：
 
@@ -294,7 +290,7 @@ public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse
 ### func toString()
 
 ```cangjie
-public override func toString(): String
+public func toString(): String
 ```
 
 功能：将 `ReceiverTool` 转换为字符串表示。
@@ -302,4 +298,3 @@ public override func toString(): String
 返回值：
 
 - `String` — "name [description]" 格式的字符串。
-

@@ -3,8 +3,8 @@
 </div>
 
 <p align="center">
-<img alt="" src="https://img.shields.io/badge/release-v0.0.1-brightgreen" style="display: inline-block;" />
-<img alt="" src="https://img.shields.io/badge/cjc-v0.53.18-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/release-v0.2.0-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/cjc-v1.0.5-brightgreen" style="display: inline-block;" />
 <img alt="" src="https://img.shields.io/badge/cjcov-0.0%25-brightgreen" style="display: inline-block;" />
 <img alt="" src="https://img.shields.io/badge/state-孵化/毕业-brightgreen" style="display: inline-block;" />
 <img alt="" src="https://img.shields.io/badge/domain-OHOS/Cloud-brightgreen" style="display: inline-block;" />
@@ -80,7 +80,7 @@ Add the following to your `cjpm.toml`:
 
 ```toml
 [dependencies]
-  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.0.1" }
+  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
 ```
 
 ### Building
@@ -101,12 +101,6 @@ make example
 # Run all tests
 make test
 ```
-
-Most tests should pass. Known failing tests:
-- `testGarbageCollection`
-- `testForkJoinGarbageCollection`
-
-These problems are fixed in a newer version of the Cangjie compiler however this library is not supporting that version yet.
 
 ### Tutorial
 
@@ -163,8 +157,8 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
 public interface BankAccount {
@@ -278,8 +272,8 @@ main() {
 
 Currently, this project can be correctly compiled and executed only on:
 
-- Cangjie 0.53.18 (Universal Edition)
-- DevEco Studio for Windows 5.0.13.200 and DevEco Studio Cangjie Plugin Canary for Windows 5.0.13.200 (HarmonyOS Edition)
+- Cangjie 1.0.5 (Universal Edition)
+- DevEco Studio 6.0.2 and DevEco Studio Cangjie Plugin 6.0.2.640 (HarmonyOS Edition)
 
 If you are using other versions of the Cangjie SDK, you may need to modify the project source code directly for compatibility.
 

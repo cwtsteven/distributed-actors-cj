@@ -2,7 +2,7 @@ package actors.distributed
 
 import std.collection.*
 import actors.*
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * Exception thrown when an actor system fails

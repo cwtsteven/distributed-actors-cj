@@ -1,6 +1,7 @@
 package actors
 
 import std.collection.concurrent.*
+import std.time.*
 
 type Item = (SequentialDispatcher, () -> Unit)
 
@@ -16,7 +17,7 @@ interface Mailbox {
     * Removes an item from the mailbox
     * @return the item if it exists, None otherwise
     */
-    func remove(): Option<Item>
+    func remove(timeout!: Duration): Option<Item>
     /*
     * Blocks the current thread until an item is available
     * @return the item
@@ -28,18 +29,18 @@ interface Mailbox {
 * A mailbox that can hold an unbounded number of items
 */
 class UnboundedMailbox <: Mailbox {
-    private let queue = BlockingQueue<Item>()
+    private let queue = LinkedBlockingQueue<Item>()
 
     public func add(item: Item, _: Int64): Unit {
-        queue.enqueue(item)
+        queue.add(item)
     }
 
-    public func remove(): Option<Item> {
-        queue.tryDequeue()
+    public func remove(timeout!: Duration = Duration.Zero): Option<Item> {
+        queue.remove(timeout)
     }
 
     public func removeBlock(): Item {
-        queue.dequeue()
+        queue.remove()
     }
 }
 
@@ -53,8 +54,8 @@ class UnboundedPriorityMailbox <: Mailbox {
         queue.add(item, priority)
     }
 
-    public func remove(): Option<Item> {
-        queue.remove()
+    public func remove(timeout!: Duration = Duration.Zero): Option<Item> {
+        queue.remove(timeout)
     }
 
     public func removeBlock(): Item {

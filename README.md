@@ -3,8 +3,8 @@
 </div>
 
 <p align="center">
-<img alt="" src="https://img.shields.io/badge/release-v0.0.1-brightgreen" style="display: inline-block;" />
-<img alt="" src="https://img.shields.io/badge/cjc-v0.53.18-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/release-v0.2.0-brightgreen" style="display: inline-block;" />
+<img alt="" src="https://img.shields.io/badge/cjc-v1.0.5-brightgreen" style="display: inline-block;" />
 <img alt="" src="https://img.shields.io/badge/cjcov-0.0%25-brightgreen" style="display: inline-block;" />
 <img alt="" src="https://img.shields.io/badge/state-孵化/毕业-brightgreen" style="display: inline-block;" />
 <img alt="" src="https://img.shields.io/badge/domain-OHOS/Cloud-brightgreen" style="display: inline-block;" />
@@ -80,7 +80,7 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 
 ```toml
 [dependencies]
-  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.0.1" }
+  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
 ```
 
 ### 编译构建
@@ -101,13 +101,6 @@ make example
 # 运行所有测试
 make test
 ```
-
-大多数测试应能通过。已知未通过的测试：
-
-- `testGarbageCollection`
-- `testForkJoinGarbageCollection`
-
-这些问题已在更新版本的仓颉编译器中得到修复，但本库尚未支持该版本。
 
 ### 教程
 
@@ -164,8 +157,8 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true, description: "Bank service"]
 public interface BankAccount {
@@ -280,7 +273,7 @@ main() {
 目前代码仅在以下版本能够正确编译执行：
 
 - Cangjie 0.53.18（通用版）
-- DevEco Studio for Windows 5.0.13.200 和 DevEco Studio Cangjie Plugin Canary for Windows 5.0.13.200（鸿蒙版）
+- DevEco Studio for 6.0.2 和 DevEco Studio Cangjie Plugin 6.0.2.640（鸿蒙版）
 
 如果使用了其他版本的 Cangjie SDK，可能需要直接修改项目源代码进行适配。
 

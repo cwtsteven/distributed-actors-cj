@@ -7,8 +7,8 @@ import actors.*
 import actors.macros.*
 import actors.distributed.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true]
 public interface UserActor {
