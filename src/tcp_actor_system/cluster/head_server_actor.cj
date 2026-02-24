@@ -7,8 +7,8 @@ import actors.macros.*
 import actors.distributed.*
 import actors.tcp_actor_system.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 private var __instance: ?HeadServer = None
 
@@ -150,8 +150,8 @@ class HeadServerImpl <: HeadServer {
         let hostInfo = TCPActorHostInfo(workerAddr, workerPort)
         let client = ClientManager.instance.getOrCreateClient(hostInfo)
         let workerActor = WorkerActor.getProxy(client.getActor(workerId).getOrThrow())
-        workerMap.put(workerId, (hostInfo, workerActor))
-        workerList.append(workerId)
+        workerMap.add(workerId, (hostInfo, workerActor))
+        workerList.add(workerId)
         logger.debug("worker ${workerId} joined to the head server.")
         true
     }
@@ -188,7 +188,7 @@ class HeadServerImpl <: HeadServer {
         logger.debug("spawning actor ${actorName} with type name ${typeName}.")
         if (workerList.size == 0) {
             logger.debug("no clients found in the head server.")
-            return None
+            return Option<ActorProxy>.None
         }
         logger.debug("workerList size: ${workerList.size}.")
 
@@ -204,7 +204,7 @@ class HeadServerImpl <: HeadServer {
                 case Some((info, workerActor)) =>
                     if (workerActor.spawnActor(typeName, actorName, args).get()) {
                         index = (index + 1) % workerList.size
-                        actorMap.put(actorName, workerId)
+                        actorMap.add(actorName, workerId)
                         logger.debug("spawning actor ${actorName} on worker ${workerId} with type name ${typeName} success.")
                         return Some(ActorProxy(actorName, info))
                     }
@@ -217,7 +217,7 @@ class HeadServerImpl <: HeadServer {
             trial++
         }
         logger.debug("spawning actor ${actorName} with type name ${typeName} failed after ${MAX_TRIALS} trials.")
-        None
+        Option<ActorProxy>.None
     }
 
     /*
@@ -240,14 +240,14 @@ class HeadServerImpl <: HeadServer {
                             return Some(ActorProxy(actorName, info))
                         }
                         logger.debug("actor ${actorName} found but not alive.")
-                        None
+                        Option<ActorProxy>.None
                     case None =>
                         logger.debug("worker ${workerId} not found.")
-                        None
+                        Option<ActorProxy>.None
                 }
             case None =>
                 logger.debug("actor ${actorName} not found.")
-                None
+                Option<ActorProxy>.None
         }
     }
 

@@ -4,7 +4,7 @@ import std.unittest.*
 import std.unittest.testmacro.*
 
 import actors.*
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 @Test
 public class ActorFutureTest {

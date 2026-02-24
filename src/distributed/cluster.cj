@@ -3,7 +3,7 @@ package actors.distributed
 import std.collection.*
 import std.collection.concurrent.*
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 private type SpawnFunc = (Array<SpawnArgument>) -> Option<Distributable>
 private type ConcreteSpawnFunc<T> = (Array<SpawnArgument>) -> Option<T>
@@ -64,7 +64,7 @@ public interface ActorCluster {
     * @return true if the spawning function was registered, false if it was already registered
     */
     static func registerSpawningFunc<T>(typeName: String, spawningFunc: ConcreteSpawnFunc<T>): Bool where T <: Distributable & Proxyable<T> & Spawnable<T> {
-        let res = spawnTable.putIfAbsent(typeName,
+        let res = spawnTable.addIfAbsent(typeName,
             { args =>
                 let opt = spawningFunc(args)
                 match (opt) {
@@ -88,7 +88,7 @@ public interface ActorCluster {
         let serializeFunc = { t: Any => (t as Serializable<T>).getOrThrow().serialize() }
         let deserializeFunc: (DataModel) -> Any = { dm: DataModel => T.deserialize(dm) }
         let typeModel = T.typeModel()
-        let res = serializeTable.putIfAbsent(typeName, SerializingFuncs(serializeFunc, deserializeFunc, typeModel))
+        let res = serializeTable.addIfAbsent(typeName, SerializingFuncs(serializeFunc, deserializeFunc, typeModel))
         match (res) {
             case Some(_) => false
             case None => true

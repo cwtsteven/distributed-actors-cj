@@ -3,7 +3,7 @@ package actors.tcp_actor_system
 import actors.*
 import actors.distributed.*
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
 
 /*
 * Enum representing the message protocol betwen TCPActorHost and TCPActorClient
