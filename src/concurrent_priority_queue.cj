@@ -7,7 +7,7 @@ import std.collection.concurrent.*
 */
 const DEFAULT_NUM_OF_PRIORITIES = 10
 
-type ConcurrentLinkedQueue<T> = BlockingQueue<T>
+type ConcurrentLinkedQueue<T> = LinkedBlockingQueue<T>
 
 /*
 * A concurrent priority queue
@@ -44,8 +44,7 @@ class ConcurrentPriorityQueue<T> {
             throw IllegalArgumentException("Priority must be in the range of [1..${numOfPriorities}].")
         }
 
-        // Note: ConcurrentLinkedQueue.add() will never return false
-        queuePool[priority - 1].enqueue(item)
+        queuePool[priority - 1].add(item)
         semaphore.signal()
     }
 
@@ -61,7 +60,7 @@ class ConcurrentPriorityQueue<T> {
             }
         }
         if (index != -1) {
-            return queuePool[index].tryDequeue()
+            return queuePool[index].tryRemove()
         }
         return None
     }
@@ -80,7 +79,7 @@ class ConcurrentPriorityQueue<T> {
                 }
             }
             if (index != -1) {
-                return queuePool[index].dequeue()
+                return queuePool[index].remove()
             }
         }
         // this should never happen

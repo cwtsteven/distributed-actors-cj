@@ -3,7 +3,7 @@ package actors.macros.internal
 import std.ast.*
 import std.collection.*
 
-import encoding.json.*
+import stdx.encoding.json.*
 
 protected class GenerateDistributedActorInterface {
 
@@ -45,16 +45,16 @@ protected class GenerateDistributedActorInterface {
         checkOptions()
         checkInterfaceDecl()
 
-        decl.superTypes.append(RefType(quote(
+        decl.superTypes.add(RefType(quote(
             $distributableTypeToken
         )))
-        decl.superTypes.append(RefType(quote(
+        decl.superTypes.add(RefType(quote(
             $proxyableTypeToken<$interfaceName>
         )))
-        decl.superTypes.append(RefType(quote(
+        decl.superTypes.add(RefType(quote(
             $serializableTypeToken<$interfaceName>
         )))
-        decl.superTypes.append(RefType(quote(
+        decl.superTypes.add(RefType(quote(
             $typeSerializableTypeToken
         )))
 
@@ -62,13 +62,13 @@ protected class GenerateDistributedActorInterface {
         let staticInit = FuncDecl(quote(
             static init() {}
         ))
-        proxyClassDecl.body.decls.append(staticInit)
+        proxyClassDecl.body.decls.add(staticInit)
 
         let newDecls = ArrayList<Decl>()
 
         let receiverNames = HashSet<String>()
 
-        processReceivers(decl.body.decls, { d => newDecls.append(d) },
+        processReceivers(decl.body.decls, { d => newDecls.add(d) },
             { mDecl =>
                 let rOpts = MacroOptionParser.Run(mDecl.macroAttrs, errors)
                 checkReceiverOptions(rOpts)
@@ -76,26 +76,26 @@ protected class GenerateDistributedActorInterface {
                 createReceiverInfo(mDecl, rOpts, proxyClassDecl, staticInit, receiverNames)
 
                 if (rOpts.shouldAsk()) {
-                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Ask))
-                    newDecls.append(newDefaultReceiver(mDecl, rOpts, behaviour: Ask))
-                    proxyClassDecl.body.decls.append(newProxyReceiver(mDecl, rOpts, behaviour: Ask))
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Ask))
+                    newDecls.add(newDefaultReceiver(mDecl, rOpts, behaviour: Ask))
+                    proxyClassDecl.body.decls.add(newProxyReceiver(mDecl, rOpts, behaviour: Ask))
                 }
                 if (rOpts.shouldTell()) {
-                    newDecls.append(newReceiver(mDecl, rOpts, behaviour: Tell))
-                    newDecls.append(newDefaultReceiver(mDecl, rOpts, behaviour: Tell))
-                    proxyClassDecl.body.decls.append(newProxyReceiver(mDecl, rOpts, behaviour: Tell))
+                    newDecls.add(newReceiver(mDecl, rOpts, behaviour: Tell))
+                    newDecls.add(newDefaultReceiver(mDecl, rOpts, behaviour: Tell))
+                    proxyClassDecl.body.decls.add(newProxyReceiver(mDecl, rOpts, behaviour: Tell))
                 }
             })
 
         decl.body.decls = newDecls
 
-        decl.body.decls.append(newGetMetadataFunc())
-        decl.body.decls.append(newDispatchTellFunc())
-        decl.body.decls.append(newDispatchAskFunc())
-        decl.body.decls.append(getProxyFunc())
-        decl.body.decls.append(newSerializeFunc())
-        decl.body.decls.append(newDeserializeFunc())
-        decl.body.decls.append(newTypeModelFunc())
+        decl.body.decls.add(newGetMetadataFunc())
+        decl.body.decls.add(newDispatchTellFunc())
+        decl.body.decls.add(newDispatchAskFunc())
+        decl.body.decls.add(getProxyFunc())
+        decl.body.decls.add(newSerializeFunc())
+        decl.body.decls.add(newDeserializeFunc())
+        decl.body.decls.add(newTypeModelFunc())
 
         headDecl.toTokens() + proxyClassDecl.toTokens()
     }
@@ -131,21 +131,21 @@ protected class GenerateDistributedActorInterface {
             errors.add(ReceiverMacroDuplicateIdentifier(fd.identifier.value))
             errors.doThrow()
         }
-        receiverNames.put(fd.identifier.value)
+        receiverNames.add(fd.identifier.value)
 
         checkReceiverDecl(fd)
 
         let receiverInfoVarIdent = Token(IDENTIFIER, fd.identifier.value + RECEIVER_INFO_NAME)
         match (newReceiverInfo(receiverInfoVarIdent, rOpts, fd, fd.declType, errors)) {
-            case Some(varDecl) => proxyClassDecl.body.decls.append(varDecl)
+            case Some(varDecl) => proxyClassDecl.body.decls.add(varDecl)
             case None => ()
         }
 
         if (rOpts.shouldTell()) {
             let callExpr = deserializeFuncParams(fd, true)
             // let argsToken = if (fd.funcParams.size > 0) { quote(args) } else { Tokens([Token(WILDCARD)]) }
-            staticInit.block.nodes.append(CallExpr(quote(
-                $dispatchTellHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
+            staticInit.block.nodes.add(CallExpr(quote(
+                $dispatchTellHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
                     if (args.size != $(fd.funcParams.size)) {
                         throw IllegalArgumentException("Number of arguments (args.size) not equal to expected number of parameters ($(fd.funcParams.size)) for receiver $(fd.identifier.value)")
                     }
@@ -161,8 +161,8 @@ protected class GenerateDistributedActorInterface {
         if (rOpts.shouldAsk()) {
             let callExpr = deserializeFuncParams(fd, false)
             // let argsToken = if (fd.funcParams.size > 0) { quote(args) } else { Tokens([Token(WILDCARD)]) }
-            staticInit.block.nodes.append(CallExpr(quote(
-                $dispatchAskHashMapVarToken.put($(fd.identifier.value), { a, args, config =>
+            staticInit.block.nodes.add(CallExpr(quote(
+                $dispatchAskHashMapVarToken.add($(fd.identifier.value), { a, args, config =>
                     if (args.size != $(fd.funcParams.size)) {
                         throw IllegalArgumentException("Number of arguments (args.size) not equal to expected number of parameters ($(fd.funcParams.size)) for receiver $(fd.identifier.value)")
                     }
@@ -175,8 +175,8 @@ protected class GenerateDistributedActorInterface {
             )))
         }
         // Add receiver info to the static receivers array
-        staticInit.block.nodes.append(CallExpr(quote(
-            $receiverInfosArrayVarToken.append($receiverInfoVarIdent)
+        staticInit.block.nodes.add(CallExpr(quote(
+            $receiverInfosArrayVarToken.add($receiverInfoVarIdent)
         )))
     }
 
@@ -374,13 +374,13 @@ protected class GenerateDistributedActorInterface {
         args += quote(])
 
         let defaultPriority = rOpts.getPriority()
-        fd.funcParams.append(FuncParam(quote(
+        fd.funcParams.add(FuncParam(quote(
             config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
         )))
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
-            fd.funcParams.append(FuncParam(quote(
+            fd.funcParams.add(FuncParam(quote(
                 tell!: $tellTypeToken
             )))
         }
@@ -392,14 +392,14 @@ protected class GenerateDistributedActorInterface {
             case Tell => PrimitiveType(quote(Unit))
         }
 
-        fd.modifiers.append(Modifier(Token(PUBLIC)))
+        fd.modifiers.add(Modifier(Token(PUBLIC)))
         fd.block = Block()
         fd.block.lBrace = Token(LCURL)
         fd.block.rBrace = Token(RCURL)
 
         match (behaviour) {
             case Ask =>
-                fd.block.nodes.append(CallExpr(quote(
+                fd.block.nodes.add(CallExpr(quote(
                     proxy.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
                 )))
             case Tell =>
@@ -407,21 +407,21 @@ protected class GenerateDistributedActorInterface {
                 // For some reason VarDecl parses "let _ = tell" as "let = tell"
                 // so we add the wildcard manually instead
                 discardTellParam.identifier = Token(WILDCARD)
-                fd.block.nodes.append(discardTellParam)
-                fd.block.nodes.append(CallExpr(quote(
+                fd.block.nodes.add(discardTellParam)
+                fd.block.nodes.add(CallExpr(quote(
                     proxy.tell($(fd.identifier.value), $args, config: config)
                 )))
         }
     }
 
     private func modifyFuncDecl(_: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
-        fd.funcParams.append(FuncParam(quote(
+        fd.funcParams.add(FuncParam(quote(
             config!: ReceiverConfig
         )))
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
-            fd.funcParams.append(FuncParam(quote(
+            fd.funcParams.add(FuncParam(quote(
                 tell!: $tellTypeToken
             )))
         }
@@ -437,7 +437,7 @@ protected class GenerateDistributedActorInterface {
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
-            fd.funcParams.append(FuncParam(quote(
+            fd.funcParams.add(FuncParam(quote(
                 tell!: $tellTypeToken
             )))
         }
@@ -461,11 +461,11 @@ protected class GenerateDistributedActorInterface {
 
         match (behaviour) {
             case Ask =>
-                fd.block.nodes.append(CallExpr(quote(
+                fd.block.nodes.add(CallExpr(quote(
                     ($(fd.identifier)($args) as ActorFuture<$declaredType>).getOrThrow()
                 )))
             case Tell =>
-                fd.block.nodes.append(CallExpr(quote(
+                fd.block.nodes.add(CallExpr(quote(
                     $(fd.identifier)($args, tell: tell)
                 )))
         }
@@ -510,13 +510,13 @@ protected class GenerateDistributedActorInterface {
     //     args += quote(])
 
     //     let defaultPriority = rOpts.getPriority()
-    //     fd.funcParams.append(FuncParam(quote(
+    //     fd.funcParams.add(FuncParam(quote(
     //         config!: ReceiverConfig = ReceiverConfig(priority: $defaultPriority)
     //     )))
 
     //     if (let Tell <- behaviour) {
     //         // Add the `tell` parameter
-    //         fd.funcParams.append(FuncParam(quote(
+    //         fd.funcParams.add(FuncParam(quote(
     //             tell!: $tellTypeToken
     //         )))
     //     }
@@ -528,18 +528,18 @@ protected class GenerateDistributedActorInterface {
     //         case Tell => PrimitiveType(quote(Unit))
     //     }
 
-    //     fd.modifiers.append(Modifier(Token(PUBLIC)))
+    //     fd.modifiers.add(Modifier(Token(PUBLIC)))
     //     fd.block = Block()
     //     fd.block.lBrace = Token(LCURL)
     //     fd.block.rBrace = Token(RCURL)
 
     //     match (behaviour) {
     //         case Ask =>
-    //             fd.block.nodes.append(CallExpr(quote(
+    //             fd.block.nodes.add(CallExpr(quote(
     //                 (this as $proxyClassIdent).getOrThrow().$(fd.identifier)($args, config: config)
     //             )))
     //         case Tell =>
-    //             fd.block.nodes.append(CallExpr(quote(
+    //             fd.block.nodes.add(CallExpr(quote(
     //                 (this as $proxyClassIdent).getOrThrow().$(fd.identifier)($args, config: config, tell: tell)
     //             )))
     //     }

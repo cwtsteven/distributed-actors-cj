@@ -5,14 +5,13 @@ import std.collection.*
 import std.collection.concurrent.*
 import std.net.*
 import std.io.*
-import std.socket.*
 import std.sync.*
 import std.time.*
 
 import actors.*
 import actors.macros.*
 import actors.distributed.*
-import encoding.json.stream.*
+import stdx.encoding.json.stream.*
 
 /*
 * A struct wrapping a payload with an id
@@ -159,7 +158,7 @@ class TCPConnection <: Hashable {
     * @return true if the envelope is put successfully, false if message with the same id already exists
     */
     func putMessageBoard(id: UInt64, e: Envelope): Bool {
-        messageBoard.putIfAbsent(id, e).isNone()
+        messageBoard.addIfAbsent(id, e).isNone()
     }
 
     /*
@@ -245,7 +244,7 @@ private class TCPReader {
         set(c) { __conn = Some(c) }
     }
 
-    private let buf = Array<Byte>(1024, item: 0)
+    private let buf = Array<Byte>(1024, { _ => 0 })
 
     TCPReader(
         private let socket: TcpSocket,
@@ -266,7 +265,7 @@ private class TCPReader {
                 return
             }
 
-            buf.fill(0)
+            buf.fill(0u8)
             logger.debug("listening to a Message.")
 
             let count = try {
@@ -318,7 +317,9 @@ class EnvelopeBuffer {
     */
     @Receiver[mode: TellOnly]
     func write(buf: Array<Byte>, count: Int64): Unit {
-        buffer.appendAll(buf[0..count])
+        for (b in buf[0..count]) {
+            buffer.add(b)
+        }
         logger.debug("written ${count} bytes.")
         sendToEnvelopeProcessor()
     }

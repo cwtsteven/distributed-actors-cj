@@ -3,14 +3,13 @@ package actors.tcp_actor_system
 import std.collection.*
 import std.collection.concurrent.*
 import std.net.*
-import std.socket.*
-import std.log.*
+import stdx.log.*
 
 import actors.*
 import actors.macros.*
 import actors.distributed.*
-import encoding.json.stream.*
-import serialization.serialization.*
+import stdx.encoding.json.stream.*
+import stdx.serialization.serialization.*
 
 /*
 * A class representing a TCP actor host
@@ -40,7 +39,7 @@ public class TCPActorHost <: ActorHost {
      * @return Some(ActorProxy) if the actor was exported successfully, None if the name is already taken
      */
     public func export(name: String, a: Distributable): Option<ActorProxy> {
-        if (let Some(_) <- localMap.putIfAbsent(name, a)) {
+        if (let Some(_) <- localMap.addIfAbsent(name, a)) {
             None
         } else {
             Some(ActorProxy(name, hostInfo))
@@ -88,7 +87,7 @@ public class TCPActorHost <: ActorHost {
                 }
 
                 let conn = TCPConnection(clientSocket)
-                if (let Some(_) <- connMap.putIfAbsent(conn.hashCode(), conn)) {
+                if (let Some(_) <- connMap.addIfAbsent(conn.hashCode(), conn)) {
                     logger.debug("client already exist.")
                     conn.close()
                 } else {
@@ -122,7 +121,7 @@ public class TCPActorHost <: ActorHost {
                 let it = localMap.iterator()
                 while (true) {
                     match (it.next()) {
-                        case Some((name, a)) => list.append(ActorInfo(name: name, metadata: a.getMetadata()))
+                        case Some((name, a)) => list.add(ActorInfo(name: name, metadata: a.getMetadata()))
                         case None => break
                     }
                 }

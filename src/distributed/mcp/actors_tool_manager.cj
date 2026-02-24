@@ -1,8 +1,7 @@
 package actors.distributed.mcp
 
-import magic.prelude.*
-import magic.dsl.*
-import magic.config.Config
+import std.collection.*
+
 import magic.core.tool.*
 import magic.tool.SimpleToolManager
 
@@ -11,11 +10,19 @@ import actors.distributed.*
 
 public class ActorToolManager <: ToolManager {
 
-    private let clients = HashMap<HostInfo, ActorClient>()
+    private let clients = HashMap<String, ActorClient>()
 
     public ActorToolManager(
         private let baseManager!: ToolManager = SimpleToolManager()
     ) {}
+
+    public override prop name: String {
+        get() { baseManager.name }
+    }
+
+    public override prop tools: Array<Tool> {
+        get() { baseManager.tools }
+    }
 
     public override func addTool(tool: Tool): Unit {
         baseManager.addTool(tool)
@@ -25,7 +32,7 @@ public class ActorToolManager <: ToolManager {
         baseManager.delTool(tool)
     }
 
-    public override func addTools(tools: Array<Tool>): Unit {
+    public override func addTools(tools: Collection<Tool>): Unit {
         baseManager.addTools(tools)
     }
 
@@ -37,18 +44,14 @@ public class ActorToolManager <: ToolManager {
         baseManager.findTool(name)
     }
 
-    public override func getTools(): Array<Tool> {
-        baseManager.getTools()
-    }
-
-    public override func filterTool(question: String, config: ToolSearchConfig): Array<Tool> {
-        baseManager.filterTool(question, config)
+    public override func filterTool(question: String, filter: ToolFilter): Array<Tool> {
+        baseManager.filterTool(question, filter)
     }
 
     public prop enableFilter: Bool { get() { baseManager.enableFilter } }
 
     public func addActorClient(client: ActorClient): Unit {
-        clients.put(client.getHostInfo(), client)
+        clients.add(toHostKey(client.getHostInfo()), client)
         let actorInfos = client.findAll()
         let newTools = generateMCPToolsFromActorInfos(client, actorInfos)
         for (tool in newTools) {
@@ -57,7 +60,7 @@ public class ActorToolManager <: ToolManager {
     }
 
     public func removeActorClient(info: HostInfo): Unit {
-        let client = match (clients.remove(info)) {
+        let client = match (clients.remove(toHostKey(info))) {
                 case Some(client) => client
                 case None => throw ActorMCPException("Client ${info} not found")
             }
@@ -67,5 +70,9 @@ public class ActorToolManager <: ToolManager {
         for (tool in toolsToRemove) {
             baseManager.delTool(tool)
         }
+    }
+
+    private func toHostKey(info: HostInfo): String {
+        "${info.getTypeName()}::${info.toString()}"
     }
 }

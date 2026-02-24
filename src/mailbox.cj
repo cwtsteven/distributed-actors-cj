@@ -28,18 +28,18 @@ interface Mailbox {
 * A mailbox that can hold an unbounded number of items
 */
 class UnboundedMailbox <: Mailbox {
-    private let queue = BlockingQueue<Item>()
+    private let queue = LinkedBlockingQueue<Item>()
 
     public func add(item: Item, _: Int64): Unit {
-        queue.enqueue(item)
+        queue.add(item)
     }
 
     public func remove(): Option<Item> {
-        queue.tryDequeue()
+        queue.tryRemove()
     }
 
     public func removeBlock(): Item {
-        queue.dequeue()
+        queue.remove()
     }
 }
 
