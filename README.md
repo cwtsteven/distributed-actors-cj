@@ -272,7 +272,7 @@ main() {
 
 目前代码仅在以下版本能够正确编译执行：
 
-- Cangjie 0.53.18（通用版）
+- Cangjie 1.0.5（通用版）
 - DevEco Studio for 6.0.2 和 DevEco Studio Cangjie Plugin 6.0.2.640（鸿蒙版）
 
 如果使用了其他版本的 Cangjie SDK，可能需要直接修改项目源代码进行适配。

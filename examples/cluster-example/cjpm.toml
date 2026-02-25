@@ -30,7 +30,7 @@
   actors = { path = "../../" }
 
 [package]
-  cjc-version = "0.53.18"
+  cjc-version = "1.0.5"
   description = "An example showing actor cluster."
   version = "1.0.0"
   name = "cluster_example"

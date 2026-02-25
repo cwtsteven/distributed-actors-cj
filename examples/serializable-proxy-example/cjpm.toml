@@ -30,7 +30,7 @@
   actors = { path = "../../" }
 
 [package]
-  cjc-version = "0.53.18"
+  cjc-version = "1.0.5"
   description = "An example showing serializable proxy."
   version = "1.0.0"
   name = "serializable_proxy_example"
