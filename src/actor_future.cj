@@ -9,7 +9,8 @@ import std.time.*
 public class ActorFuture<T> {
     var result: FutureResult<T> = unsafe { zeroValue<FutureResult<T>>() }
     let isReady = AtomicBool(false)
-    let mtx = Monitor()
+    let mtx = Mutex()
+    let cond: Condition
     let closure: () -> T
 
     /*
@@ -18,6 +19,9 @@ public class ActorFuture<T> {
     */
     init(task: () -> T) {
         closure = task
+        synchronized(mtx) {
+            cond = mtx.condition()
+        }
     }
 
     /*
@@ -33,7 +37,7 @@ public class ActorFuture<T> {
 
         synchronized(mtx) {
             while (!isReady.load()) {
-                mtx.wait()
+                cond.wait()
             }
             return result.getOrThrow()
         }
@@ -64,7 +68,7 @@ public class ActorFuture<T> {
                     break
                 }
                 let d = timeout - timeElapsed
-                mtx.wait(timeout: d)
+                cond.wait(timeout: d)
             }
         }
         return tryGet()
@@ -98,7 +102,7 @@ public class ActorFuture<T> {
             }
 
             isReady.store(true)
-            mtx.notifyAll()
+            cond.notifyAll()
         }
     }
 }

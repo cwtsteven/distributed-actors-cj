@@ -49,8 +49,8 @@ main() {
                 account.withdraw(1000.0)
             }
         }
-        futs.append(fut1)
-        futs.append(fut2)
+        futs.add(fut1)
+        futs.add(fut2)
     }
     for (f in futs) {
         f.get()

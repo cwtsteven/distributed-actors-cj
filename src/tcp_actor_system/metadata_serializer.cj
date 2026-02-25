@@ -12,7 +12,7 @@ import std.collection.*
 import actors.*
 import actors.distributed.*
 
-import encoding.json.*
+import stdx.encoding.json.*
 
 /**
  * Serializes a Metadata object to a byte array
@@ -27,7 +27,7 @@ func serializeMetadata(metadata: Metadata): Array<Byte> {
         // Serialize receivers array
         let receivers = metadata.receivers
         let receiverCount = Int32(receivers.size)
-        let receiverCountBytes = Array<Byte>(4, item: 0)
+        let receiverCountBytes = Array<Byte>(4, repeat: 0)
         receiverCount.writeLittleEndian(receiverCountBytes)
         buffer.write(receiverCountBytes)
 
@@ -43,7 +43,7 @@ func serializeMetadata(metadata: Metadata): Array<Byte> {
         serializeJsonObject(buffer, metadata.customInfo)
 
         // Get the serialized data
-        let result = Array<Byte>(Int64(buffer.length), item: 0)
+        let result = Array<Byte>(Int64(buffer.length), repeat: 0)
         buffer.read(result)
         result
     } catch (e: IllegalArgumentException) {
@@ -63,14 +63,14 @@ func deserializeMetadata(bytes: Array<Byte>): Metadata {
         buffer.write(bytes)
 
         // Deserialize receivers array
-        let receiverCountBytes = Array<Byte>(4, item: 0)
+        let receiverCountBytes = Array<Byte>(4, repeat: 0)
         buffer.read(receiverCountBytes)
         let receiverCount = Int32.readLittleEndian(receiverCountBytes)
 
         let receivers = ArrayList<ReceiverInfo>()
         for (_ in 0..receiverCount) {
             let receiver = deserializeReceiverInfo(buffer)
-            receivers.append(receiver)
+            receivers.add(receiver)
         }
 
         // Deserialize description
@@ -100,7 +100,7 @@ func serializeReceiverInfo(buffer: ByteArrayStream, receiver: ReceiverInfo): Uni
 
     // Serialize paramSchema array
     let paramCount = Int32(receiver.paramSchema.size)
-    let paramCountBytes = Array<Byte>(4, item: 0)
+    let paramCountBytes = Array<Byte>(4, repeat: 0)
     paramCount.writeLittleEndian(paramCountBytes)
     buffer.write(paramCountBytes)
 
@@ -131,7 +131,7 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
     let methodName = deserializeString(buffer)
 
     // Deserialize paramSchema array
-    let paramCountBytes = Array<Byte>(4, item: 0)
+    let paramCountBytes = Array<Byte>(4, repeat: 0)
     buffer.read(paramCountBytes)
     let paramCount = Int32.readLittleEndian(paramCountBytes)
 
@@ -140,7 +140,7 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
         let paramName = deserializeString(buffer)
         let typeModel = deserializeTypeModel(buffer)
         let paramDescription = deserializeString(buffer)
-        paramSchema.append(ReceiverParameter(name: paramName, typeModel: typeModel, description: paramDescription))
+        paramSchema.add(ReceiverParameter(name: paramName, typeModel: typeModel, description: paramDescription))
     }
 
     // Deserialize retTypeModel
@@ -163,7 +163,7 @@ func deserializeReceiverInfo(buffer: ByteArrayStream): ReceiverInfo {
  * Serializes a TypeModel enum to the buffer
  */
 func serializeTypeModel(buffer: ByteArrayStream, typeModel: TypeModel): Unit {
-    let typeBytes = Array<Byte>(1, item: 0)
+    let typeBytes = Array<Byte>(1, repeat: 0)
     match (typeModel) {
         case IntType =>
             typeBytes[0] = 0
@@ -185,7 +185,7 @@ func serializeTypeModel(buffer: ByteArrayStream, typeModel: TypeModel): Unit {
             buffer.write(typeBytes)
             // Serialize the fields array
             let fieldCount = Int32(fields.size)
-            let fieldCountBytes = Array<Byte>(4, item: 0)
+            let fieldCountBytes = Array<Byte>(4, repeat: 0)
             fieldCount.writeLittleEndian(fieldCountBytes)
             buffer.write(fieldCountBytes)
 
@@ -204,7 +204,7 @@ func serializeTypeModel(buffer: ByteArrayStream, typeModel: TypeModel): Unit {
  * Deserializes a TypeModel enum from the buffer
  */
 func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
-    let typeBytes = Array<Byte>(1, item: 0)
+    let typeBytes = Array<Byte>(1, repeat: 0)
     buffer.read(typeBytes)
     match (typeBytes[0]) {
         case 0 => IntType
@@ -214,14 +214,14 @@ func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
         case 4 => UnitType
         case 5 =>
             // Deserialize StructType
-            let fieldCountBytes = Array<Byte>(4, item: 0)
+            let fieldCountBytes = Array<Byte>(4, repeat: 0)
             buffer.read(fieldCountBytes)
             let fieldCount = Int32.readLittleEndian(fieldCountBytes)
 
             let fields = ArrayList<FieldModel>()
             for (_ in 0..fieldCount) {
                 let field = deserializeFieldModel(buffer)
-                fields.append(field)
+                fields.add(field)
             }
             StructType(fields.toArray())
         case 6 =>
@@ -236,7 +236,7 @@ func deserializeTypeModel(buffer: ByteArrayStream): TypeModel {
  * Serializes a ReceiverMode enum to the buffer
  */
 func serializeReceiverMode(buffer: ByteArrayStream, mode: ReceiverMode): Unit {
-    let modeBytes = Array<Byte>(1, item: 0)
+    let modeBytes = Array<Byte>(1, repeat: 0)
     match (mode) {
         case AskOnly => modeBytes[0] = 0
         case TellOnly => modeBytes[0] = 1
@@ -249,7 +249,7 @@ func serializeReceiverMode(buffer: ByteArrayStream, mode: ReceiverMode): Unit {
  * Deserializes a ReceiverMode enum from the buffer
  */
 func deserializeReceiverMode(buffer: ByteArrayStream): ReceiverMode {
-    let modeBytes = Array<Byte>(1, item: 0)
+    let modeBytes = Array<Byte>(1, repeat: 0)
     buffer.read(modeBytes)
     match (modeBytes[0]) {
         case 0 => AskOnly
@@ -265,7 +265,7 @@ func deserializeReceiverMode(buffer: ByteArrayStream): ReceiverMode {
 func serializeString(buffer: ByteArrayStream, str: String): Unit {
     let strBytes = str.toArray()
     let length = Int32(strBytes.size)
-    let lengthBytes = Array<Byte>(4, item: 0)
+    let lengthBytes = Array<Byte>(4, repeat: 0)
     length.writeLittleEndian(lengthBytes)
     buffer.write(lengthBytes)
     buffer.write(strBytes)
@@ -275,11 +275,11 @@ func serializeString(buffer: ByteArrayStream, str: String): Unit {
  * Deserializes a string from the buffer
  */
 func deserializeString(buffer: ByteArrayStream): String {
-    let lengthBytes = Array<Byte>(4, item: 0)
+    let lengthBytes = Array<Byte>(4, repeat: 0)
     buffer.read(lengthBytes)
     let length = Int32.readLittleEndian(lengthBytes)
 
-    let strBytes = Array<Byte>(Int64(length), item: 0)
+    let strBytes = Array<Byte>(Int64(length), repeat: 0)
     buffer.read(strBytes)
     String.fromUtf8(strBytes)
 }

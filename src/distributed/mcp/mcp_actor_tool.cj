@@ -5,11 +5,13 @@ import std.collection.*
 import actors.*
 import actors.distributed.*
 
-import serialization.serialization.*
+import stdx.serialization.serialization.*
+import stdx.encoding.json.*
 
 import magic.core.tool.*
 import magic.mcp.*
 import magic.jsonable.*
+import magic.tool.AbsTool
 
 const SEPARATOR = ";__actors_08275892475824__;"
 
@@ -26,14 +28,13 @@ let receiverConfigTypeSchema =
 /*
 * A tool that wraps an actor receiver function
 */
-public class ReceiverTool <: Tool {
+public class ReceiverTool <: AbsTool {
 
     private let __name: String
     private let __description: String
     private let __parameters: Array<ToolParameter>
     private let __retType: TypeSchema
     private let __examples: Array<String>
-    private let __extra: HashMap<String, String>
     private let __hostInfo: HostInfo
     private let __info: ReceiverInfo
 
@@ -61,7 +62,7 @@ public class ReceiverTool <: Tool {
         __parameters = parameters
         __retType = retType
         __examples = examples
-        __extra = extra
+        _extra = extra
         __hostInfo = hostInfo
         __info = info
     }
@@ -71,7 +72,6 @@ public class ReceiverTool <: Tool {
     public prop parameters: Array<ToolParameter> { get() { __parameters } }
     public prop retType: TypeSchema { get() { __retType } }
     public prop examples: Array<String> { get() { __examples } }
-    public prop extra: HashMap<String, String> { get() { __extra } }
     public prop hostInfo: HostInfo { get() { __hostInfo } }
     public prop info: ReceiverInfo { get() { __info } }
 
@@ -85,7 +85,7 @@ public class ReceiverTool <: Tool {
     * @throws ReceiverNotFoundException - if the receiver is not found on the actor
     * @throws RemoteException - if the remote connection fails
     */
-    public func invoke(args: HashMap<String, ToJsonValue>): ToolResponse {
+    public func invoke(args: HashMap<String, JsonValue>): ToolResponse {
         let names = __name.split(SEPARATOR)
         if (names.size != 2) {
             throw ActorMCPException("Invalid tool name: ${__name}")
@@ -118,39 +118,46 @@ public class ReceiverTool <: Tool {
         }
     }
 
-    public override func toString(): String {
+    public func toString(): String {
         "${__name} [${__description}]"
     }
 
-    func generateArgsFromTypeModel(args: HashMap<String, ToJsonValue>): Array<DataModel> {
+    func generateArgsFromTypeModel(args: HashMap<String, JsonValue>): Array<DataModel> {
         let res = ArrayList<DataModel>()
         for (parameter in info.paramSchema) {
             let arg = match (args.get(parameter.name)) {
                 case Some(arg) => arg
                 case None => throw ActorMCPException("Argument ${parameter.name} not found")
             }
-            res.append(generateDataModelFromToJsonValue(parameter.typeModel, arg))
+            res.add(generateDataModelFromToJsonValue(parameter.typeModel, arg))
         }
         res.toArray()
     }
 }
 
-func generateDataModelFromToJsonValue(typeModel: TypeModel, arg: ToJsonValue): DataModel {
+func generateDataModelFromToJsonValue(typeModel: TypeModel, arg: JsonValue): DataModel {
     match (typeModel) {
-        case TypeModel.IntType => DataModelInt(arg.toJsonValue().asInt().getValue())
-        case TypeModel.FloatType => DataModelFloat(arg.toJsonValue().asFloat().getValue())
-        case TypeModel.BoolType => DataModelBool(arg.toJsonValue().asBool().getValue())
-        case TypeModel.StringType => DataModelString(arg.toJsonValue().asString().getValue())
+        case TypeModel.IntType => DataModelInt(arg.asInt().getValue())
+        case TypeModel.FloatType => DataModelFloat(arg.asFloat().getValue())
+        case TypeModel.BoolType => DataModelBool(arg.asBool().getValue())
+        case TypeModel.StringType => DataModelString(arg.asString().getValue())
         case TypeModel.UnitType => DataModelNull()
         case TypeModel.StructType(fieldTypeModels) =>
-            let structValue = arg.toJsonValue().asObject()
-            DataModelStruct(ArrayList<Field>(fieldTypeModels.map<Field>({ field: FieldModel =>
-                Field(field.name, generateDataModelFromToJsonValue(field.typeModel, structValue.get(field.name).getOrThrow()))
-            })))
+            let structValue = arg.asObject()
+            let fields = ArrayList<Field>()
+            for (field in fieldTypeModels) {
+                fields.add(Field(
+                    field.name,
+                    generateDataModelFromToJsonValue(field.typeModel, structValue.get(field.name).getOrThrow())
+                ))
+            }
+            DataModelStruct(fields)
         case TypeModel.ListType(itemType) =>
-            DataModelSeq(arg.toJsonValue().asArray().getItems().map({ item =>
-                generateDataModelFromToJsonValue(itemType, item)
-            }))
+            let dataModels = ArrayList<DataModel>()
+            for (item in arg.asArray().getItems()) {
+                dataModels.add(generateDataModelFromToJsonValue(itemType, item))
+            }
+            DataModelSeq(dataModels)
     }
 }
 
@@ -190,7 +197,7 @@ func deserializeFromDataModelToString(typeModel: TypeModel, dm: DataModel): Stri
 func generateMCPToolsFromActorInfos(client: ActorClient, actorInfos: Array<ActorInfo>): Array<Tool> {
     let allTools = ArrayList<Tool>()
     for (actorInfo in actorInfos) {
-        allTools.appendAll(generateMCPToolsFromActorInfo(client, actorInfo))
+        allTools.add(all: generateMCPToolsFromActorInfo(client, actorInfo))
     }
     allTools.toArray()
 }
@@ -198,19 +205,20 @@ func generateMCPToolsFromActorInfos(client: ActorClient, actorInfos: Array<Actor
 func generateMCPToolsFromActorInfo(client: ActorClient, actorInfo: ActorInfo): Array<Tool> {
     let tools = ArrayList<Tool>()
     for (receiver in actorInfo.metadata.receivers) {
-        let parameters = ArrayList<ToolParameter>(receiver.paramSchema.map({ param =>
-            ToolParameter(
+        let parameters = ArrayList<ToolParameter>()
+        for (param in receiver.paramSchema) {
+            parameters.add(ToolParameter(
                 param.name,
                 param.description,
                 generateTypeSchemaFromTypeModel(param.typeModel)
-            )
-        }))
-        parameters.append(ToolParameter(
+            ))
+        }
+        parameters.add(ToolParameter(
             "config",
             "The configuration of the receiver call",
             receiverConfigTypeSchema
         ))
-        tools.append(
+        tools.add(
             ReceiverTool(
                 name: actorInfo.name + SEPARATOR + receiver.methodName,
                 description: receiver.description,
@@ -233,9 +241,12 @@ func generateTypeSchemaFromTypeModel(typeModel: TypeModel): TypeSchema {
         case TypeModel.BoolType => TypeSchema.Boolean
         case TypeModel.StringType => TypeSchema.Str
         case TypeModel.UnitType => TypeSchema.Boolean
-        case TypeModel.StructType(fields) => TypeSchema.Obj(fields.map({ field =>
-            FieldSchema(field.name, field.description, generateTypeSchemaFromTypeModel(field.typeModel))
-        }))
+        case TypeModel.StructType(fields) =>
+            let schemas = ArrayList<FieldSchema>()
+            for (field in fields) {
+                schemas.add(FieldSchema(field.name, field.description, generateTypeSchemaFromTypeModel(field.typeModel)))
+            }
+            TypeSchema.Obj(schemas.toArray())
         case TypeModel.ListType(itemType) => TypeSchema.Arr(generateTypeSchemaFromTypeModel(itemType))
     }
 }

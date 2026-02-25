@@ -8,8 +8,8 @@ import actors.distributed.*
 import actors.tcp_actor_system.*
 import actors.tcp_actor_system.cluster.*
 
-import encoding.json.*
-import serialization.serialization.*
+import stdx.encoding.json.*
+import stdx.serialization.serialization.*
 
 @ActorInterface[distributed: true]
 public interface BankAccount <: Spawnable<BankAccount> {
