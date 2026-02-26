@@ -273,7 +273,6 @@ main() {
 Currently, this project can be correctly compiled and executed only on:
 
 - Cangjie 1.0.5 (Universal Edition)
-- DevEco Studio 6.0.2 and DevEco Studio Cangjie Plugin 6.0.2.640 (HarmonyOS Edition)
 
 If you are using other versions of the Cangjie SDK, you may need to modify the project source code directly for compatibility.
 
