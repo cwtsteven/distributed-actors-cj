@@ -1413,11 +1413,17 @@ First, add the required dependencies to your `cjpm.toml`:
 ```toml
 [dependencies]
   [dependencies.actors]
-    git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git"
+    git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git"
+    branch = "main"
+    version = "0.2.0"
+  [dependencies.actors_mcp]
+    path = "subpackages/actors-mcp"
   [dependencies.magic]
     git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git"
-    tag = "harmony_os_edition"
+    commitId = "d6cccc429b9de7a6b4994f4e2193956c0d8321f6"
 ```
+
+For external projects outside this repository, use `git` for `actors`, and use a local `path` dependency to a checked-out `subpackages/actors-mcp` package.
 
 ### Basic Agent Setup
 

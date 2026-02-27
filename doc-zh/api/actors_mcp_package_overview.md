@@ -1,0 +1,22 @@
+# actors_mcp
+
+## 功能说明
+
+`actors_mcp` 包为分布式 Actor 提供 MCP（Model Context Protocol）集成，使 Actor 能够作为 MCP 工具暴露给外部系统调用。
+
+该 API 由本仓库中的 `actors_mcp` 子包（`subpackages/actors-mcp`）提供。
+
+## API 列表
+
+### 类
+
+| 类名 | 功能 |
+| --- | --- |
+| [ActorToolManager](./distributed/mcp/mcp_package_api/mcp_package_classes.md#class-actortoolmanager) | 管理多个 Actor 客户端并将其 Receiver 函数作为 MCP 工具对外暴露的工具管理器实现。 |
+| [ReceiverTool](./distributed/mcp/mcp_package_api/mcp_package_classes.md#class-receivertool) | 将 Actor 的 Receiver 函数封装为 MCP 工具的实现。 |
+
+### 异常
+
+| 异常名 | 功能 |
+| --- | --- |
+| [ActorMCPException](./distributed/mcp/mcp_package_api/mcp_package_classes.md#class-actormcpexception) | MCP 相关操作失败（如工具不存在、参数非法等）时抛出的异常。 |

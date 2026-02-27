@@ -49,10 +49,6 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 │   ├── ActorProxy          # 远程 Actor 的客户端代理
 │   ├── DistributedFuture   # 分布式操作结果
 │   ├── ActorCluster
-│   │
-│   └── actors.distributed.mcp  # Model Context Protocol (MCP) 集成
-│       ├── ActorMCPClient      # 用于 AI 智能体集成的 MCP 客户端
-│       └── ReceiverTool        # Actor 接收器的 MCP 工具封装
 │
 ├── actors.macros          # 编译期 Actor 与接口生成
 │   ├── @Actor             # 将类转换为 Actor
@@ -66,6 +62,12 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
     │
     └── actors.tcp_actor_system.cluster  # 基于集群的分布式 Actor 系统
         └── TCPCluster                   # 集群管理器（头服务器和工作节点）
+
+subpackages
+└── actors-mcp                 # 独立 MCP 扩展包（actors_mcp）
+    └── actors_mcp             # Model Context Protocol (MCP) 集成
+        ├── ActorToolManager   # Actor 客户端 MCP 工具管理器
+        └── ReceiverTool       # Actor 接收器 MCP 工具封装
 ```
 
 ### 接口说明
@@ -81,6 +83,13 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 ```toml
 [dependencies]
   actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
+```
+
+如果需要 MCP 集成，请额外添加本仓库内的 MCP 包：
+
+```toml
+[dependencies]
+  actors_mcp = { path = "subpackages/actors-mcp" }
 ```
 
 ### 编译构建
@@ -248,7 +257,7 @@ import magic.prelude.*
 import magic.dsl.*
 import magic.config.Config
 
-import actors.distributed.mcp.*
+import actors_mcp.*
 import actors.tcp_actor_system.*
 
 @agent[model: "deepseek:deepseek-chat"]
@@ -287,4 +296,3 @@ main() {
 ## 参与贡献
 
 欢迎给我们提交PR，欢迎给我们提交Issue，欢迎参与任何形式的贡献。
-

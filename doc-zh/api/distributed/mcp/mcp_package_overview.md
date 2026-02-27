@@ -1,10 +1,12 @@
-# actors.distributed.mcp
+# actors_mcp
 
 ## 功能说明
 
-`actors.distributed.mcp` 包为分布式 Actor 提供 MCP（Model Context Protocol）集成，使 Actor 能够作为 MCP 工具暴露给外部系统调用。该包连接分布式 Actor 系统与 MCP 生态，实现与 MCP 客户端/服务器的无缝集成。
+`actors_mcp` 包为分布式 Actor 提供 MCP（Model Context Protocol）集成，使 Actor 能够作为 MCP 工具暴露给外部系统调用。该包连接分布式 Actor 系统与 MCP 生态，实现与 MCP 客户端/服务器的无缝集成。
 
 该包使分布式 Actor 能够在 MCP 生态中以标准化协议被外部系统使用，将 Actor 能力以工具形式开放。
+
+该 API 由本仓库中的 `actors_mcp` 子包（`subpackages/actors-mcp`）提供。
 
 ## API 列表
 
