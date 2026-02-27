@@ -4,7 +4,7 @@ import magic.prelude.*
 import magic.dsl.*
 import magic.config.Config
 
-import actors.distributed.mcp.*
+import actors_mcp.*
 import actors.tcp_actor_system.*
 
 @agent[model: "deepseek:deepseek-chat"]

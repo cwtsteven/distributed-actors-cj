@@ -1414,6 +1414,8 @@ First, add the required dependencies to your `cjpm.toml`:
 [dependencies]
   [dependencies.actors]
     git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git"
+  [dependencies.actors_mcp]
+    path = "subpackages/actors-mcp"
   [dependencies.magic]
     git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git"
     tag = "harmony_os_edition"
