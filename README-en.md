@@ -49,10 +49,6 @@ actors                   # Core actor programming model and local actor system
 │   ├── ActorProxy          # Client-side proxy for remote actors
 │   ├── DistributedFuture   # Distributed operation results
 │   ├── ActorCluster
-│   │
-│   └── actors.distributed.mcp  # Model Context Protocol integration
-│       ├── ActorMCPClient      # MCP client for AI agent integration
-│       └── ReceiverTool        # MCP tool wrapper for actor receivers
 │
 ├── actors.macros          # Compile-time actor and interface generation
 │   ├── @Actor             # Transform classes into actors
@@ -66,6 +62,12 @@ actors                   # Core actor programming model and local actor system
     │
     └── actors.tcp_actor_system.cluster  # Cluster-based distributed actor system
         └── TCPCluster                   # Cluster manager (head server and worker nodes)
+
+subpackages
+└── actors-mcp                 # Separate MCP extension package (actors_mcp)
+    └── actors_mcp             # Model Context Protocol integration
+        ├── ActorToolManager   # MCP tool manager for actor clients
+        └── ReceiverTool       # MCP tool wrapper for actor receivers
 ```
 
 ### APIs description
@@ -81,6 +83,13 @@ Add the following to your `cjpm.toml`:
 ```toml
 [dependencies]
   actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
+```
+
+For MCP integration, add the MCP package from this repository:
+
+```toml
+[dependencies]
+  actors_mcp = { path = "subpackages/actors-mcp" }
 ```
 
 ### Building
@@ -248,7 +257,7 @@ import magic.prelude.*
 import magic.dsl.*
 import magic.config.Config
 
-import actors.distributed.mcp.*
+import actors_mcp.*
 import actors.tcp_actor_system.*
 
 @agent[model: "deepseek:deepseek-chat"]
