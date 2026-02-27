@@ -27,7 +27,7 @@
       path-option = ["${CANGJIE_STDX_PATH}"]
 
 [dependencies]
-  actors = { path = "../..", output-type = "dynamic" }
+  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0", output-type = "dynamic" }
   magic = { git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git", commitId = "d6cccc429b9de7a6b4994f4e2193956c0d8321f6" }
 
 [package]

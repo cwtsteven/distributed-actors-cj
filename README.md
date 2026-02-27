@@ -89,7 +89,7 @@ subpackages
 
 ```toml
 [dependencies]
-  actors_mcp = { path = "subpackages/actors-mcp" }
+  actors_mcp = { path = "/path-to/actors-mcp" }
 ```
 
 ### 编译构建

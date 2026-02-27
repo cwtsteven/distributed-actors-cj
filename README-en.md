@@ -89,7 +89,7 @@ For MCP integration, add the MCP package from this repository:
 
 ```toml
 [dependencies]
-  actors_mcp = { path = "subpackages/actors-mcp" }
+  actors_mcp = { path = "/path-to/actors-mcp" }
 ```
 
 ### Building

@@ -28,7 +28,7 @@
 
 [dependencies]
   magic = { git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git", commitId = "d6cccc429b9de7a6b4994f4e2193956c0d8321f6" }
-  actors = { path = "../../" }
+  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
   actors_mcp = { path = "../../subpackages/actors-mcp" }
 
 [package]
