@@ -49,10 +49,6 @@ actors                   # Core actor programming model and local actor system
 │   ├── ActorProxy          # Client-side proxy for remote actors
 │   ├── DistributedFuture   # Distributed operation results
 │   ├── ActorCluster
-│   │
-│   └── actors.distributed.mcp  # Model Context Protocol integration
-│       ├── ActorMCPClient      # MCP client for AI agent integration
-│       └── ReceiverTool        # MCP tool wrapper for actor receivers
 │
 ├── actors.macros          # Compile-time actor and interface generation
 │   ├── @Actor             # Transform classes into actors
@@ -81,6 +77,13 @@ Add the following to your `cjpm.toml`:
 ```toml
 [dependencies]
   actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
+```
+
+For MCP integration, add the MCP package from this repository:
+
+```toml
+[dependencies]
+  actors_mcp = { path = "subpackages/actors-mcp" }
 ```
 
 ### Building
