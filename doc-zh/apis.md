@@ -87,21 +87,6 @@
 | [SerializationException](./distributed_package_api/distributed_package_exceptions.md#class-serializationexception) | 当序列化操作失败时抛出。 |
 | [SerializingFunctionsNotFoundException](./distributed_package_api/distributed_package_exceptions.md#class-serializingfunctionsnotfoundexception) | 当找不到序列化函数时抛出。 |
 
-## actors.distributed.mcp 包
-
-### 类
-
-| 类名 | 描述 |
-|------------|-------------|
-| [ActorToolManager](./mcp_package_api/mcp_package_classes.md#class-actortoolmanager) | 管理多个 Actor 客户端并将其 Receiver 函数作为 MCP 工具对外暴露的工具管理器实现。 |
-| [ReceiverTool](./mcp_package_api/mcp_package_classes.md#class-receivertool) | 将 Actor 的 Receiver 函数封装为 MCP 工具的实现。 |
-
-### 异常
-
-| 异常名 | 描述 |
-|----------------|-------------|
-| [ActorMCPException](./mcp_package_api/mcp_package_classes.md#class-actormcpexception) | MCP 相关操作失败（如工具不存在、参数非法等）时抛出的异常。 |
-
 ## actors.tcp_actor_system 包
 
 ### 类
@@ -152,3 +137,8 @@
 | [@ActorInterface](./macros_package_api/macros_package_macros.md#actorinterface-macro) | 将接口转换为 actor 接口。 |
 | [@Receiver](./macros_package_api/macros_package_macros.md#receiver-宏) | 将方法转换为 receiver。 |
 
+## actors_mcp 包
+
+该包由仓库中的 `subpackages/actors-mcp` 子包提供。
+
+包概览与 API 请参阅 [actors_mcp 包概览](./api/actors_mcp_package_overview.md)。

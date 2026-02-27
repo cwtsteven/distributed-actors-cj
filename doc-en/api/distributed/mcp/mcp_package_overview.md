@@ -1,10 +1,12 @@
-# actors.distributed.mcp
+# actors_mcp
 
 ## Function Description
 
-The `actors.distributed.mcp` package provides Model Context Protocol (MCP) integration for distributed actors, enabling actors to be exposed as MCP tools that can be called from external systems. This package bridges the gap between distributed actor systems and MCP-compatible tools, allowing for seamless integration with MCP clients and servers.
+The `actors_mcp` package provides Model Context Protocol (MCP) integration for distributed actors, enabling actors to be exposed as MCP tools that can be called from external systems. This package bridges the gap between distributed actor systems and MCP-compatible tools, allowing for seamless integration with MCP clients and servers.
 
 This package enables distributed actors to be used as tools in MCP ecosystems, making actor functionality accessible to external systems through standardized MCP protocols.
+
+This API is shipped via the `actors_mcp` subpackage (`subpackages/actors-mcp`) in this repository.
 
 ## API List
 

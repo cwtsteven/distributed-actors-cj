@@ -87,21 +87,6 @@ This document provides a comprehensive list of all public APIs in the distribute
 | [SerializationException](./distributed_package_api/distributed_package_exceptions.md#class-serializationexception) | Thrown when serialization of a message or object fails. |
 | [SerializingFunctionsNotFoundException](./distributed_package_api/distributed_package_exceptions.md#class-serializingfunctionsnotfoundexception) | Thrown when serializing or deserializing functions for a type cannot be found in the distributed actor system. |
 
-## actors.distributed.mcp Package
-
-### Classes
-
-| Class Name | Description |
-|------------|-------------|
-| [ActorToolManager](./mcp_package_api/mcp_package_classes.md#class-actortoolmanager) | Tool manager implementation that manages multiple actor clients and exposes their receiver functions as MCP tools. |
-| [ReceiverTool](./mcp_package_api/mcp_package_classes.md#class-receivertool) | MCP tool implementation that wraps actor receiver functions, enabling them to be called as MCP tools. |
-
-### Exceptions
-
-| Exception Name | Description |
-|----------------|-------------|
-| [ActorMCPException](./mcp_package_api/mcp_package_classes.md#class-actormcpexception) | Exception thrown when MCP-related operations fail, such as tool not found or invalid arguments. |
-
 ## actors.tcp_actor_system Package
 
 ### Classes
@@ -152,3 +137,8 @@ This document provides a comprehensive list of all public APIs in the distribute
 | [@ActorInterface](./macros_package_api/macros_package_macros.md#actorinterface-macro)     | Transform an interface into an actor interface. |
 | [@Receiver](./macros_package_api/macros_package_macros.md#receiver-macro)     | Transform a method into a receiver. |
 
+## actors_mcp Package
+
+This package is provided by the repository subpackage at `subpackages/actors-mcp`.
+
+For package overview and APIs, see [actors_mcp Package Overview](./api/actors_mcp_package_overview.md).

@@ -1361,11 +1361,17 @@ CangjieMagic 是一个框架，使 AI 代理能够与外部工具和服务交互
 ```toml
 [dependencies]
   [dependencies.actors]
-    git = "git@github.com:Huawei-Edinburgh-Programming-Languages/distributed-actors.git"
+    git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git"
+    branch = "main"
+    version = "0.2.0"
+  [dependencies.actors_mcp]
+    path = "subpackages/actors-mcp"
   [dependencies.magic]
     git = "https://gitcode.com/Cangjie-TPC/CangjieMagic.git"
-    tag = "harmony_os_edition"
+    commitId = "d6cccc429b9de7a6b4994f4e2193956c0d8321f6"
 ```
+
+对于仓库外部项目，`actors` 可使用 `git` 依赖；`actors_mcp` 需要指向本地检出的 `subpackages/actors-mcp` 路径依赖。
 
 ### 基本代理设置
 

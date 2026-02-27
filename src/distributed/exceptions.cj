@@ -82,7 +82,7 @@ public open class SerializationException <: ActorSystemException {
 * Exception thrown when a deserialization fails
 */
 public open class DeserializationException <: ActorSystemException {
-    protected init(message: String) {
+    public init(message: String) {
         super(message)
     }
 
