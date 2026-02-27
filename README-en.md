@@ -85,6 +85,10 @@ Add the following to your `cjpm.toml`:
 
 ### Building
 
+Before building the package, make sure you have done:
+1. set up cangjie compiler, e.g. `source /path-to-cangjie-compiler/envsetup.sh`
+2. set up the path to stdx, e.g. `export CANGJIE_STDX_PATH=/path-to-stdx-lib/dynamic/stdx`
+
 ```shell
 # Build the package
 make

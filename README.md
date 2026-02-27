@@ -85,6 +85,10 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 
 ### 编译构建
 
+在构建该包之前，请确保已经完成以下操作：
+配置好 Cangjie 编译器，例如：`source /path-to-cangjie-compiler/envsetup.sh`
+配置好 stdx 的路径，例如：`export CANGJIE_STDX_PATH=/path-to-stdx-lib/dynamic/stdx`
+
 ```shell
 # 构建包
 make
