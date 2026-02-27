@@ -97,6 +97,9 @@ For MCP integration, add the MCP package from this repository:
 Before building the package, make sure you have done:
 1. set up cangjie compiler, e.g. `source /path-to-cangjie-compiler/envsetup.sh`
 2. set up the path to stdx, e.g. `export CANGJIE_STDX_PATH=/path-to-stdx-lib/dynamic/stdx`
+3. add stdx path into load library path, e.g.
+  - in macOS: `export DYLD_LIBRARY_PATH=$CANGJIE_STDX_PATH:$DYLD_LIBRARY_PATH`
+  - in linux: `export LD_LIBRARY_PATH=$CANGJIE_STDX_PATH:$LD_LIBRARY_PATH`
 
 ```shell
 # Build the package

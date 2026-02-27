@@ -95,8 +95,11 @@ subpackages
 ### 编译构建
 
 在构建该包之前，请确保已经完成以下操作：
-配置好 Cangjie 编译器，例如：`source /path-to-cangjie-compiler/envsetup.sh`
-配置好 stdx 的路径，例如：`export CANGJIE_STDX_PATH=/path-to-stdx-lib/dynamic/stdx`
+1. 配置好 Cangjie 编译器，例如：`source /path-to-cangjie-compiler/envsetup.sh`
+2. 配置好 stdx 的路径，例如：`export CANGJIE_STDX_PATH=/path-to-stdx-lib/dynamic/stdx`
+3. 将 stdx 路径添加到库加载路径中，例如：
+  - 在 macOS 上：`export DYLD_LIBRARY_PATH=$CANGJIE_STDX_PATH:$DYLD_LIBRARY_PATH`
+  - 在 Linux 上：`export LD_LIBRARY_PATH=$CANGJIE_STDX_PATH:$LD_LIBRARY_PATH`
 
 ```shell
 # 构建包
