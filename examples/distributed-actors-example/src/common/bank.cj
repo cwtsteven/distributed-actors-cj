@@ -27,6 +27,15 @@ public interface BankAccount {
     func getBalance(): Float64
 }
 
+@ActorInterface[distributed: true, enableReceiverPriority: true, description: "Balance reporter service"]
+public interface BalanceReporter {
+    @Receiver[priority: 10, description: "Store a balance snapshot"]
+    func recordSnapshot(owner: String, balance: Float64): String
+
+    @Receiver[priority: 1, description: "Get the latest balance snapshot"]
+    func latestSnapshot(): String
+}
+
 @Actor
 public class BankAccountImpl <: BankAccount {
     private let name: String
@@ -55,5 +64,21 @@ public class BankAccountImpl <: BankAccount {
     @Receiver
     public func getBalance(): Float64 {
         balance
+    }
+}
+
+@Actor[enableReceiverPriority: true]
+public class BalanceReporterImpl <: BalanceReporter {
+    private var latest: String = "No snapshots yet"
+
+    @Receiver[priority: 10]
+    public func recordSnapshot(owner: String, balance: Float64): String {
+        latest = "${owner}: ${balance}"
+        latest
+    }
+
+    @Receiver[priority: 1]
+    public func latestSnapshot(): String {
+        latest
     }
 }

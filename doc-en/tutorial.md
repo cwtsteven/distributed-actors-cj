@@ -297,7 +297,7 @@ After the `test()` function returns, since there are no remaining references to 
 
 Users can specify priority for receivers, allowing higher-priority receivers to be executed before lower-priority ones.
 
-First, users need to enable receiver priority by adding the `[enableReceiverPriority: true]` annotation to the class. For example:
+First, users need to enable receiver priority on the outer actor macro. This can be done on `@Actor`, and for distributed actor interfaces it can also be done on `@ActorInterface`. For example:
 
 ```cangjie
 @Actor[enableReceiverPriority: true]
@@ -309,7 +309,7 @@ public class Account {
 }
 ```
 
-If `enableReceiverPriority` is set to `false` or if the `@Actor` macro does not include this option, it means that receiver priorities are not enabled.
+If `enableReceiverPriority` is set to `false`, or if the outer `@Actor` / `@ActorInterface` macro does not include this option, receiver priorities are not enabled.
 
 Next, we can assign a default priority level to each receiver. Currently, we provide 10 priority levels, represented by integers from 1 to 10. The higher the number, the higher the priority. If the priority option is not set, the default value is 5:
 
@@ -512,6 +512,19 @@ public interface BankAccount {
 ```
 
 The `distributed: true` option indicates that this is a distributed actor interface, which means it can be used for remote communication across the network.
+
+Distributed actor interfaces can also enable receiver priorities:
+
+```cangjie
+@ActorInterface[distributed: true, enableReceiverPriority: true]
+public interface BalanceReporter {
+    @Receiver[priority: 10]
+    func recordSnapshot(owner: String, balance: Float64): String
+
+    @Receiver[priority: 1]
+    func latestSnapshot(): String
+}
+```
 
 ## Implementing Distributed Actors
 

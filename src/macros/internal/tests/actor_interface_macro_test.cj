@@ -63,6 +63,14 @@ public class ActorInterfaceMacroTest {
     func testValidInterfaceWithPriorityEnabled() {
         let attrs = quote(enableReceiverPriority: true)
         let tokens = createDeclWithReceivers(quote(interface TestInterface), [(quote([priority: 5]), quote(func test(): Int64))], [])
+        let result = GenerateActorInterface.Run(attrs, tokens)
+        @Expect(result.size > 0, true)
+    }
+
+    @TestCase
+    func testInterfaceWithPriorityDisabledRejectsReceiverPriority() {
+        let attrs = quote(enableReceiverPriority: false)
+        let tokens = createDeclWithReceivers(quote(interface TestInterface), [(quote([priority: 5]), quote(func test(): Int64))], [])
         let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(attrs, tokens))
         @Expect(exn.message.contains(MacroOptionNotAllowed(Priority(5), ACTOR_INTERFACE_MACRO).toString()), true)
     }

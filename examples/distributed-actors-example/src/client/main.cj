@@ -31,4 +31,10 @@ main() {
     steven.deposit(100.0).get()
     let res2 = steven.getBalance().get()
     println("Steven balance: ${res2}") // 200.0
+
+    let reporterProxy = tcpClient.getActor("balance-reporter").getOrThrow()
+    let reporter = BalanceReporter.getProxy(reporterProxy)
+    let snapshot = reporter.recordSnapshot("Steven", res2).get()
+    println("Latest snapshot: ${snapshot}")
+    println("Stored snapshot: ${reporter.latestSnapshot().get()}")
 }

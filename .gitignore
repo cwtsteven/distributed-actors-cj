@@ -1,4 +1,6 @@
 cjpm.lock
+.DS_Store
+**/.DS_Store
 **/target/
 **.cj.macrocall
 /.vscode/
