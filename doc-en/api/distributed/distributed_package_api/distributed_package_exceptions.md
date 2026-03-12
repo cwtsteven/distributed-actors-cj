@@ -3,29 +3,15 @@
 ## class ActorClusterException
 
 ```cangjie
-public class ActorClusterException <: ActorSystemException {
-  ActorClusterException(message: String)
-}
+public class ActorClusterException <: ActorSystemException
 ```
 
 Function: Exception thrown when an actor cluster fails.
 
-### init(String)
-
-```cangjie
-ActorClusterException(message: String)
-```
-
-Function: Creates an `ActorClusterException` with a custom error message.
-
-Parameters:
-
-- `message: String` - The custom error message describing the cluster error.
-
 ## class ActorNotFoundException
 
 ```cangjie
-public class ActorNotFoundException <: Exception {
+public class ActorNotFoundException <: ActorSystemException {
   public init(name: String)
 }
 ```
@@ -47,30 +33,16 @@ Parameters:
 ## class ActorSystemException
 
 ```cangjie
-public class ActorSystemException <: Exception {
-  public init(msg: String)
-}
+public class ActorSystemException <: Exception
 ```
 
 Function: General exception for actor system related errors with a custom message.
-
-### init(String)
-
-```cangjie
-public init(msg: String)
-```
-
-Function: Creates an `ActorSystemException` with a custom error message.
-
-Parameters:
-
-- `msg: String` - The custom error message describing the actor system error.
 
 ## class DeserializationException
 
 ```cangjie
 public class DeserializationException <: ActorSystemException {
-  DeserializationException(message: String)
+  public init(message: String)
 }
 ```
 
@@ -79,7 +51,7 @@ Function: Exception thrown when a deserialization operation fails.
 ### init(String)
 
 ```cangjie
-DeserializationException(message: String)
+public init(message: String)
 ```
 
 Function: Creates a `DeserializationException` with a custom error message.
@@ -91,7 +63,7 @@ Parameters:
 ## class ReceiverNotFoundException
 
 ```cangjie
-public class ReceiverNotFoundException <: Exception {
+public class ReceiverNotFoundException <: ActorSystemException {
   public init(name: String, receiverName: String)
 }
 ```
@@ -114,27 +86,15 @@ Parameters:
 ## class RemoteException
 
 ```cangjie
-public class RemoteException <: Exception {
-  public init()
-}
+public class RemoteException <: ActorSystemException
 ```
 
 Function: Exception thrown when a remote connection has failed during distributed actor communication.
 
-### init()
-
-```cangjie
-public init()
-```
-
-Function: Creates a `RemoteException` with a default message indicating that the remote connection has failed.
-
 ## class RemoteReceiverException
 
 ```cangjie
-public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverException> {
-  public init(e: Exception)
-  public init(e: Error)
+public class RemoteReceiverException <: ActorSystemException & Serializable<RemoteReceiverException> {
   public override func serialize(): DataModel
   public static func deserialize(dm: DataModel): RemoteReceiverException
 }
@@ -144,30 +104,6 @@ Function: Exception that wraps non-serializable exceptions or errors thrown from
 
 Implements:
 - `Serializable`
-
-### init(Exception)
-
-```cangjie
-public init(e: Exception)
-```
-
-Function: Creates a `RemoteReceiverException` from an `Exception`, capturing its stack trace.
-
-Parameters:
-
-- `e: Exception` - The exception to wrap.
-
-### init(Error)
-
-```cangjie
-public init(e: Error)
-```
-
-Function: Creates a `RemoteReceiverException` from an `Error`, capturing its stack trace.
-
-Parameters:
-
-- `e: Error` - The error to wrap.
 
 ### func serialize()
 
@@ -204,44 +140,15 @@ Exceptions:
 ## class SerializationException
 
 ```cangjie
-public class SerializationException <: ActorSystemException {
-  SerializationException(message: String)
-}
+public class SerializationException <: ActorSystemException
 ```
 
 Function: Exception thrown when a serialization operation fails.
 
-### init(String)
-
-```cangjie
-SerializationException(message: String)
-```
-
-Function: Creates a `SerializationException` with a custom error message.
-
-Parameters:
-
-- `message: String` - The custom error message describing the serialization error.
-
 ## class SerializingFunctionsNotFoundException
 
 ```cangjie
-public class SerializingFunctionsNotFoundException <: ActorClusterException {
-  SerializingFunctionsNotFoundException(message: String)
-}
+public class SerializingFunctionsNotFoundException <: ActorClusterException
 ```
 
 Function: Exception thrown when a serializing function is not found.
-
-### init(String)
-
-```cangjie
-SerializingFunctionsNotFoundException(message: String)
-```
-
-Function: Creates a `SerializingFunctionsNotFoundException` with a custom error message.
-
-Parameters:
-
-- `message: String` - The custom error message describing the error.
-

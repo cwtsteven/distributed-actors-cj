@@ -76,13 +76,13 @@ public class TCPActorSystemInternalException <: ActorSystemException {
 }
 
 extend Exception {
-    public func toStringWithStackTrace(): String {
+    func toStringWithStackTrace(): String {
         stackTraceToString(message, getStackTrace())
     }
 }
 
 extend Error {
-    public func toStringWithStackTrace(): String {
+    func toStringWithStackTrace(): String {
         stackTraceToString(message, getStackTrace())
     }
 }

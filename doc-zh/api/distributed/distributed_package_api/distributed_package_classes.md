@@ -58,6 +58,7 @@ public func tell(receiverName: String, args: Array<DataModel>, config!: Receiver
 - `ActorNotFoundException` — 如果在客户端找不到 actor 则抛出。
 - `ReceiverNotFoundException` — 如果找不到 receiver 则抛出。
 - `RemoteException` — 如果远程连接失败则抛出。
+- `IllegalArgumentException` — 如果参数无效则抛出。
 - `ActorSystemException` — 对于任何系统特定错误则抛出。
 
 ### func ask()
@@ -83,6 +84,7 @@ public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverC
 - `ActorNotFoundException` — 如果在客户端找不到 actor 则抛出。
 - `ReceiverNotFoundException` — 如果找不到 receiver 则抛出。
 - `RemoteException` — 如果远程连接失败则抛出。
+- `IllegalArgumentException` — 如果参数无效则抛出。
 - `ActorSystemException` — 对于任何系统特定错误则抛出。
 
 ### func serialize()

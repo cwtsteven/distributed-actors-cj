@@ -58,6 +58,7 @@ Exceptions:
 - `ActorNotFoundException` - Thrown if the actor is not found on the client.
 - `ReceiverNotFoundException` - Thrown if the receiver is not found.
 - `RemoteException` - Thrown if the remote connection fails.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
 - `ActorSystemException` - Thrown for any system-specific errors.
 
 ### func ask()
@@ -83,6 +84,7 @@ Exceptions:
 - `ActorNotFoundException` - Thrown if the actor is not found on the client.
 - `ReceiverNotFoundException` - Thrown if the receiver is not found.
 - `RemoteException` - Thrown if the remote connection fails.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
 - `ActorSystemException` - Thrown for any system-specific errors.
 
 ### func serialize()

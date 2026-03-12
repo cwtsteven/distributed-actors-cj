@@ -34,6 +34,18 @@ public static let default = ReceiverConfig()
 
 功能：使用默认优先级的 `ReceiverConfig` 实例。
 
+### prop priority
+
+```cangjie
+public let priority: Int64
+```
+
+功能：该 Receiver 调用使用的优先级。
+
+取值：
+
+- `Int64` — 当前 Receiver 调用配置的优先级值。
+
 ### operator ==()
 
 ```cangjie

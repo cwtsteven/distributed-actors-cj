@@ -6,6 +6,12 @@ The `actors.tcp_actor_system.cluster` package builds a TCP-based cluster manager
 
 ## API List
 
+### Interfaces
+
+| Interface Name | Function |
+| --- | --- |
+| [HeadServer](./cluster_package_api/cluster_package_interfaces.md#interface-headserver) | Distributed actor interface for the cluster head server. It manages worker registration and cluster-wide actor placement, lookup, and removal. |
+
 ### Classes
 
 | Class Name | Function |
@@ -17,5 +23,4 @@ The `actors.tcp_actor_system.cluster` package builds a TCP-based cluster manager
 | Exception Name | Function |
 |----------------|----------|
 | [TCPClusterException](./cluster_package_api/cluster_package_exceptions.md#class-tcpclusterexception) | Exception thrown when a cluster operation fails. |
-
 

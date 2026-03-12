@@ -105,3 +105,58 @@ Return Value:
 
 - `TypeModel` - The type model of the TCPActorHostInfo.
 
+### operator ==()
+
+```cangjie
+public override operator func ==(other: HostInfo): Bool
+```
+
+Function: Compares this `TCPActorHostInfo` with another `HostInfo`.
+
+Parameters:
+
+- `other: HostInfo` - The other host info value to compare with.
+
+Return Value:
+
+- `Bool` - Returns `true` when the other value is also a `TCPActorHostInfo` with the same address and port.
+
+### operator !=()
+
+```cangjie
+public override operator func !=(other: HostInfo): Bool
+```
+
+Function: Compares this `TCPActorHostInfo` with another `HostInfo` for inequality.
+
+Parameters:
+
+- `other: HostInfo` - The other host info value to compare with.
+
+Return Value:
+
+- `Bool` - Returns `true` when the two host info values are not equal.
+
+### func hashCode()
+
+```cangjie
+public override func hashCode(): Int64
+```
+
+Function: Returns the hash code of the TCP actor host info.
+
+Return Value:
+
+- `Int64` - The hash code derived from the host address and port.
+
+### func toString()
+
+```cangjie
+public func toString(): String
+```
+
+Function: Converts the TCP actor host info to a string representation.
+
+Return Value:
+
+- `String` - A string in the form `TCPActorHostInfo addr:port`.

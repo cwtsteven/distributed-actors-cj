@@ -146,6 +146,11 @@ static func spawnActor<T>(name: String, args: Array<SpawnArgument>): Option<T> w
 
 - `Option<T>` — 创建成功返回 `Some(T)`；若名称已存在或创建失败返回 `None`。
 
+异常：
+
+- `RemoteException` — 如果与集群的连接失败则抛出。
+- `IllegalArgumentException` — 如果参数无效则抛出。
+
 ### func getActor\<T>()
 
 ```cangjie
@@ -389,6 +394,7 @@ func dispatchTell(receiverName: String, args: Array<DataModel>, config: Receiver
 异常：
 
 - `ReceiverNotFoundException` — 未找到 receiver 函数时抛出。
+- `IllegalArgumentException` — 如果参数无效则抛出。
 
 ### func dispatchAsk()
 
@@ -411,6 +417,7 @@ func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverC
 异常：
 
 - `ReceiverNotFoundException` — 未找到 receiver 函数时抛出。
+- `IllegalArgumentException` — 如果参数无效则抛出。
 
 ## interface Proxyable<T>
 
@@ -460,22 +467,6 @@ func getResult(): DataModel
 
 - `SerializationException` — 如果结果无法序列化则抛出。
 
-### func fromActorFuture\<T>()
-
-```cangjie
-static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
-```
-
-功能：从可序列化类型的 `ActorFuture` 创建 `LocalWaitable`。
-
-参数：
-
-- `obj: Object` — 要转换的 `ActorFuture` 对象。
-
-返回值：
-
-- `LocalWaitable` — 提供该 `ActorFuture` 序列化结果的 `LocalWaitable`。
-
 ## interface Spawnable\<T>
 
 ```cangjie
@@ -512,6 +503,10 @@ static func spawnWith(args: Array<SpawnArgument>): Option<T>
 
 - `Option<T>` — 创建成功返回 `Some(T)`，若创建失败（如参数无效）返回 `None`。
 
+异常：
+
+- `IllegalArgumentException` — 如果参数无效则抛出。
+
 ## interface TypeSerializable
 
 ```cangjie
@@ -534,4 +529,4 @@ static func typeModel(): TypeModel
 
 说明：
 
-- 框架已为整数（`Int8`-`Int64`、`UInt8`-`UInt64`）、浮点数（`Float16`-`Float64`）、`Bool`、`Unit`、`String`、`Array<T>` 与 `Option<T>`（当 `T` 同样实现 `TypeSerializable` 时）提供默认实现。自定义类型应实现该接口以参与分布式元数据生成。
+- 框架已为整数（`Int8`-`Int64`、`UInt8`-`UInt64`）、浮点数（`Float16`-`Float64`）、`Bool`、`Unit`、`String`、`Array<T>`、`Option<T>`、`ArrayList<T>`、`HashSet<T>` 与 `HashMap<K, V>` 提供默认实现，前提是其中包含的类型满足相应约束。自定义类型应实现该接口以参与分布式元数据生成。

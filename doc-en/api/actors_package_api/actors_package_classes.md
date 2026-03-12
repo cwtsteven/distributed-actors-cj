@@ -48,7 +48,6 @@ Return Value:
 
 - `Option<T>` - If the result is not yet ready, it returns `None`; otherwise, it returns the result value.
 
-
 ## class SequentialDispatcher
 
 ```cangjie

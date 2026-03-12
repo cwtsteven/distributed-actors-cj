@@ -6,6 +6,12 @@
 
 ## API 列表
 
+### 接口
+
+| 接口名 | 功能 |
+| --- | --- |
+| [HeadServer](./cluster_package_api/cluster_package_interfaces.md#interface-headserver) | 集群头节点的分布式 actor 接口，负责管理工作节点注册，以及集群范围内 actor 的放置、查找与移除。 |
+
 ### 类
 
 | 类名 | 功能 |
@@ -17,4 +23,3 @@
 | 异常名 | 功能 |
 | --- | --- |
 | [TCPClusterException](./cluster_package_api/cluster_package_exceptions.md#class-tcpclusterexception) | 当集群操作失败时抛出。 |
-

@@ -3,29 +3,15 @@
 ## class ActorClusterException
 
 ```cangjie
-public class ActorClusterException <: ActorSystemException {
-  ActorClusterException(message: String)
-}
+public class ActorClusterException <: ActorSystemException
 ```
 
 功能：当分布式 actor 集群发生错误时抛出，例如集群管理或协调失败。
 
-### init(String)
-
-```cangjie
-ActorClusterException(message: String)
-```
-
-功能：创建带自定义错误信息的 `ActorClusterException`。
-
-参数：
-
-- `message: String` - 描述集群错误的自定义错误信息。
-
 ## class ActorNotFoundException
 
 ```cangjie
-public class ActorNotFoundException <: Exception {
+public class ActorNotFoundException <: ActorSystemException {
   public init(name: String)
 }
 ```
@@ -47,30 +33,16 @@ public init(name: String)
 ## class ActorSystemException
 
 ```cangjie
-public class ActorSystemException <: Exception {
-  public init(msg: String)
-}
+public class ActorSystemException <: Exception
 ```
 
 功能：actor 系统相关错误的通用异常。
-
-### init(String)
-
-```cangjie
-public init(msg: String)
-```
-
-功能：创建带自定义错误信息的 `ActorSystemException`。
-
-参数：
-
-- `msg: String` - 描述 actor 系统错误的消息。
 
 ## class DeserializationException
 
 ```cangjie
 public class DeserializationException <: ActorSystemException {
-  DeserializationException(message: String)
+  public init(message: String)
 }
 ```
 
@@ -79,7 +51,7 @@ public class DeserializationException <: ActorSystemException {
 ### init(String)
 
 ```cangjie
-DeserializationException(message: String)
+public init(message: String)
 ```
 
 功能：创建带自定义错误信息的 `DeserializationException`。
@@ -91,7 +63,7 @@ DeserializationException(message: String)
 ## class ReceiverNotFoundException
 
 ```cangjie
-public class ReceiverNotFoundException <: Exception {
+public class ReceiverNotFoundException <: ActorSystemException {
   public init(name: String, receiverName: String)
 }
 ```
@@ -114,27 +86,15 @@ public init(name: String, receiverName: String)
 ## class RemoteException
 
 ```cangjie
-public class RemoteException <: Exception {
-  public init()
-}
+public class RemoteException <: ActorSystemException
 ```
 
 功能：分布式 actor 通信过程中远程连接失败时抛出。
 
-### init()
-
-```cangjie
-public init()
-```
-
-功能：创建默认"远程连接失败"消息的 `RemoteException`。
-
 ## class RemoteReceiverException
 
 ```cangjie
-public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverException> {
-  public init(e: Exception)
-  public init(e: Error)
+public class RemoteReceiverException <: ActorSystemException & Serializable<RemoteReceiverException> {
   public override func serialize(): DataModel
   public static func deserialize(dm: DataModel): RemoteReceiverException
 }
@@ -144,30 +104,6 @@ public class RemoteReceiverException <: Exception & Serializable<RemoteReceiverE
 
 实现接口：
 - `Serializable`
-
-### init(Exception)
-
-```cangjie
-public init(e: Exception)
-```
-
-功能：从 `Exception` 创建 `RemoteReceiverException`，并捕获其堆栈信息。
-
-参数：
-
-- `e: Exception` - 要包装的异常。
-
-### init(Error)
-
-```cangjie
-public init(e: Error)
-```
-
-功能：从 `Error` 创建 `RemoteReceiverException`，并捕获其堆栈信息。
-
-参数：
-
-- `e: Error` - 要包装的错误。
 
 ### func serialize()
 
@@ -204,44 +140,15 @@ public static func deserialize(dm: DataModel): RemoteReceiverException
 ## class SerializationException
 
 ```cangjie
-public class SerializationException <: ActorSystemException {
-  SerializationException(message: String)
-}
+public class SerializationException <: ActorSystemException
 ```
 
 功能：当序列化操作失败时抛出。
 
-### init(String)
-
-```cangjie
-SerializationException(message: String)
-```
-
-功能：创建带自定义错误信息的 `SerializationException`。
-
-参数：
-
-- `message: String` - 描述序列化错误的自定义错误信息。
-
 ## class SerializingFunctionsNotFoundException
 
 ```cangjie
-public class SerializingFunctionsNotFoundException <: ActorClusterException {
-  SerializingFunctionsNotFoundException(message: String)
-}
+public class SerializingFunctionsNotFoundException <: ActorClusterException
 ```
 
 功能：当找不到序列化函数时抛出。
-
-### init(String)
-
-```cangjie
-SerializingFunctionsNotFoundException(message: String)
-```
-
-功能：创建带自定义错误信息的 `SerializingFunctionsNotFoundException`。
-
-参数：
-
-- `message: String` - 描述错误的自定义错误信息。
-

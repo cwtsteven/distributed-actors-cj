@@ -389,6 +389,7 @@ Parameters:
 Exceptions:
 
 - `ReceiverNotFoundException` - Thrown if the receiver function is not found.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
 
 ### func dispatchAsk()
 
@@ -411,6 +412,7 @@ Return Value:
 Exceptions:
 
 - `ReceiverNotFoundException` - Thrown if the receiver function is not found.
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
 
 ## interface Proxyable\<T>
 
@@ -460,22 +462,6 @@ Exceptions:
 
 - `SerializationException` - Thrown if the result cannot be serialized.
 
-### func fromActorFuture\<T>()
-
-```cangjie
-static func fromActorFuture<T>(obj: Object): LocalWaitable where T <: Serializable<T>
-```
-
-Function: Creates a LocalWaitable from an `ActorFuture` for serializable types.
-
-Parameters:
-
-- `obj: Object` - The ActorFuture object to convert.
-
-Return Value:
-
-- `LocalWaitable` - A `LocalWaitable` that provides the serialized result of the ActorFuture.
-
 ## interface Spawnable\<T>
 
 ```cangjie
@@ -512,6 +498,10 @@ Return Value:
 
 - `Option<T>` - Returns `Some(T)` when the actor is successfully created, `None` when creation fails (for example due to invalid arguments).
 
+Exceptions:
+
+- `IllegalArgumentException` - Thrown if the arguments are invalid.
+
 ## interface TypeSerializable
 
 ```cangjie
@@ -534,4 +524,4 @@ Return Value:
 
 Notes:
 
-- Built-in conformances cover integers (`Int8`-`Int64`, `UInt8`-`UInt64`), floats (`Float16`-`Float64`), `Bool`, `Unit`, `String`, `Array<T>` and `Option<T>` whenever `T` is also `TypeSerializable`. Custom types should implement this interface to participate in distributed metadata generation.
+- Built-in conformances cover integers (`Int8`-`Int64`, `UInt8`-`UInt64`), floats (`Float16`-`Float64`), `Bool`, `Unit`, `String`, `Array<T>`, `Option<T>`, `ArrayList<T>`, `HashSet<T>`, and `HashMap<K, V>` whenever the contained types satisfy the required constraints. Custom types should implement this interface to participate in distributed metadata generation.
