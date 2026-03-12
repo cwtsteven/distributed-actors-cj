@@ -31,6 +31,7 @@ example:
 	mkdir $(EXAMPLE_TARGET_DIR)
 	$(CJC) $(BASIC_EXAMPLE_DIR)/ping-pong.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(EXAMPLE_TARGET_DIR)/ping-pong
 	$(CJC) $(BASIC_EXAMPLE_DIR)/actor-interface.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(EXAMPLE_TARGET_DIR)/actor-interface
+	$(CJC) $(BASIC_EXAMPLE_DIR)/actor-interface-priority.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(EXAMPLE_TARGET_DIR)/actor-interface-priority
 	$(CJC) $(BASIC_EXAMPLE_DIR)/gc.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(EXAMPLE_TARGET_DIR)/gc
 	$(CJC) $(BASIC_EXAMPLE_DIR)/fjcreate.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(EXAMPLE_TARGET_DIR)/fjcreate
 	$(CJC) $(BASIC_EXAMPLE_DIR)/counter.cj $(OPTIONS) $(IMPORT_ACTORS) -o $(EXAMPLE_TARGET_DIR)/counter

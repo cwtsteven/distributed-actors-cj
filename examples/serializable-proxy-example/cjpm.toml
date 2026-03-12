@@ -27,7 +27,7 @@
       path-option = ["${CANGJIE_STDX_PATH}"]
 
 [dependencies]
-  actors = { git = "https://gitcode.com/Cangjie-TPC/distributed-actors-cj.git", branch = "main", version = "0.2.0" }
+  actors = { path = "../.." }
 
 [package]
   cjc-version = "1.0.5"
