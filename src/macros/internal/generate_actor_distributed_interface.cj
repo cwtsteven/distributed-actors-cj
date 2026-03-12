@@ -22,12 +22,6 @@ protected class GenerateDistributedActorInterface {
         CustomInfos(JsonObject())
     ]
 
-    static let allowedReceiverOptions: Array<MacroOption> = [
-        Mode(AskAndTell),
-        Description(""),
-        CustomInfos(JsonObject())
-    ]
-
     protected static func Run(aOpts: MacroOptionSet, headDecl: Decl, decl: InterfaceDecl, errors: MacroErrors) {
         GenerateDistributedActorInterface(aOpts, headDecl, decl, errors).run()
     }
@@ -114,7 +108,15 @@ protected class GenerateDistributedActorInterface {
     }
 
     private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
-        rOpts.checkOptions(allowedReceiverOptions, errors, ACTOR_DISTRIBUTED_INTERFACE_MACRO)
+        let allowedReceiverOptions = ArrayList<MacroOption>([
+            Mode(AskAndTell),
+            Description(""),
+            CustomInfos(JsonObject())
+        ])
+        if (aOpts.hasEnabledReceiverPriority()) {
+            allowedReceiverOptions.add(Priority(5))
+        }
+        rOpts.checkOptions(allowedReceiverOptions.toArray(), errors, ACTOR_DISTRIBUTED_INTERFACE_MACRO)
         errors.report()
     }
 
@@ -434,6 +436,7 @@ protected class GenerateDistributedActorInterface {
 
     private func modifyDefaultFuncDecl(rOpts: MacroOptionSet, fd: FuncDecl, behaviour: Behaviour): Unit {
         var args = generateParamList(fd)
+        let defaultPriority = rOpts.getPriority()
 
         if (let Tell <- behaviour) {
             // Add the `tell` parameter
@@ -454,9 +457,9 @@ protected class GenerateDistributedActorInterface {
         fd.block.rBrace = Token(RCURL)
 
         args += if (args.size > 0) {
-            quote(, config: ReceiverConfig.default)
+            quote(, config: ReceiverConfig(priority: $defaultPriority))
         } else {
-            quote(config: ReceiverConfig.default)
+            quote(config: ReceiverConfig(priority: $defaultPriority))
         }
 
         match (behaviour) {

@@ -97,7 +97,7 @@ Options: The `@Receiver` macro accepts a list of options in the form of `opt1: v
 
 Available options:
 
-- `priority: value` - Specifies the default priority level for the receiving function. The provided value must be an integer literal between 1 and 10; otherwise, an error will be thrown during macro expansion. This option is only available when the outer `@Actor` macro has the `enableReceiverPriority: true` option.
+- `priority: value` - Specifies the default priority level for the receiving function. The provided value must be an integer literal between 1 and 10; otherwise, an error will be thrown during macro expansion. This option is only available when the outer macro enables `enableReceiverPriority: true`, including both `@Actor[...]` and `@ActorInterface[distributed: true, ...]`.
 - `mode: value` - Specifies whether the annotated function should be modified with 'Ask' or 'Tell' behaviour. The supplied value to the `mode` option must be one of the following:
     - `AskOnly`: only generates a receiver function that can be called in `Ask` mode, which returns an `ActorFuture` which allows the caller to obtain the return value of the function and/or wait for the function call to finish.
     - `TellOnly`: only generates a receiver function that can be called in `Tell` mode, which returns `Unit` and gives no way for the caller to obtain the return value or synchronize with the actor thread.

@@ -297,7 +297,7 @@ func bar() {
 
 用户可以为 receiver 指定优先级，允许高优先级的 receiver 在低优先级的 receiver 之前执行。
 
-首先，用户需要通过向类添加 `[enableReceiverPriority: true]` 注解来启用 receiver 优先级。例如：
+首先，用户需要在外层 actor 宏上启用 receiver 优先级。这个选项既可以用于 `@Actor`，也可以用于 `@ActorInterface[distributed: true, ...]`。例如：
 
 ```cangjie
 @Actor[enableReceiverPriority: true]
@@ -309,7 +309,7 @@ public class Account {
 }
 ```
 
-如果 `enableReceiverPriority` 设置为 `false` 或者 `@Actor` 宏不包含此选项，则意味着未启用 receiver 优先级。
+如果 `enableReceiverPriority` 设置为 `false`，或者外层 `@Actor` / `@ActorInterface[distributed: true, ...]` 宏未包含此选项，则意味着未启用 receiver 优先级。
 
 接下来，我们可以为每个 receiver 分配默认优先级级别。目前，我们提供 10 个优先级级别，用 1 到 10 的整数表示。数字越高，优先级越高。如果未设置优先级选项，默认值为 5：
 
@@ -511,6 +511,19 @@ public interface BankAccount {
 ```
 
 `distributed: true` 选项表示这是一个分布式 actor 接口，这意味着它可以用于跨网络的远程通信。
+
+分布式 actor 接口同样可以启用 receiver 优先级：
+
+```cangjie
+@ActorInterface[distributed: true, enableReceiverPriority: true]
+public interface BalanceReporter {
+    @Receiver[priority: 10]
+    func recordSnapshot(owner: String, balance: Float64): String
+
+    @Receiver[priority: 1]
+    func latestSnapshot(): String
+}
+```
 
 ## 实现分布式 Actor
 

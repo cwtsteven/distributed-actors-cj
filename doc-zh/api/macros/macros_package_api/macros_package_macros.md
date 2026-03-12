@@ -95,7 +95,7 @@ public macro Receiver(options: Tokens, input: Tokens): Tokens
 
 可用选项：
 
-- `priority: value` — 指定 receiver 的默认优先级，仅当外层 `@Actor` 启用 `enableReceiverPriority: true` 时有效。取值需为 1 到 10 的整数字面量，否则宏展开时报错；
+- `priority: value` — 指定 receiver 的默认优先级，仅当外层宏启用 `enableReceiverPriority: true` 时有效，包括 `@Actor[...]` 和 `@ActorInterface[distributed: true, ...]` 两种情况。取值需为 1 到 10 的整数字面量，否则宏展开时报错；
 - `mode: value` — 指定函数的 Ask/Tell 行为：
   - `AskOnly`：仅生成 Ask 模式的 receiver（返回 `ActorFuture`，可等待/获取返回值）；
   - `TellOnly`：仅生成 Tell 模式的 receiver（返回 `Unit`，不可等待/获取返回值）；

@@ -171,8 +171,29 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface TestInterface),
             [(quote([priority: 5]), quote(func test(): Unit))], [])
         let options = quote(distributed: true, enableReceiverPriority: true)
-        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-        @Expect(exn.message.contains(MacroOptionNotAllowed(Priority(5), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
+
+    @TestCase
+    func testDistributedWithEnableReceiverPriorityTrue() {
+        let tokens = createDeclWithReceivers(
+            quote(interface TestInterface),
+            [(quote(), quote(func test(): Unit))], [])
+        let options = quote(distributed: true, enableReceiverPriority: true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
+    }
+
+    @TestCase
+    func testDistributedWithEnableReceiverPriorityTrueAndReceiverPriorities() {
+        let tokens = createDeclWithReceivers(
+            quote(interface TestInterface),
+            [(quote([priority: 10]), quote(func highPriorityTask(): Unit)),
+            (quote([priority: 1]), quote(func lowPriorityTask(): Unit))], [])
+        let options = quote(distributed: true, enableReceiverPriority: true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
     }
 
     @TestCase
@@ -301,8 +322,8 @@ public class DistributedActorInterfaceMacroTest {
             quote(interface ValidDistributedInterface),
             [(quote([priority: 5]), quote(func test(): Unit))], [])
         let options = quote(distributed: true, enableReceiverPriority: true)
-        let exn = @AssertThrows[MacroException](GenerateActorInterface.Run(options, tokens))
-        @Expect(exn.message.contains(MacroOptionNotAllowed(Priority(5), ACTOR_DISTRIBUTED_INTERFACE_MACRO).toString()), true)
+        let result = GenerateActorInterface.Run(options, tokens)
+        @Expect(result.size > 0, true)
     }
 
 
@@ -340,7 +361,7 @@ public class DistributedActorInterfaceMacroTest {
     func testReceiverWithAllOptions() {
         let tokens = createDeclWithReceivers(
             quote(interface ValidDistributedInterface),
-            [(quote([description: "High priority ask and tell method", customInfo: """
+            [(quote([priority: 10, description: "High priority ask and tell method", customInfo: """
                 { "priority": "high", "mode": "ask_and_tell" }
                 """]), quote(func test(): String))], [])
         let options = quote(distributed: true, enableReceiverPriority: true)

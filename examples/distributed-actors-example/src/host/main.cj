@@ -31,6 +31,7 @@ main() {
     // Export the bank service
     let bankAccount1 = BankAccountImpl("Steven", 0.0)
     tcpHost.export("Steven", bankAccount1)
+    tcpHost.export("balance-reporter", BalanceReporterImpl())
 
     // Keep the server running
     serverFuture.get()
