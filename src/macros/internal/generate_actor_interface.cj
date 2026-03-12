@@ -19,10 +19,6 @@ protected class GenerateActorInterface {
         Distributed(false)
     ]
 
-    static let allowedReceiverOptions: Array<MacroOption> = [
-        Mode(AskAndTell)
-    ]
-
     private init(attrs: Tokens, input: Tokens) {
         errors = MacroErrors()
         aOpts = MacroOptionParser.Run(attrs, errors)
@@ -68,7 +64,13 @@ protected class GenerateActorInterface {
     }
 
     private func checkReceiverOptions(rOpts: MacroOptionSet): Unit {
-        rOpts.checkOptions(allowedReceiverOptions, errors, ACTOR_INTERFACE_MACRO)
+        let allowedReceiverOptions = ArrayList<MacroOption>([
+            Mode(AskAndTell)
+        ])
+        if (aOpts.hasEnabledReceiverPriority()) {
+            allowedReceiverOptions.add(Priority(5))
+        }
+        rOpts.checkOptions(allowedReceiverOptions.toArray(), errors, ACTOR_INTERFACE_MACRO)
         errors.report()
     }
 
