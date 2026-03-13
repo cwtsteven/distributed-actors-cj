@@ -34,6 +34,18 @@ public static let default = ReceiverConfig()
 
 Function: A default `ReceiverConfig` instance with default priority.
 
+### prop priority
+
+```cangjie
+public let priority: Int64
+```
+
+Function: The priority of the receiver call.
+
+Value:
+
+- `Int64` - The configured priority value for this receiver call.
+
 ### operator ==()
 
 ```cangjie

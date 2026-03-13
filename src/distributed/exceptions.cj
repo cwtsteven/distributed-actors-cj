@@ -187,13 +187,13 @@ public open class RemoteReceiverException <: ActorSystemException & Serializable
 }
 
 extend Exception {
-    public func toStringWithStackTrace(): String {
+    func toStringWithStackTrace(): String {
         stackTraceToString(message, getStackTrace())
     }
 }
 
 extend Error {
-    public func toStringWithStackTrace(): String {
+    func toStringWithStackTrace(): String {
         stackTraceToString(message, getStackTrace())
     }
 }

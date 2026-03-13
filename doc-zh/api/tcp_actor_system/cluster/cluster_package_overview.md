@@ -6,6 +6,10 @@
 
 ## API 列表
 
+### 接口
+
+此包不对外暴露公共接口。
+
 ### 类
 
 | 类名 | 功能 |
@@ -17,4 +21,3 @@
 | 异常名 | 功能 |
 | --- | --- |
 | [TCPClusterException](./cluster_package_api/cluster_package_exceptions.md#class-tcpclusterexception) | 当集群操作失败时抛出。 |
-

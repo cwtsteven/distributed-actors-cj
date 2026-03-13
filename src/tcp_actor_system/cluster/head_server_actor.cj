@@ -19,7 +19,7 @@ const MAX_TRIALS = 10
 * Head server interface
 */
 @ActorInterface[distributed: true]
-public interface HeadServer {
+interface HeadServer {
     /*
     * Joins as a worker to the head server
     * @param workerId - the id of the worker

@@ -6,6 +6,10 @@ The `actors.tcp_actor_system.cluster` package builds a TCP-based cluster manager
 
 ## API List
 
+### Interfaces
+
+This package does not expose any public interfaces.
+
 ### Classes
 
 | Class Name | Function |
@@ -17,5 +21,3 @@ The `actors.tcp_actor_system.cluster` package builds a TCP-based cluster manager
 | Exception Name | Function |
 |----------------|----------|
 | [TCPClusterException](./cluster_package_api/cluster_package_exceptions.md#class-tcpclusterexception) | Exception thrown when a cluster operation fails. |
-
-
