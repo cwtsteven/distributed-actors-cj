@@ -36,13 +36,13 @@ public class TCPActorHost <: ActorHost {
      * Exports an actor
      * @param name - the name of the actor
      * @param a - the actor to export
-     * @return Some(ActorProxy) if the actor was exported successfully, None if the name is already taken
+     * @return true if the actor was exported successfully, false if the name is already taken
      */
-    public func export(name: String, a: Distributable): Option<ActorProxy> {
+    public func export(name: String, a: Distributable): Bool {
         if (let Some(_) <- localMap.addIfAbsent(name, a)) {
-            None
+            false
         } else {
-            Some(ActorProxy(name, hostInfo))
+            true
         }
     }
 
@@ -183,7 +183,7 @@ public class TCPActorHost <: ActorHost {
 
         spawn {
             logger.debug("wait on local future.")
-            let res = fut.getResult()
+            let res = fut.get()
             logger.debug("local future done.")
             conn.send(Envelope(id, Fulfill(futId, res)))
         }

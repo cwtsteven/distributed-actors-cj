@@ -33,17 +33,26 @@ public interface Distributable {
     * @param receiverName - the name of the receiver
     * @param args - the arguments to the receiver
     * @param config - the configuration of the receiver
-    * @return the future of the result
+    * @return the future of the serialized result payload
     * @throws ReceiverNotFoundException - if the receiver is not found
     * @throws IllegalArgumentException - if the arguments are invalid
+    * @throws Exception - when the receiver result cannot be serialized
     */
-    func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
+    func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): DistributedActorFuture<DataModel>
 }
 
 /*
 * Interface for actors that can create a typed proxy
 */
 public interface Proxyable<T> where T <: Distributable {
+    /*
+    * Gets a typed-proxy for the actor using a name and host info pair.
+    * @param name - the exported actor name
+    * @param info - the host information for the remote actor host
+    * @return a typed-proxy for the actor
+    */
+    static func getProxy(name: String, info: HostInfo): T
+
     /*
     * Gets a typed-proxy for the actor
     * @param proxy - the actor proxy
@@ -74,7 +83,7 @@ public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
     * @throws ActorSystemException - for any system-specific errors
     */
     public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
-        ClientManager.instance.getOrCreateClient(hostInfo).remoteCall(InvokeInfo(name: actorName, receiverName: receiverName, args: args, config: config, fut: None))
+        ClientManager.instance.getOrCreateClient(hostInfo).tell(actorName, receiverName, args, config)
     }
 
     /*
@@ -82,16 +91,15 @@ public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
     * @param receiverName - the name of the receiver
     * @param args - the arguments to the receiver in serialized form
     * @param config - the configuration of the receiver
+    * @return a future whose successful value contains the serialized remote result
     * @throws ActorNotFoundException - if the actor is not found on the client
     * @throws ReceiverNotFoundException - if the receiver is not found
     * @throws RemoteException - if the remote connection fails
     * @throws IllegalArgumentException - if the arguments are invalid
     * @throws ActorSystemException - for any system-specific errors
     */
-    public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture {
-        let fut = DistributedFuture()
-        ClientManager.instance.getOrCreateClient(hostInfo).remoteCall(InvokeInfo(name: actorName, receiverName: receiverName, args: args, config: config, fut: Some(fut)))
-        fut
+    public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedActorFuture<DataModel> {
+        ClientManager.instance.getOrCreateClient(hostInfo).ask(actorName, receiverName, args, config)
     }
 
     /*
@@ -149,5 +157,3 @@ public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
         ])
     }
 }
-
-// public abstract class Proxy<T> {}

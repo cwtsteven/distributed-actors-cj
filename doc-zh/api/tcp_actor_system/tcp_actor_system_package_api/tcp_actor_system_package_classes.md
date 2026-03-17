@@ -146,28 +146,21 @@ public func getHostInfo(): HostInfo
 
 - `HostInfo` — 标识此客户端连接到的远程主机的主机信息。
 
-### func remoteCall()
+### func getTypedActor\<T>()
 
 ```cangjie
-public func remoteCall(invokeInfo: InvokeInfo): Unit
+public func getTypedActor<T>(name: String): Option<T> where T <: Distributable & Proxyable<T>
 ```
 
-功能：根据调用信息对某个 actor 的 receiver 发起远程调用。
+功能：按名称获取类型化 actor 代理。
 
 参数：
 
-- `invokeInfo: InvokeInfo` — 远程调用的信息。
+- `name: String` — 已导出的 actor 名称。
 
-异常：
+返回值：
 
-- `ActorNotFoundException` — 如果找不到 actor 则抛出。
-- `ReceiverNotFoundException` — 如果找不到 receiver 则抛出。
-- `IllegalArgumentException` — 如果参数无效则抛出。
-- `TCPActorSystemRemoteException` — 如果连接丢失则抛出。
-- `TCPActorSystemRequestTimeoutException` — 如果请求超时则抛出。
-- `TCPActorSystemSerializationException` — 如果信封序列化失败则抛出。
-- `TCPActorSystemDeserializationException` — 如果响应信封反序列化失败则抛出。
-- `TCPActorSystemInternalException` — 对于任何内部错误则抛出。
+- `Option<T>` — 找到时返回 `Some(T)`，否则返回 `None`。
 
 ### func close()
 
@@ -203,7 +196,7 @@ public init(addr!: String, bindAt!: UInt16)
 ### func export()
 
 ```cangjie
-public func export(name: String, a: Distributable): Option<ActorProxy>
+public func export(name: String, a: Distributable): Bool
 ```
 
 功能：以指定名称导出 actor 实例。
@@ -215,7 +208,7 @@ public func export(name: String, a: Distributable): Option<ActorProxy>
 
 返回值：
 
-- `Option<ActorProxy>` — 导出成功返回 `Some(ActorProxy)`；若名称已被占用返回 `None`。
+- `Bool` — 导出成功返回 `true`；若名称已被占用返回 `false`。
 
 ### func unexport()
 

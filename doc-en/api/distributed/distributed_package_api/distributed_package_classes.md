@@ -64,10 +64,10 @@ Exceptions:
 ### func ask()
 
 ```cangjie
-public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
+public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedActorFuture<DataModel>
 ```
 
-Function: Makes a call to a remote actor's receiver and returns a [DistributedFuture](distributed_package_classes.md#class-distributedfuture) representing the pending result (`Ask` mode).
+Function: Makes a call to a remote actor's receiver and returns a `DistributedActorFuture<DataModel>` representing the pending serialized result (`Ask` mode).
 
 Parameters:
 
@@ -77,7 +77,7 @@ Parameters:
 
 Return Value:
 
-- [DistributedFuture](distributed_package_classes.md#class-distributedfuture) - The pending result of the remote call.
+- `DistributedActorFuture<DataModel>` - The pending serialized result of the remote call.
 
 Exceptions:
 
@@ -130,128 +130,6 @@ Function: Gets the type model of the actor proxy, describing its structure for d
 Return Value:
 
 - `TypeModel` - The type model describing the actor proxy structure.
-
-## class DistributedFuture
-
-```cangjie
-public class DistributedFuture
-```
-
-Function: Represents the pending result of remote receiver call. Provides methods for obtaining and fulfilling the serialized result.
-
-### func get()
-
-```cangjie
-public func get(): DataModel
-```
-
-Function: Blocks the current thread until the result is ready and returns the serialized result.
-
-Return Value:
-
-- `DataModel` - The serialized result of the operation.
-
-Exceptions:
-
-- `RemoteException` - Thrown if the remote connection fails.
-- `RemoteReceiverException` - Thrown if the result is an exception or error thrown from the remote receiver execution.
-- `ActorSystemException` - Thrown for any system-specific errors.
-
-### func get(Duration)
-
-```cangjie
-public func get(timeout: Duration): Option<DataModel>
-```
-
-Function: Blocks the current thread until the result is ready with a timeout and returns the result.
-
-Parameters:
-
-- `timeout: Duration` - The timeout duration.
-
-Return Value:
-
-- `Option<DataModel>` - Returns the result if it is ready within the timeout, `None` otherwise.
-
-Exceptions:
-
-- `RemoteException` - Thrown if the remote connection fails.
-- `RemoteReceiverException` - Thrown if the result is an exception or error thrown from the remote receiver execution.
-- `ActorSystemException` - Thrown for any system-specific errors.
-
-### func tryGet()
-
-```cangjie
-public func tryGet(): Option<DataModel>
-```
-
-Function: Tries to get the result.
-
-Return Value:
-
-- `Option<DataModel>` - Returns the result if it is ready, `None` otherwise.
-
-Exceptions:
-
-- `RemoteException` - Thrown if the remote connection fails.
-- `RemoteReceiverException` - Thrown if the result is an exception or error thrown from the remote receiver execution.
-- `ActorSystemException` - Thrown for any system-specific errors.
-
-### func fulfill()
-
-```cangjie
-public func fulfill(dataModel: DataModel): Bool
-```
-
-Function: Fulfills the future with a serialized result value.
-
-Parameters:
-
-- `dataModel: DataModel` - The serialized result value to fulfill the future with.
-
-Return Value:
-
-- `Bool` - Returns `true` if the future was successfully fulfilled, `false` if it was already fulfilled.
-
-Exceptions:
-
-- `IllegalArgumentException` - Thrown if the serialized result cannot be deserialized into a valid future result.
-
-### func exn()
-
-```cangjie
-public func exn(exception: Exception): Bool
-```
-
-Function: Fulfills the future with an exception.
-
-Parameters:
-
-- `exception: Exception` - The exception to fulfill the future with.
-
-Return Value:
-
-- `Bool` - Returns `true` if the future was successfully fulfilled, `false` if it was already fulfilled.
-
-### func toActorFuture\<T>()
-
-```cangjie
-public func toActorFuture<T>(): ActorFuture<T> where T <: Serializable<T>
-```
-
-Function: Converts the distributed future into a local `ActorFuture`.
-
-Type Parameters:
-
-- `T` - The concrete serializable type expected from the remote call.
-
-Return Value:
-
-- `ActorFuture<T>` - A local future that will complete with the deserialized value.
-
-Exceptions:
-
-- `DataModelException` - Thrown when the type of the result of the DistributedFuture does not match with `T`.
 
 ## class ClientManager
 

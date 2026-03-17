@@ -87,6 +87,7 @@ protected class GenerateDistributedActorInterface {
         decl.body.decls.add(newDispatchTellFunc())
         decl.body.decls.add(newDispatchAskFunc())
         decl.body.decls.add(getProxyFunc())
+        decl.body.decls.add(getProxyFromActorProxyFunc())
         decl.body.decls.add(newSerializeFunc())
         decl.body.decls.add(newDeserializeFunc())
         decl.body.decls.add(newTypeModelFunc())
@@ -169,7 +170,7 @@ protected class GenerateDistributedActorInterface {
                         throw IllegalArgumentException("Number of arguments (args.size) not equal to expected number of parameters ($(fd.funcParams.size)) for receiver $(fd.identifier.value)")
                     }
                     try {
-                        a.$(fd.identifier)$(callExpr)
+                        a.$(fd.identifier)$(callExpr).toDataModel()
                     } catch (e: DataModelException) {
                         throw IllegalArgumentException("Error deserializing arguments for receiver $(fd.identifier.value): " + e.message)
                     }
@@ -278,7 +279,7 @@ protected class GenerateDistributedActorInterface {
 
     private func newDispatchAskFunc(): FuncDecl {
         FuncDecl(quote(
-            func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable {
+            func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): DistributedActorFuture<DataModel> {
                 match ($proxyClassIdent.$dispatchAskHashMapVarToken.get(receiverName)) {
                     case Some(f) => f(this, args, config)
                     case None => throw ReceiverNotFoundException($(interfaceName.value), receiverName)
@@ -289,8 +290,16 @@ protected class GenerateDistributedActorInterface {
 
     private func getProxyFunc(): FuncDecl {
         FuncDecl(quote(
+            static func getProxy(name: String, info: HostInfo): $interfaceName {
+                $proxyClassIdent(name, info)
+            }
+        ))
+    }
+
+    private func getProxyFromActorProxyFunc(): FuncDecl {
+        FuncDecl(quote(
             static func getProxy(proxy: ActorProxy): $interfaceName {
-                $proxyClassIdent(proxy)
+                $proxyClassIdent(proxy.actorName, proxy.hostInfo)
             }
         ))
     }
@@ -324,22 +333,24 @@ protected class GenerateDistributedActorInterface {
         ClassDecl(quote(
             private class $proxyClassIdent <: $interfaceName {
                 static let $dispatchTellHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> Unit>()
-                static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> LocalWaitable>()
+                static let $dispatchAskHashMapVarToken = HashMap<String, ($interfaceName, Array<DataModel>, ReceiverConfig) -> DistributedActorFuture<DataModel>>()
                 static let $receiverInfosArrayVarToken = ArrayList<ReceiverInfo>()
 
-                private let proxy: ActorProxy
+                private let actorName: String
+                private let hostInfo: HostInfo
 
-                public init(proxy: ActorProxy) {
-                    this.proxy = proxy
+                public init(actorName: String, hostInfo: HostInfo) {
+                    this.actorName = actorName
+                    this.hostInfo = hostInfo
                 }
 
                 public func serialize(): DataModel {
-                    proxy.serialize()
+                    ActorProxy(actorName, hostInfo).serialize()
                 }
 
                 public static func deserialize(dataModel: DataModel): $interfaceName {
                     let proxy = ActorProxy.deserialize(dataModel)
-                    $proxyClassIdent(proxy)
+                    $proxyClassIdent(proxy.actorName, proxy.hostInfo)
                 }
 
                 public static func typeModel(): TypeModel {
@@ -390,7 +401,7 @@ protected class GenerateDistributedActorInterface {
         let declaredType = fd.declType
 
         fd.declType = match (behaviour) {
-            case Ask => RefType(quote(ActorFuture<$declaredType>))
+            case Ask => RefType(quote(DistributedActorFuture<$declaredType>))
             case Tell => PrimitiveType(quote(Unit))
         }
 
@@ -401,8 +412,10 @@ protected class GenerateDistributedActorInterface {
 
         match (behaviour) {
             case Ask =>
-                fd.block.nodes.add(CallExpr(quote(
-                    proxy.ask($(fd.identifier.value), $args, config: config).toActorFuture<$declaredType>()
+                fd.block.nodes.add(ReturnExpr(quote(
+                    return DistributedActorFuture<$declaredType>.fromDataModel(
+                        ActorProxy(actorName, hostInfo).ask($(fd.identifier.value), $args, config: config)
+                    )
                 )))
             case Tell =>
                 let discardTellParam = VarDecl(quote(let dummy = tell))
@@ -411,7 +424,7 @@ protected class GenerateDistributedActorInterface {
                 discardTellParam.identifier = Token(WILDCARD)
                 fd.block.nodes.add(discardTellParam)
                 fd.block.nodes.add(CallExpr(quote(
-                    proxy.tell($(fd.identifier.value), $args, config: config)
+                    ActorProxy(actorName, hostInfo).tell($(fd.identifier.value), $args, config: config)
                 )))
         }
     }
@@ -429,7 +442,7 @@ protected class GenerateDistributedActorInterface {
         }
 
         fd.declType = match (behaviour) {
-            case Ask => RefType(quote(ActorFuture<$(fd.declType)>))
+            case Ask => RefType(quote(DistributedActorFuture<$(fd.declType)>))
             case Tell => PrimitiveType(quote(Unit))
         }
     }
@@ -448,7 +461,7 @@ protected class GenerateDistributedActorInterface {
         let declaredType = fd.declType
 
         fd.declType = match (behaviour) {
-            case Ask => RefType(quote(ActorFuture<$declaredType>))
+            case Ask => RefType(quote(DistributedActorFuture<$declaredType>))
             case Tell => PrimitiveType(quote(Unit))
         }
 
@@ -465,7 +478,7 @@ protected class GenerateDistributedActorInterface {
         match (behaviour) {
             case Ask =>
                 fd.block.nodes.add(CallExpr(quote(
-                    ($(fd.identifier)($args) as ActorFuture<$declaredType>).getOrThrow()
+                    ($(fd.identifier)($args) as DistributedActorFuture<$declaredType>).getOrThrow()
                 )))
             case Tell =>
                 fd.block.nodes.add(CallExpr(quote(

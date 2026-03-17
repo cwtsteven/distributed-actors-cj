@@ -572,17 +572,14 @@ let actorHost: ActorHost
 
 // 创建并导出 actor
 let bankAccount = BankAccountImpl("alice", 1000.0)
-match (actorHost.export("alice", bankAccount)) {
-    case Some(proxy) =>
-        println("Bank account exported successfully")
-        // 如果需要，可以直接使用代理
-    case None =>
-        println("Failed to export bank account: name already taken")
-        return
+if (!actorHost.export("alice", bankAccount)) {
+    println("Failed to export bank account: name already taken")
+    return
 }
+println("Bank account exported successfully")
 ```
 
-`export` 函数使用 *name* 导出分布式 actor。此名称在该特定 actor host 的导出 actor 中应该是唯一的。使用相同名称导出两次将返回 `None`。成功导出时，它返回 `Some(ActorProxy)`，可直接用于本地通信。
+`export` 函数使用 *name* 导出分布式 actor。此名称在该特定 actor host 的导出 actor 中应该是唯一的。使用相同名称导出两次将返回 `false`；成功导出时返回 `true`。
 
 一旦 actor 被导出，相应的 actor client 就可以找到它。
 
@@ -619,8 +616,8 @@ let bankProxy = ActorProxy("alice", actorClient.getHostInfo())
 一旦我们获得 actor 代理，我们可以使用 `ask` 或 `tell` 函数对特定 receiver 进行远程调用：
 
 ```cangjie
-// 调用远程方法 - 这些返回 DistributedFuture 对象
-let depositFut: DistributedFuture = bankProxy.ask("deposit", [
+// 调用远程方法 - 这些返回 DistributedActorFuture<DataModel> 对象
+let depositFut: DistributedActorFuture<DataModel> = bankProxy.ask("deposit", [
     500.0.serialize()
 ])
 ```
@@ -628,7 +625,7 @@ let depositFut: DistributedFuture = bankProxy.ask("deposit", [
 `ask` 函数具有以下签名：
 
 ```cangjie
-public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
+public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedActorFuture<DataModel>
 ```
 
 如果 actor 之前已从 host 取消导出（使用 `unexport` 函数），此函数将抛出 `ActorNotFoundException`。
@@ -639,7 +636,7 @@ public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverC
 
 当远程连接失败时，此函数还会抛出 `RemoteException`，对于来自特定 actor 系统的任何潜在错误，会抛出 `ActorSystemException`。
 
-`tell` 函数类似，只是它不返回 `DistributedFuture`。
+`tell` 函数类似，只是它不返回 future。
 
 远程 receiver 的执行顺序与本地 receiver 相同，从同一线程在同一 actor 上调用两个（远程）receiver 时，这些 receiver 将按调用顺序执行。
 
@@ -669,14 +666,14 @@ let bankProxy: BankAccount = BankAccount.getProxy(actorProxy)
 获取类型化代理后，我们可以像调用本地 actor 一样调用其远程 receiver：
 
 ```cangjie
-// 调用远程方法 - 这些返回 ActorFuture 对象
-let depositFut: ActorFuture<Bool> = bankProxy.deposit(500.0)
-let balanceFut: ActorFuture<Float64> = bankProxy.getBalance()
+// 调用远程方法 - 这些返回 DistributedActorFuture 对象
+let depositFut: DistributedActorFuture<Bool> = bankProxy.deposit(500.0)
+let balanceFut: DistributedActorFuture<Float64> = bankProxy.getBalance()
 ```
 
 使用类型化代理调用远程 receiver 本质上会调用底层 `ActorProxy` 的 `ask` 或 `tell` 函数，当连接失败时会抛出 `RemoteException`，对于任何 actor 系统特定错误会抛出 `ActorSystemException`。
 
-此函数返回一个 `ActorFuture<T>`，可用于获取远程 receiver 调用的结果。
+此函数返回一个 `DistributedActorFuture<T>`，可用于获取远程 receiver 调用的结果。
 
 ```cangjie
 depositFut.get()
@@ -769,9 +766,8 @@ let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
 
 // 向 host 导出 actor
 let bankAccount = BankAccountImpl("Steven", 0.0)
-match (tcpHost.export("Steven", bankAccount)) {
-    case Some(_) => println("Bank account exported")
-    case None => println("Failed to export: name already taken")
+if (!tcpHost.export("Steven", bankAccount)) {
+    throw Exception("Failed to export: name already taken")
 }
 
 // 启动服务器以接受客户端连接
@@ -806,6 +802,10 @@ let steven = BankAccount.getProxy(proxy)
 steven.deposit(100.0).get()
 let res2 = steven.getBalance().get()
 println("Steven balance: ${res2}") // 200.0
+
+// 或直接获取类型化代理
+let steven2 = tcpClient.getTypedActor<BankAccount>("Steven").getOrThrow()
+println("Steven balance again: ${steven2.getBalance().get()}")
 ```
 
 ## 完整的 TCP Actor 系统示例

@@ -8,7 +8,8 @@ This document provides a comprehensive list of all public APIs in the distribute
 
 | Class Name | Description |
 |------------|-------------|
-| [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) | Concrete class for representing the pending result of a closure submitted to an Actor. Provides methods for blocking and non-blocking result retrieval with timeout support. |
+| [DistributedActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-distributedactorfuturet) | Base future type for distributed actor calls. Exposes blocking and non-blocking result retrieval and may surface remote transport/system failures. |
+| [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) | Concrete class for representing the pending result of a closure submitted to an Actor. Provides blocking and non-blocking result retrieval, result mapping, and `DataModel` transport conversion helpers. |
 | [SequentialDispatcher](./actors_package_api/actors_package_classes.md#class-sequentialdispatcher) | A dispatcher that queues and executes closures sequentially on a dedicated thread, and provides methods for submitting closures. Supports priority-based scheduling and is typically used internally by the actor system. |
 
 ### Structs
@@ -38,7 +39,6 @@ This document provides a comprehensive list of all public APIs in the distribute
 |------------|-------------|
 | [ActorProxy](./distributed_package_api/distributed_package_classes.md#class-actorproxy) | Proxy class for communicating with remote actors. Provides methods for both *ask* and *tell* patterns. |
 | [ClientManager](./distributed_package_api/distributed_package_classes.md#class-clientmanager) | Singleton class that manages actor clients in the distributed actor system. Used to get and register actor clients and their deserializers. |
-| [DistributedFuture](./distributed_package_api/distributed_package_classes.md#class-distributedfuture) | Concrete class representing the pending result of remote receiver call. Provides methods for obtaining and fulfilling the result. |
 
 ### Structs
 
@@ -46,7 +46,6 @@ This document provides a comprehensive list of all public APIs in the distribute
 |-------------|-------------|
 | [ActorInfo](./distributed_package_api/distributed_package_structs.md#struct-actorinfo) | Information about an actor including its name and metadata. |
 | [FieldModel](./distributed_package_api/distributed_package_structs.md#struct-fieldmodel) | Information about a field in a struct type, including its name, type, and description. Part of the whole type model schema. |
-| [InvokeInfo](./distributed_package_api/distributed_package_structs.md#struct-invokeinfo) | Information about a remote call invocation, containing all the necessary details to make a remote call to an actor's receiver. |
 | [Metadata](./distributed_package_api/distributed_package_structs.md#struct-metadata) | Contains metadata about an actor interface, including receiver information, description, and custom data. |
 | [ReceiverInfo](./distributed_package_api/distributed_package_structs.md#struct-receiverinfo) | Information about a specific receiver function, including parameter schemas, return types, and metadata. |
 | [ReceiverParameter](./distributed_package_api/distributed_package_structs.md#struct-receiverparameter) | Information about a parameter in a receiver function, including its name, type, and description. |
@@ -61,7 +60,6 @@ This document provides a comprehensive list of all public APIs in the distribute
 | [ActorHost](./distributed_package_api/distributed_package_interfaces.md#interface-actorhost) | Interface for actor host implementations. Provides methods for *exporting* a distributed actor. |
 | [HostInfo](./distributed_package_api/distributed_package_interfaces.md#interface-hostinfo) | Interface for host information that identifies a remote actor host. Provides methods to create clients and obtain type information. |
 | [Distributable](./distributed_package_api/distributed_package_interfaces.md#interface-distributable) | Interface implemented by all distributed actors, provides methods to dispatch remote calls from client to the underlying actor instance. |
-| [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`. |
 | [Proxyable](./distributed_package_api/distributed_package_interfaces.md#interface-proxyablet) | Interface for distributed actor interfaces that can be proxied to a typed proxy via `getProxy`. |
 | [Spawnable](./distributed_package_api/distributed_package_interfaces.md#interface-spawnablet) | Interface for distributed actors that can be spawned dynamically within a cluster. Users are required implement this interface for any actor interfaces that are meant to be spawned in a cluster. |
 | [TypeSerializable](./distributed_package_api/distributed_package_interfaces.md#interface-typeserializable) | Interface for types that can describe their type schema for distributed transport by returning a `TypeModel`. |

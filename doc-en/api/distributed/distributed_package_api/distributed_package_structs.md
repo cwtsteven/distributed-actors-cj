@@ -117,45 +117,6 @@ Return Value:
 
 - `Bool` - Returns `true` if the `FieldModels` are not equal, `false` otherwise.
 
-## struct InvokeInfo
-
-```cangjie
-public struct InvokeInfo {
-  public InvokeInfo(
-    public let name!: String,
-    public let receiverName!: String,
-    public let args!: Array<DataModel>,
-    public let config!: ReceiverConfig,
-    public let fut!: ?DistributedFuture
-  )
-}
-```
-
-Function: Information about a remote call invocation, containing all the necessary details to make a remote call to an actor's receiver function.
-
-### init(String, String, Array<DataModel>, ReceiverConfig, ?DistributedFuture)
-
-```cangjie
-public InvokeInfo(
-  public let name!: String,
-  public let receiverName!: String,
-  public let args!: Array<DataModel>,
-  public let config!: ReceiverConfig,
-  public let fut!: ?DistributedFuture
-)
-```
-
-
-Function: Creates an `InvokeInfo` with the specified call details.
-
-Parameters:
-
-- `name!: String` - The name of the target actor.
-- `receiverName!: String` - The name of the receiver function to call.
-- `args!: Array<DataModel>` - Serialized arguments for the receiver function.
-- `config!: ReceiverConfig` - Configuration for the call.
-- `fut!: ?DistributedFuture` - Optional future to fulfill with the result.
-
 ## struct Metadata
 
 ```cangjie

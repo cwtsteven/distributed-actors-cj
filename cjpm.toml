@@ -31,7 +31,7 @@
   description = "A distributed actors framework."
   version = "0.2.0"
   name = "actors"
-  compile-option = "-O2 -Woff unused"
+  compile-option = "-O2 -Woff unused -L \"${CANGJIE_STDX_PATH}\" -lstdx.serialization.serialization"
   output-type = "dynamic"
 
 [package.package-configuration."actors.macros.internal"]

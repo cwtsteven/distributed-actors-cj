@@ -13,7 +13,7 @@ public interface ActorHost {
      * @return Some(ActorProxy) if the actor was successfully exported, None if the name is already taken
      * @throws ActorSystemException - for any system-specific errors
      */
-    func export(name: String, a: Distributable): Option<ActorProxy>
+    func export(name: String, a: Distributable): Bool
 
     /*
     * Un-exports an actor
@@ -34,7 +34,6 @@ public interface ActorHost {
 * Interface for host info
 */
 public interface HostInfo <: Serializable<HostInfo> & TypeSerializable & Equatable<HostInfo> & Hashable & ToString {
-
     /*
     * Creates a client for the host
     * @return the client for the host

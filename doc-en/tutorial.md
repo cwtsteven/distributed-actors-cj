@@ -573,17 +573,14 @@ let actorHost: ActorHost
 
 // Create and export the actor
 let bankAccount = BankAccountImpl("alice", 1000.0)
-match (actorHost.export("alice", bankAccount)) {
-    case Some(proxy) =>
-        println("Bank account exported successfully")
-        // The proxy can be used directly if needed
-    case None =>
-        println("Failed to export bank account: name already taken")
-        return
+if (!actorHost.export("alice", bankAccount)) {
+    println("Failed to export bank account: name already taken")
+    return
 }
+println("Bank account exported successfully")
 ```
 
-The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this particular actor host. Exporting twice with the same name returns `None`. On successful export, it returns `Some(ActorProxy)` which can be used directly for local communication.
+The `export` function exports a distributed actor with a *name*. This name should be unique among the exported actors of this particular actor host. Exporting twice with the same name returns `false`; a successful export returns `true`.
 
 Once an actor has been exported, it can be found by a corresponding actor client.
 
@@ -620,8 +617,8 @@ However this does not check if the actor exists or not.
 Once we obtain an actor proxy, we can use the `ask` or `tell` function to make a remote call to a particular receiver:
 
 ```cangjie
-// Call remote methods - these return DistributedFuture objects
-let depositFut: DistributedFuture = bankProxy.ask("deposit", [
+// Call remote methods - these return DistributedActorFuture<DataModel> objects
+let depositFut: DistributedActorFuture<DataModel> = bankProxy.ask("deposit", [
     500.0.serialize()
 ])
 ```
@@ -629,7 +626,7 @@ let depositFut: DistributedFuture = bankProxy.ask("deposit", [
 The function `ask` has the following signature:
 
 ```cangjie
-public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
+public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedActorFuture<DataModel>
 ```
 
 If the actor has been unexported from the host (using the `unexport` function) before, this function throws an `ActorNotFoundException`.
@@ -640,7 +637,7 @@ The `args` is an array of `DataModel` which is the serialized arguments to that 
 
 This function also throws `RemoteException` when the remote connection fails and `ActorSystemException` for any potential errors coming from the specific actor system.
 
-The `tell` function works similarly except that it does not return a `DistributedFuture`.
+The `tell` function works similarly except that it does not return a future.
 
 The execution order of remote receivers is the same as local receivers where calling two (remote) receivers on the same actor from the same thread, these receivers will be executed in the order they were called.
 
@@ -670,14 +667,14 @@ let bankProxy: BankAccount = BankAccount.getProxy(actorProxy)
 After obtaining a typed-proxy, we can invoke its remote receivers as if it were a local actor:
 
 ```cangjie
-// Call remote methods - these return ActorFuture objects
-let depositFut: ActorFuture<Bool> = bankProxy.deposit(500.0)
-let balanceFut: ActorFuture<Float64> = bankProxy.getBalance()
+// Call remote methods - these return DistributedActorFuture objects
+let depositFut: DistributedActorFuture<Bool> = bankProxy.deposit(500.0)
+let balanceFut: DistributedActorFuture<Float64> = bankProxy.getBalance()
 ```
 
 Calling remote receivers using a typed-proxy essentially calls the `ask` or `tell` functions of the underlying `ActorProxy`, which will throw a `RemoteException` when connection has failed and a `ActorSystemException` for any actor system specific errors that have occurred.
 
-This function returns an `ActorFuture<T>` that can be used to obtain the result of the remote receiver call.
+This function returns a `DistributedActorFuture<T>` that can be used to obtain the result of the remote receiver call.
 
 ```cangjie
 depositFut.get()
@@ -799,9 +796,8 @@ let tcpHost = TCPActorHost(addr: "localhost", bindAt: 8080)
 
 // Export actors with the host
 let bankAccount = BankAccountImpl("Steven", 0.0)
-match (tcpHost.export("Steven", bankAccount)) {
-    case Some(_) => println("Bank account exported")
-    case None => println("Failed to export: name already taken")
+if (!tcpHost.export("Steven", bankAccount)) {
+    throw Exception("Failed to export: name already taken")
 }
 
 // Start the server to accept client connections
@@ -836,6 +832,10 @@ let steven = BankAccount.getProxy(proxy)
 steven.deposit(100.0).get()
 let res2 = steven.getBalance().get()
 println("Steven balance: ${res2}") // 200.0
+
+// Or obtain a typed proxy directly
+let steven2 = tcpClient.getTypedActor<BankAccount>("Steven").getOrThrow()
+println("Steven balance again: ${steven2.getBalance().get()}")
 ```
 
 ## Complete TCP Actor System Example

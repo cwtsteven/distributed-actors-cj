@@ -89,24 +89,25 @@ Exceptions:
 - `RemoteException` - Thrown if the remote connection fails.
 - `ActorSystemException` - Thrown for any system-specific errors.
 
-### func remoteCall()
+### func getTypedActor\<T>()
 
 ```cangjie
-func remoteCall(invokeInfo: InvokeInfo): Unit
+func getTypedActor<T>(name: String): Option<T> where T <: Distributable & Proxyable<T>
 ```
 
-Function: Makes a remote call to an actor's receiver according to the invocation info.
+Function: Gets a typed proxy for the specified actor name.
 
 Parameters:
 
-- `invokeInfo: InvokeInfo` - The information about the remote call invocation.
+- `name: String` - The name of the actor.
+
+Return Value:
+
+- `Option<T>` - Returns `Some(T)` if the actor is found, `None` otherwise.
 
 Exceptions:
 
-- `ActorNotFoundException` - Thrown if the actor is not found on the client.
-- `ReceiverNotFoundException` - Thrown if the receiver is not found.
 - `RemoteException` - Thrown if the remote connection fails.
-- `IllegalArgumentException` - Thrown if the arguments are invalid.
 - `ActorSystemException` - Thrown for any system-specific errors.
 
 ### func getHostInfo()
@@ -243,7 +244,7 @@ Function: Interface that exports and un-exports distributed actors.
 ### func export()
 
 ```cangjie
-func export(name: String, a: Distributable): Option<ActorProxy>
+func export(name: String, a: Distributable): Bool
 ```
 
 Function: Exports an actor instance with a specified name.
@@ -255,7 +256,7 @@ Parameters:
 
 Return Value:
 
-- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor was successfully exported, `None` if the name is already taken.
+- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
 
 Exceptions:
 
@@ -394,10 +395,10 @@ Exceptions:
 ### func dispatchAsk()
 
 ```cangjie
-func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
+func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): DistributedActorFuture<DataModel>
 ```
 
-Function: Dispatches an `ask` operation to the actor and returns a *waitable* object for the result.
+Function: Dispatches an `ask` operation to the actor and returns a future for the serialized result payload.
 
 Parameters:
 
@@ -407,7 +408,7 @@ Parameters:
 
 Return Value:
 
-- [LocalWaitable](./distributed_package_interfaces.md#interface-localwaitable) - A *waitable* object that can be used to retrieve the pending result of a receiver call.
+- `DistributedActorFuture<DataModel>` - A future whose successful value contains the serialized result payload.
 
 Exceptions:
 
@@ -437,30 +438,6 @@ Parameters:
 Return Value:
 
 - `T` - The typed proxy that exposes methods mirroring the receivers declared on the interface.
-
-## interface LocalWaitable
-
-```cangjie
-public interface LocalWaitable
-```
-
-Function: A common interface for all local `ActorFuture<T>` type, provide methods to obtain the result of the Future in its serialized form, i.e. `DataModel`.
-
-### func getResult()
-
-```cangjie
-func getResult(): DataModel
-```
-
-Function: Gets the serialized result of the operation. If the receiver throws an exception or an error, they will be returned as serialized data model.
-
-Return Value:
-
-- `DataModel` - The serialized result.
-
-Exceptions:
-
-- `SerializationException` - Thrown if the result cannot be serialized.
 
 ## interface Spawnable\<T>
 

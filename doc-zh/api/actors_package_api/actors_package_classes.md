@@ -1,12 +1,20 @@
 # 类
 
+## class DistributedActorFuture\<T>
+
+```cangjie
+public open class DistributedActorFuture<T>
+```
+
+功能：分布式 actor 调用使用的基础 future 类型。它提供阻塞/非阻塞结果获取、惰性结果映射以及传输转换能力。与本地 `ActorFuture` 不同，该类型可能暴露远程传输或 actor 系统错误。
+
 ## class ActorFuture\<T>
 
 ```cangjie
 public class ActorFuture<T>
 ```
 
-功能：表示提交给 Actor 的闭包的待处理结果。提供线程安全的阻塞与非阻塞结果获取方法，并支持超时。
+功能：表示提交给本地 Actor 的闭包的待处理结果。`ActorFuture<T>` 继承 `DistributedActorFuture<T>` 的全部获取和转换 API，并增加本地任务执行语义。
 
 ### func get()
 
@@ -47,6 +55,50 @@ public func tryGet(): Option<T>
 返回值：
 
 - `Option<T>` — 未就绪返回 `None`，否则返回结果值。
+
+### func map\<U>()
+
+```cangjie
+public func map<U>(transform: (T) -> U): DistributedActorFuture<U>
+```
+
+功能：创建一个派生 future，在不生成新任务的前提下变换成功结果。异常与错误会被原样透传。
+
+参数：
+
+- `transform: (T) -> U` — 将成功值映射为新值的函数。
+
+返回值：
+
+- `DistributedActorFuture<U>` — 惰性解析的派生 future。
+
+### func toDataModel()
+
+```cangjie
+public func toDataModel(): DistributedActorFuture<DataModel>
+```
+
+功能：将可序列化 future 转换为以 `DataModel` 表示成功结果的传输 future。
+
+返回值：
+
+- `DistributedActorFuture<DataModel>` — 携带序列化结果载荷的派生分布式 future。
+
+### static func fromDataModel()
+
+```cangjie
+public static func fromDataModel(actorFuture: DistributedActorFuture<DataModel>): DistributedActorFuture<T>
+```
+
+功能：将序列化数据的传输 future 转换回类型化 future。
+
+参数：
+
+- `actorFuture: DistributedActorFuture<DataModel>` — 序列化后的远程结果。
+
+返回值：
+
+- `DistributedActorFuture<T>` — 按需反序列化成功载荷的类型化分布式 future。
 
 ## class SequentialDispatcher
 

@@ -27,7 +27,8 @@ main(args: Array<String>) {
 
     let host = TCPActorHost(addr: userAddr, bindAt: userPort)
     let userActor = UserActorImpl(userId)
-    let proxy = UserActor.getProxy(host.export(userId, userActor).getOrThrow())
+    host.export(userId, userActor)
+    let proxy = UserActor.getProxy(userId, host.getHostInfo())
     host.serve()
 
     startLoop(userId, proxy)

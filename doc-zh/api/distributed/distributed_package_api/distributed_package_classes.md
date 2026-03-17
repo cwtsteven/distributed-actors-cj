@@ -64,10 +64,10 @@ public func tell(receiverName: String, args: Array<DataModel>, config!: Receiver
 ### func ask()
 
 ```cangjie
-public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture
+public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedActorFuture<DataModel>
 ```
 
-功能：以 `Ask` 模式调用远程 actor 的 receiver 函数，并返回表示待处理结果的 `DistributedFuture`。
+功能：以 `Ask` 模式调用远程 actor 的 receiver 函数，并返回表示待处理序列化结果的 `DistributedActorFuture<DataModel>`。
 
 参数：
 
@@ -77,7 +77,7 @@ public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverC
 
 返回值：
 
-- `DistributedFuture` — 表示远程调用待处理结果的对象。
+- `DistributedActorFuture<DataModel>` — 表示远程调用待处理序列化结果的对象。
 
 异常：
 
@@ -130,124 +130,6 @@ public static func typeModel(): TypeModel
 返回值：
 
 - `TypeModel` — actor 代理的类型模型。
-
-## class DistributedFuture
-
-```cangjie
-public class DistributedFuture
-```
-
-功能：表示远程 receiver 调用待处理结果的具体类，提供获取与兑现序列化结果的方法。
-
-### func get()
-
-```cangjie
-public func get(): DataModel
-```
-
-功能：阻塞当前线程直到结果就绪并返回序列化结果。
-
-返回值：
-
-- `DataModel` — 操作的序列化结果。
-
-异常：
-
-- `RemoteException` — 如果远程连接失败则抛出。
-- `RemoteReceiverException` — 如果结果是远程 receiver 执行时抛出的异常或错误则抛出。
-- `ActorSystemException` — 对于任何系统特定错误则抛出。
-
-### func get(Duration)
-
-```cangjie
-public func get(timeout: Duration): Option<DataModel>
-```
-
-功能：阻塞当前线程直到超时到期或结果就绪。若结果已准备好则返回结果，否则返回 `None`。`timeout = 0` 表示无限等待，与调用 `get()` 等效。
-
-参数：
-
-- `timeout: Duration` — 最长等待时间。
-
-返回值：
-
-- `Option<DataModel>` — 超时未就绪返回 `None`，否则返回序列化结果。
-
-异常：
-
-- `RemoteException` — 如果远程连接失败则抛出。
-- `RemoteReceiverException` — 如果结果是远程 receiver 执行时抛出的异常或错误则抛出。
-- `ActorSystemException` — 对于任何系统特定错误则抛出。
-
-### func tryGet()
-
-```cangjie
-public func tryGet(): Option<DataModel>
-```
-
-功能：若结果已就绪则立刻返回序列化结果，否则返回 `None`。
-
-返回值：
-
-- `Option<DataModel>` — 未就绪返回 `None`，否则返回序列化结果。
-
-异常：
-
-- `RemoteException` — 如果远程连接失败则抛出。
-- `RemoteReceiverException` — 如果结果是远程 receiver 执行时抛出的异常或错误则抛出。
-- `ActorSystemException` — 对于任何系统特定错误则抛出。
-
-### func fulfill()
-
-```cangjie
-public func fulfill(dataModel: DataModel): Bool
-```
-
-功能：以序列化结果值完成 Future。
-
-参数：
-
-- `dataModel: DataModel` — 用于完成 Future 的序列化结果。
-
-返回值：
-
-- `Bool` — 成功完成返回 `true`，若已完成返回 `false`。
-
-异常：
-
-- `IllegalArgumentException` — 如果序列化结果无法被正确反序列化为有效的 Future 结果则抛出。
-
-### func exn()
-
-```cangjie
-public func exn(exception: Exception): Bool
-```
-
-功能：以异常完成 Future。
-
-参数：
-
-- `exception: Exception` — 用于完成 Future 的异常。
-
-返回值：
-
-- `Bool` — 成功完成返回 `true`，若已完成返回 `false`。
-
-### func toActorFuture<T>()
-
-```cangjie
-public func toActorFuture<T>(): ActorFuture<T> where T <: Serializable<T>
-```
-
-功能：将 DistributedFuture 转换为本地 `ActorFuture`。
-
-类型参数：
-
-- `T` — 期望得到的可序列化类型。
-
-返回值：
-
-- `ActorFuture<T>` — 完成后包含已反序列化结果的 ActorFuture。
 
 ## class ClientManager
 

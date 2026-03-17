@@ -117,44 +117,6 @@ public override operator func !=(other: FieldModel): Bool
 
 - `Bool` — 不相等返回 `true`，否则 `false`。
 
-## struct InvokeInfo
-
-```cangjie
-public struct InvokeInfo {
-  public InvokeInfo(
-    public let name!: String,
-    public let receiverName!: String,
-    public let args!: Array<DataModel>,
-    public let config!: ReceiverConfig,
-    public let fut!: ?DistributedFuture
-  )
-}
-```
-
-功能：远程调用的信息，包含进行远程 Receiver 调用所需的全部细节。
-
-### init(String, String, Array<DataModel>, ReceiverConfig, ?DistributedFuture)
-
-```cangjie
-public InvokeInfo(
-  public let name!: String,
-  public let receiverName!: String,
-  public let args!: Array<DataModel>,
-  public let config!: ReceiverConfig,
-  public let fut!: ?DistributedFuture
-:)
-```
-
-功能：以给定调用细节创建 `InvokeInfo`。
-
-参数：
-
-- `name!: String` — 目标 Actor 名称。
-- `receiverName!: String` — 待调用的 Receiver 名称。
-- `args!: Array<DataModel>` — Receiver 的序列化参数。
-- `config!: ReceiverConfig` — 调用配置。
-- `fut!: ?DistributedFuture` — 可选的 Future，用于填充结果。
-
 ## struct Metadata
 
 ```cangjie

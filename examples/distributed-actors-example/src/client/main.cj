@@ -21,20 +21,15 @@ main() {
     TCPActorSystem.logger.level = LogLevel.DEBUG
 
     let tcpClient = TCPActorClient.create("localhost", PORT)
-
-    let proxy = tcpClient.getActor("Steven").getOrThrow()
-    proxy.ask("deposit", [100.0.serialize()]).get()
-    let res = Float64.deserialize(proxy.ask("getBalance", []).get())
-    println("Steven balance: ${res}") // 100.0
-
-    let steven = BankAccount.getProxy(proxy)
+    let stevenProxy = tcpClient.getActor("Steven").getOrThrow()
+    let steven = BankAccount.getProxy(stevenProxy)
     steven.deposit(100.0).get()
-    let res2 = steven.getBalance().get()
-    println("Steven balance: ${res2}") // 200.0
+    let res = steven.getBalance().get()
+    println("Steven balance: ${res}") // 100.0
 
     let reporterProxy = tcpClient.getActor("balance-reporter").getOrThrow()
     let reporter = BalanceReporter.getProxy(reporterProxy)
-    let snapshot = reporter.recordSnapshot("Steven", res2).get()
+    let snapshot = reporter.recordSnapshot("Steven", res).get()
     println("Latest snapshot: ${snapshot}")
     println("Stored snapshot: ${reporter.latestSnapshot().get()}")
 }

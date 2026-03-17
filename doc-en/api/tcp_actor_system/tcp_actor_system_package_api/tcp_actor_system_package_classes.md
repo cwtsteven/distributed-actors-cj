@@ -135,28 +135,21 @@ Exceptions:
 - `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
 - `TCPActorSystemInternalException` - Thrown for any internal errors.
 
-### func remoteCall()
+### func getTypedActor\<T>()
 
 ```cangjie
-public func remoteCall(invokeInfo: InvokeInfo): Unit
+public func getTypedActor<T>(name: String): Option<T> where T <: Distributable & Proxyable<T>
 ```
 
-Function: Makes a remote call to an actor's receiver.
+Function: Gets a typed actor proxy by name.
 
 Parameters:
 
-- `invokeInfo: InvokeInfo` - The information about the remote call invocation.
+- `name: String` - The exported actor name.
 
-Exceptions:
+Return Value:
 
-- `ActorNotFoundException` - Thrown if the actor is not found.
-- `ReceiverNotFoundException` - Thrown if the receiver is not found.
-- `IllegalArgumentException` - Thrown if the arguments are invalid.
-- `TCPActorSystemRemoteException` - Thrown if the connection is lost.
-- `TCPActorSystemRequestTimeoutException` - Thrown if the request has timed out.
-- `TCPActorSystemSerializationException` - Thrown if the envelope serialization fails.
-- `TCPActorSystemDeserializationException` - Thrown if the response envelope deserialization fails.
-- `TCPActorSystemInternalException` - Thrown for any internal errors.
+- `Option<T>` - Returns `Some(T)` if the actor is found, `None` otherwise.
 
 ### func getHostInfo()
 
@@ -204,7 +197,7 @@ Parameters:
 ### func export()
 
 ```cangjie
-public func export(name: String, a: Distributable): Option<ActorProxy>
+public func export(name: String, a: Distributable): Bool
 ```
 
 Function: Exports an actor instance under the specified name.
@@ -216,7 +209,7 @@ Parameters:
 
 Return Value:
 
-- `Option<ActorProxy>` - Returns `Some(ActorProxy)` if the actor was successfully exported, `None` if the name is already taken.
+- `Bool` - Returns `true` if the actor was successfully exported, `false` if the name is already taken.
 
 ### func unexport()
 

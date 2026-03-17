@@ -47,7 +47,6 @@ actors                   # 核心 Actor 编程模型与本地 Actor 系统
 │   ├── ActorHost           # Actor 注册接口
 │   ├── ActorClient         # 远程 Actor 访问接口
 │   ├── ActorProxy          # 远程 Actor 的客户端代理
-│   ├── DistributedFuture   # 分布式操作结果
 │   ├── ActorCluster
 │
 ├── actors.macros          # 编译期 Actor 与接口生成

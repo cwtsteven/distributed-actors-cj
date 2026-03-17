@@ -8,7 +8,8 @@
 
 | 类名 | 描述 |
 |------------|-------------|
-| [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) | 表示提交给 Actor 的闭包的待处理结果；提供带超时的阻塞与非阻塞结果获取方法。 |
+| [DistributedActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-distributedactorfuturet) | 分布式 actor 调用使用的基础 future 类型。提供阻塞/非阻塞结果获取，并且可能暴露远程传输或系统错误。 |
+| [ActorFuture\<T>](./actors_package_api/actors_package_classes.md#class-actorfuture) | 表示提交给 Actor 的闭包的待处理结果；提供阻塞/非阻塞获取、结果映射以及 `DataModel` 传输转换方法。 |
 | [SequentialDispatcher](./actors_package_api/actors_package_classes.md#class-sequentialdispatcher) | 一个在专用线程上按顺序排队并执行闭包调度器，并提供提交闭包的方法；支持基于优先级的任务调度，通常由 Actor 系统内部使用。 |
 
 ### 结构体
@@ -38,7 +39,6 @@
 |------------|-------------|
 | [ActorProxy](./distributed_package_api/distributed_package_classes.md#class-actorproxy) | 与远程 actor 通信的代理类，提供 Ask/Tell 两种调用方式。 |
 | [ClientManager](./distributed_package_api/distributed_package_classes.md#class-clientmanager) | 管理分布式 actor 系统中 actor client 的单例类，用于获取和注册 actor client 及其反序列化器。 |
-| [DistributedFuture](./distributed_package_api/distributed_package_classes.md#class-distributedfuture) | 表示远程 receiver 调用待处理结果的具体类，提供获取与兑现结果的方法。 |
 
 ### 结构体
 
@@ -46,7 +46,6 @@
 |-------------|-------------|
 | [ActorInfo](./distributed_package_api/distributed_package_structs.md#struct-actorinfo) | 关于 actor 的信息，包括名称与元数据。 |
 | [FieldModel](./distributed_package_api/distributed_package_structs.md#struct-fieldmodel) | 结构体字段的信息，包括名称、类型与描述，是整体类型模型的一部分。 |
-| [InvokeInfo](./distributed_package_api/distributed_package_structs.md#struct-invokeinfo) | 远程调用的信息，包含执行 receiver 所需的全部细节。 |
 | [Metadata](./distributed_package_api/distributed_package_structs.md#struct-metadata) | 关于 actor 接口的元数据，包括 receiver 信息、描述与自定义数据。 |
 | [ReceiverInfo](./distributed_package_api/distributed_package_structs.md#struct-receiverinfo) | 某个 receiver 的信息，包括参数模式、返回类型与元数据。 |
 | [ReceiverParameter](./distributed_package_api/distributed_package_structs.md#struct-receiverparameter) | Receiver 参数的信息，包括名称、类型与描述。 |
@@ -61,7 +60,6 @@
 | [ActorHost](./distributed_package_api/distributed_package_interfaces.md#interface-actorhost) | actor host 实现的接口，提供用于 *导出* 分布式 actor 的方法。 |
 | [HostInfo](./distributed_package_api/distributed_package_interfaces.md#interface-hostinfo) | 标识远程 actor host 的主机信息接口，提供创建客户端和获取类型信息的方法。 |
 | [Distributable](./distributed_package_api/distributed_package_interfaces.md#interface-distributable) | 所有分布式 actor 所需实现的接口，提供将客户端远程调用分发到底层 actor 实例的方法。 |
-| [LocalWaitable](./distributed_package_api/distributed_package_interfaces.md#interface-localwaitable) | 所有本地 `ActorFuture<T>` 类型共用的接口，提供以序列化形式（`DataModel`）获取 Future 结果的方法。 |
 | [Proxyable](./distributed_package_api/distributed_package_interfaces.md#interface-proxyablet) | 为实现类型化代理 `getProxy` 能力的分布式 actor 接口提供的接口。 |
 | [Spawnable](./distributed_package_api/distributed_package_interfaces.md#interface-spawnablet) | 可在集群中被动态创建的分布式 actor 接口。任何打算在集群中被创建的 actor 接口，都需要实现该接口。 |
 | [TypeSerializable](./distributed_package_api/distributed_package_interfaces.md#interface-typeserializable) | 为类型提供 `TypeModel` 类型模式描述的接口，用于分布式传输与元数据生成。 |

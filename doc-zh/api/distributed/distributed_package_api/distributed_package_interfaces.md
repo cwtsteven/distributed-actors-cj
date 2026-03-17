@@ -101,23 +101,24 @@ func containsActor(name: String): Bool
 - `RemoteException` — 如果远程连接失败则抛出。
 - `ActorSystemException` — 对于任何系统特定错误则抛出。
 
-### func remoteCall()
+### func getTypedActor\<T>()
 
 ```cangjie
-func remoteCall(invokeInfo: InvokeInfo): Unit
+func getTypedActor<T>(name: String): Option<T> where T <: Distributable & Proxyable<T>
 ```
 
-功能：根据调用信息对某个 actor 的 receiver 发起远程调用。
+功能：获取指定名称 actor 的类型化代理。
 
 参数：
 
-- `invokeInfo: InvokeInfo` — 关于远程调用的全部信息。
+- `name: String` — actor 的名称。
+
+返回值：
+
+- `Option<T>` — 找到时返回 `Some(T)`，否则返回 `None`。
 
 异常：
 
-- `ActorNotFoundException` — 如果在客户端找不到 actor 则抛出。
-- `ReceiverNotFoundException` — 如果找不到 receiver 则抛出。
-- `IllegalArgumentException` — 如果参数无效则抛出。
 - `RemoteException` — 如果远程连接失败则抛出。
 - `ActorSystemException` — 对于任何系统特定错误则抛出。
 
@@ -248,7 +249,7 @@ public interface ActorHost
 ### func export()
 
 ```cangjie
-func export(name: String, a: Distributable): Option<ActorProxy>
+func export(name: String, a: Distributable): Bool
 ```
 
 功能：以指定名称导出一个 actor 实例。
@@ -260,7 +261,7 @@ func export(name: String, a: Distributable): Option<ActorProxy>
 
 返回值：
 
-- `Option<ActorProxy>` — 导出成功返回 `Some(ActorProxy)`；若名称已被占用返回 `None`。
+- `Bool` — 导出成功返回 `true`；若名称已被占用返回 `false`。
 
 异常：
 
@@ -399,10 +400,10 @@ func dispatchTell(receiverName: String, args: Array<DataModel>, config: Receiver
 ### func dispatchAsk()
 
 ```cangjie
-func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
+func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): DistributedActorFuture<DataModel>
 ```
 
-功能：以 `Ask` 方式向 actor 分发调用，并返回可等待对象以获取结果。
+功能：以 `Ask` 方式向 actor 分发调用，并返回携带序列化结果的 future。
 
 参数：
 
@@ -412,7 +413,7 @@ func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverC
 
 返回值：
 
-- `LocalWaitable` — 可用于获取 receiver 调用待处理结果的可等待对象。
+- `DistributedActorFuture<DataModel>` — 成功值中包含序列化结果载荷的 future。
 
 异常：
 
@@ -442,30 +443,6 @@ static func getProxy(proxy: ActorProxy): T
 返回值：
 
 - `T` — 与接口 receiver 对应的类型化代理，提供与接口声明一致的方法。
-
-## interface LocalWaitable
-
-```cangjie
-public interface LocalWaitable
-```
-
-功能：所有本地 `ActorFuture<T>` 类型共用的接口，提供以序列化形式（`DataModel`）获取 Future 结果的方法。
-
-### func getResult()
-
-```cangjie
-func getResult(): DataModel
-```
-
-功能：获取操作的序列化结果。若 receiver 抛出异常或错误，则会以序列化数据模型的形式返回。
-
-返回值：
-
-- `DataModel` — 操作的序列化结果。
-
-异常：
-
-- `SerializationException` — 如果结果无法序列化则抛出。
 
 ## interface Spawnable\<T>
 

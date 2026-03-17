@@ -1,12 +1,20 @@
 # Classes
 
+## class DistributedActorFuture\<T>
+
+```cangjie
+public open class DistributedActorFuture<T>
+```
+
+Function: Base future type for distributed actor calls. It provides blocking and non-blocking result retrieval, lazy result mapping, and transport conversion helpers. Unlike local `ActorFuture`, this type may surface remote transport or actor-system failures.
+
 ## class ActorFuture\<T>
 
 ```cangjie
 public class ActorFuture<T>
 ```
 
-Function: A concrete class representing the pending result of a closure submitted to an Actor. This class provides thread-safe methods for blocking and non-blocking result retrieval with timeout support.
+Function: A concrete local actor future representing the pending result of a closure submitted to an Actor. `ActorFuture<T>` inherits all retrieval and conversion APIs from `DistributedActorFuture<T>` and adds local task execution semantics.
 
 ### func get()
 
@@ -47,6 +55,50 @@ Function: If the result is ready, it immediately returns the result; otherwise, 
 Return Value:
 
 - `Option<T>` - If the result is not yet ready, it returns `None`; otherwise, it returns the result value.
+
+### func map\<U>()
+
+```cangjie
+public func map<U>(transform: (T) -> U): DistributedActorFuture<U>
+```
+
+Function: Creates a derived future that transforms the successful result of this future without spawning a new task. Exceptions and errors are forwarded unchanged.
+
+Parameters:
+
+- `transform: (T) -> U` - Maps the successful value into a new value.
+
+Return Value:
+
+- `DistributedActorFuture<U>` - A lazily resolved derived future.
+
+### func toDataModel()
+
+```cangjie
+public func toDataModel(): DistributedActorFuture<DataModel>
+```
+
+Function: Converts a serializable future into a transport future whose successful result is encoded as `DataModel`.
+
+Return Value:
+
+- `DistributedActorFuture<DataModel>` - A derived distributed future carrying the serialized result payload.
+
+### static func fromDataModel()
+
+```cangjie
+public static func fromDataModel(actorFuture: DistributedActorFuture<DataModel>): DistributedActorFuture<T>
+```
+
+Function: Converts a transport future of serialized data back into a typed future.
+
+Parameters:
+
+- `actorFuture: DistributedActorFuture<DataModel>` - The serialized remote result.
+
+Return Value:
+
+- `DistributedActorFuture<T>` - A typed distributed future that deserializes the successful payload on demand.
 
 ## class SequentialDispatcher
 

@@ -47,7 +47,6 @@ actors                   # Core actor programming model and local actor system
 │   ├── ActorHost           # Actor registration interface
 │   ├── ActorClient         # Remote actor access interface
 │   ├── ActorProxy          # Client-side proxy for remote actors
-│   ├── DistributedFuture   # Distributed operation results
 │   ├── ActorCluster
 │
 ├── actors.macros          # Compile-time actor and interface generation
