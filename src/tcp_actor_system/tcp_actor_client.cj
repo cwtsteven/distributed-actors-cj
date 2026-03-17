@@ -11,7 +11,89 @@ import actors.*
 import actors.macros.*
 import actors.distributed.*
 
-type FutMap = ConcurrentHashMap<UInt64, DistributedFuture>
+class PendingRemoteResult {
+    private var result: FutureResult<DataModel> = unsafe { zeroValue<FutureResult<DataModel>>() }
+    private let isReady = AtomicBool(false)
+    private let mtx = Mutex()
+    private let cond: Condition
+
+    init() {
+        synchronized(mtx) {
+            cond = mtx.condition()
+        }
+    }
+
+    func get(): DataModel {
+        if (isReady.load()) {
+            return result.getOrThrow()
+        }
+        synchronized(mtx) {
+            while (!isReady.load()) {
+                cond.wait()
+            }
+            result.getOrThrow()
+        }
+    }
+
+    func fulfill(dataModel: DataModel): Bool {
+        setResult(deserializePendingResult(dataModel))
+    }
+
+    func exn(exception: Exception): Bool {
+        setResult(Exc(exception))
+    }
+
+    private func setResult(result: FutureResult<DataModel>): Bool {
+        synchronized(mtx) {
+            if (isReady.load()) {
+                return false
+            }
+            this.result = result
+            isReady.store(true)
+            cond.notifyAll()
+            true
+        }
+    }
+
+    private func deserializePendingResult(dataModel: DataModel): FutureResult<DataModel> {
+        match (dataModel) {
+            case dm: DataModelStruct =>
+                let fields = dm.getFields()
+                var resultType: String = ""
+                var valueData: DataModel = DataModelNull()
+                var message: String = ""
+
+                for (field in fields) {
+                    match (field.getName()) {
+                        case "type" =>
+                            match (field.getData()) {
+                                case str: DataModelString => resultType = str.getValue()
+                                case _ => throw IllegalArgumentException("Invalid type field in FutureResult deserialization.")
+                            }
+                        case "value" =>
+                            valueData = field.getData()
+                        case "message" =>
+                            match (field.getData()) {
+                                case str: DataModelString => message = str.getValue()
+                                case _ => throw IllegalArgumentException("Invalid message field in FutureResult deserialization.")
+                            }
+                        case _ => ()
+                    }
+                }
+
+                match (resultType) {
+                    case "Okay" => Okay(valueData)
+                    case "Exc" => Exc(RemoteReceiverException(message))
+                    case "Err" => Exc(RemoteReceiverException(message))
+                    case _ => throw IllegalArgumentException("Invalid FutureResult type: ${resultType}.")
+                }
+            case _ =>
+                throw IllegalArgumentException("Expected DataModelStruct for FutureResult deserialization.")
+        }
+    }
+}
+
+type FutMap = ConcurrentHashMap<UInt64, PendingRemoteResult>
 
 /*
 * A class representing a TCP actor client
@@ -191,44 +273,43 @@ public class TCPActorClient <: ActorClient {
     }
 
     /*
-    * Makes a remote call to an actor's receiver
-    * @param invokeInfo - the invoke info
-    * @throws ActorNotFoundException - if the actor is not found
-    * @throws ReceiverNotFoundException - if the receiver is not found
-    * @throws IllegalArgumentException - if the arguments are invalid
-    * @throws TCPActorSystemRemoteException - if the connection is lost
-    * @throws TCPActorSystemRequestTimeoutException - if the request has timed out
-    * @throws TCPActorSystemSerializationException - if the envelope serialization fails
-    * @throws TCPActorSystemDeserializationException - if the response envelope deserialization fails
-    * @throws TCPActorSystemInternalException - for any internal errors
+    * Gets a typed actor proxy by name.
+    * This is the preferred public API when users work with distributed actor interfaces.
+    * @param name - the exported actor name
+    * @return the typed proxy if found, None otherwise
     */
-    public func remoteCall(invokeInfo: InvokeInfo): Unit {
-        if (isClosed.load()) {
-            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
-        }
-        match (invokeInfo.fut) {
-            case Some(fut) => remoteAsk(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config, fut)
-            case None => remoteTell(invokeInfo.name, invokeInfo.receiverName, invokeInfo.args, invokeInfo.config)
+    public func getTypedActor<T>(name: String): Option<T> where T <: Distributable & Proxyable<T> {
+        match (this.getActor(name)) {
+            case Some(proxy) => Some(T.getProxy(proxy.actorName, proxy.hostInfo))
+            case None => None
         }
     }
 
     /*
-    * Makes a remote ask to an actor's receiver
-    * @param name - the name of the actor
-    * @param receiverName - the name of the receiver
-    * @param args - the arguments of the method
-    * @param config - the config of the method
-    * @param fut - the future to fulfill
+    * Gets a typed actor proxy by name or throws if the actor is not found.
+    * @param name - the exported actor name
+    * @return the typed proxy
     * @throws ActorNotFoundException - if the actor is not found
-    * @throws ReceiverNotFoundException - if the receiver is not found
-    * @throws IllegalArgumentException - if the arguments are invalid
-    * @throws TCPActorSystemRemoteException - if the connection is lost
-    * @throws TCPActorSystemRequestTimeoutException - if the request has timed out
-    * @throws TCPActorSystemSerializationException - if the envelope serialization fails
-    * @throws TCPActorSystemDeserializationException - if the response envelope deserialization fails
-    * @throws TCPActorSystemInternalException - for any internal errors
     */
-    func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: DistributedFuture): Unit {
+    public func requireTypedActor<T>(name: String): T where T <: Distributable & Proxyable<T> {
+        match (this.getTypedActor<T>(name)) {
+            case Some(actor) => actor
+            case None => throw ActorNotFoundException(name)
+        }
+    }
+
+    public func ask(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): ActorFuture<DataModel> {
+        if (isClosed.load()) {
+            throw TCPActorSystemRemoteException("[Client to ${hostInfo}] Connection to ${conn.remoteAddress} has been lost.")
+        }
+        let fut = PendingRemoteResult()
+        remoteAsk(name, receiverName, args, config, fut)
+        let actorFuture = ActorFuture<DataModel>({ => fut.get() })
+        spawn { actorFuture.execute() }
+        actorFuture
+    }
+
+    func remoteAsk(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig, fut: PendingRemoteResult): Unit {
         logger.debug("remoteCall(${name}) begins.")
 
         let futId = nextFutId.fetchAdd(1)
@@ -240,22 +321,7 @@ public class TCPActorClient <: ActorClient {
         logger.debug("remoteCall(${name}) ends.")
     }
 
-    /*
-    * Makes a remote tell to an actor's receiver
-    * @param name - the name of the actor
-    * @param receiverName - the name of the receiver
-    * @param args - the arguments of the method
-    * @param config - the config of the method
-    * @throws ActorNotFoundException - if the actor is not found
-    * @throws ReceiverNotFoundException - if the receiver is not found
-    * @throws IllegalArgumentException - if the arguments are invalid
-    * @throws TCPActorSystemRemoteException - if the connection is lost
-    * @throws TCPActorSystemRequestTimeoutException - if the request has timed out
-    * @throws TCPActorSystemSerializationException - if the envelope serialization fails
-    * @throws TCPActorSystemDeserializationException - if the response envelope deserialization fails
-    * @throws TCPActorSystemInternalException - for any internal errors
-    */
-    func remoteTell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
+    public func tell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit {
         logger.debug("remoteTell(${name}) begins.")
 
         let resp = conn.sendSync(Payload.Tell(name, receiverName, args, config))

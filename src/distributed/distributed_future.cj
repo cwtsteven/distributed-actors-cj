@@ -11,7 +11,7 @@ import stdx.serialization.serialization.*
 /*
 * A class representing a distributed future obtained from calling a remote receiver.
 */
-public class DistributedFuture {
+class DistributedFuture {
     private var result: FutureResult<DataModel> = unsafe { zeroValue<FutureResult<DataModel>>() }
     private let isReady = AtomicBool(false)
     private let mtx = Mutex()
@@ -30,7 +30,7 @@ public class DistributedFuture {
     * @throws RemoteReceiverException - if the result is an exception or error thrown from the remote receiver execution
     * @throws ActorSystemException - for any system-specific errors
     */
-    public func get(): DataModel {
+    func get(): DataModel {
         if (isReady.load()) {
             return result.getOrThrow()
         }
@@ -50,7 +50,7 @@ public class DistributedFuture {
     * @throws RemoteReceiverException - if the result is an exception or error thrown from the remote receiver execution
     * @throws ActorSystemException - for any system-specific errors
     */
-    public func get(timeout: Duration): Option<DataModel> {
+    func get(timeout: Duration): Option<DataModel> {
         if (timeout <= Duration.Zero) {
             return Some(get())
         }
@@ -81,7 +81,7 @@ public class DistributedFuture {
     * @throws RemoteReceiverException - if the result is an exception or error thrown from the remote receiver execution
     * @throws ActorSystemException - for any system-specific errors
     */
-    public func tryGet(): Option<DataModel> {
+    func tryGet(): Option<DataModel> {
         if (isReady.load()) {
             return Some(result.getOrThrow())
         }
@@ -94,7 +94,7 @@ public class DistributedFuture {
     * @return true if the future was successfully fulfilled, false if it was already fulfilled
     * @throws IllegalArgumentException - if the data model cannot be properly deserialized
     */
-    public func fulfill(dataModel: DataModel): Bool {
+    func fulfill(dataModel: DataModel): Bool {
         if (isReady.load()) {
             return false
         }
@@ -110,7 +110,7 @@ public class DistributedFuture {
     * @param exception - the exception to fulfill the future with
     * @return true if the future was successfully fulfilled, false if it was already fulfilled
     */
-    public func exn(exception: Exception): Bool {
+    func exn(exception: Exception): Bool {
         setResult(Exc(exception))
     }
 
@@ -118,17 +118,6 @@ public class DistributedFuture {
     * Converts the distributed future to an actor future
     * @param T - the type of the result
     * @return the actor future
-    */
-    public func toActorFuture<T>(): ActorFuture<T> where T <: Serializable<T> {
-        let fut = ActorFuture<T>({ => T.deserialize(this.get()) })
-        spawn { fut.execute() }
-        fut
-    }
-
-    /*
-    * Sets the result of the future
-    * @param result - the result to set
-    * @return true if the future was successfully set, false if it was already set
     */
     func setResult(result: FutureResult<DataModel>): Bool {
         synchronized(mtx) {
@@ -140,37 +129,6 @@ public class DistributedFuture {
             cond.notifyAll()
             true
         }
-    }
-}
-
-/*
-* A common interface for both local and distributed futures.
-* Provides a method to get the result of the future in serialized form.
-*/
-public interface LocalWaitable {
-    /*
-    * Gets the result of the local waitable object
-    * @return the result
-    * @throws SerializationException - if the result cannot be serialized
-    */
-    func getResult(): DataModel
-}
-
-extend<T> ActorFuture<T> <: LocalWaitable where T <: Serializable<T> {
-
-    /*
-    * Blocks current thread until the result is ready and returns the result in serialized form
-    * @return the result in serialized form
-    */
-    public func getResult(): DataModel {
-        let res: FutureResult<DataModel> = try {
-            Okay(this.get().serialize())
-        } catch (e: Exception) {
-            Exc(e)
-        } catch (e: Error) {
-            Err(e)
-        }
-        serializeFutureResult(res)
     }
 }
 

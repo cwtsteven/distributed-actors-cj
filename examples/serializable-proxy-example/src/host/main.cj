@@ -17,8 +17,8 @@ main() {
     // Export the bank account
     let bankAccount1 = BankAccountImpl("Steven", 100.0)
     let bankAccount2 = BankAccountImpl("Federico", 0.0)
-    tcpHost.export("Steven", bankAccount1)
-    tcpHost.export("Federico", bankAccount2)
+    tcpHost.publish("Steven", bankAccount1)
+    tcpHost.publish("Federico", bankAccount2)
 
     tcpHost.serve().get()
 }
