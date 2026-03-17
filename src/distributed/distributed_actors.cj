@@ -37,13 +37,21 @@ public interface Distributable {
     * @throws ReceiverNotFoundException - if the receiver is not found
     * @throws IllegalArgumentException - if the arguments are invalid
     */
-    func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): LocalWaitable
+    func dispatchAsk(receiverName: String, args: Array<DataModel>, config: ReceiverConfig): ActorFuture<DataModel>
 }
 
 /*
 * Interface for actors that can create a typed proxy
 */
 public interface Proxyable<T> where T <: Distributable {
+    /*
+    * Gets a typed-proxy for the actor using a name and host info pair.
+    * @param name - the exported actor name
+    * @param info - the host information for the remote actor host
+    * @return a typed-proxy for the actor
+    */
+    static func getProxy(name: String, info: HostInfo): T
+
     /*
     * Gets a typed-proxy for the actor
     * @param proxy - the actor proxy
@@ -74,7 +82,7 @@ public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
     * @throws ActorSystemException - for any system-specific errors
     */
     public func tell(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): Unit {
-        ClientManager.instance.getOrCreateClient(hostInfo).remoteCall(InvokeInfo(name: actorName, receiverName: receiverName, args: args, config: config, fut: None))
+        ClientManager.instance.getOrCreateClient(hostInfo).tell(actorName, receiverName, args, config)
     }
 
     /*
@@ -88,10 +96,8 @@ public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
     * @throws IllegalArgumentException - if the arguments are invalid
     * @throws ActorSystemException - for any system-specific errors
     */
-    public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): DistributedFuture {
-        let fut = DistributedFuture()
-        ClientManager.instance.getOrCreateClient(hostInfo).remoteCall(InvokeInfo(name: actorName, receiverName: receiverName, args: args, config: config, fut: Some(fut)))
-        fut
+    public func ask(receiverName: String, args: Array<DataModel>, config!: ReceiverConfig = ReceiverConfig.default): ActorFuture<DataModel> {
+        ClientManager.instance.getOrCreateClient(hostInfo).ask(actorName, receiverName, args, config)
     }
 
     /*
@@ -148,6 +154,33 @@ public class ActorProxy <: Serializable<ActorProxy> & TypeSerializable {
             FieldModel(name: "hostInfo", description: "Host Info", typeModel: TypeModel.UnitType)
         ])
     }
+}
+
+/*
+* Converts a local actor future into a serialized future result that can be transported remotely.
+*/
+public func serializeActorFutureResult<T>(fut: ActorFuture<T>): ActorFuture<DataModel> where T <: Serializable<T> {
+    let serialized = ActorFuture<DataModel>({ =>
+        let res: FutureResult<DataModel> = try {
+            Okay(fut.get().serialize())
+        } catch (e: Exception) {
+            Exc(e)
+        } catch (e: Error) {
+            Err(e)
+        }
+        serializeFutureResult(res)
+    })
+    spawn { serialized.execute() }
+    serialized
+}
+
+/*
+* Converts a serialized remote future result back into a typed actor future.
+*/
+public func deserializeActorFutureResult<T>(fut: ActorFuture<DataModel>): ActorFuture<T> where T <: Serializable<T> {
+    let typed = ActorFuture<T>({ => T.deserialize(fut.get()) })
+    spawn { typed.execute() }
+    typed
 }
 
 // public abstract class Proxy<T> {}

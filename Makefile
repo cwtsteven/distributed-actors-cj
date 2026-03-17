@@ -2,10 +2,13 @@ all: clean build
 
 CJC = cjc
 CJPM = cjpm
+BASH = /bin/bash
 
 EXAMPLE_DIR = ./examples
 BASIC_EXAMPLE_DIR = $(EXAMPLE_DIR)/basic-examples
 EXAMPLE_TARGET_DIR = ./target/examples
+MCP_SUBPACKAGE_DIR = ./subpackages/actors-mcp
+AGENT_EXAMPLE_DIR = $(EXAMPLE_DIR)/agent-example
 OPTIONS = -g
 IMPORT_ACTORS = --import-path ./target/release/actors --import-path $(CANGJIE_STDX_PATH) -L./target/release/actors -L$(CANGJIE_STDX_PATH) -lactors
 
@@ -21,7 +24,7 @@ else
 endif
 
 ifeq ($(OS),Darwin)
-	export DYLD_LIBRARY_PATH := $(CANGJIE_STDX_PATH):$(CANGJIE_HOME)/runtime/lib/darwin_$(CJ_ARCH)_cjnative:$(DYLD_LIBRARY_PATH)
+	export DYLD_LIBRARY_PATH := $(CANGJIE_STDX_PATH):$(CANGJIE_HOME)/runtime/lib/darwin_$(CJ_ARCH)_cjnative:$(CANGJIE_HOME)/lib/darwin_$(CJ_ARCH)_cjnative:$(DYLD_LIBRARY_PATH)
 else ifeq ($(OS),Linux)
 	export LD_LIBRARY_PATH := $(CANGJIE_STDX_PATH):$(CANGJIE_HOME)/runtime/lib/linux_$(ARCH)_cjnative:$(LD_LIBRARY_PATH)
 endif
@@ -40,7 +43,11 @@ example:
 	pushd $(EXAMPLE_DIR)/serializable-proxy-example && $(CJPM) clean && $(CJPM) build && popd && cp $(EXAMPLE_DIR)/serializable-proxy-example/target/release/bin/serializable_proxy_example.host $(EXAMPLE_TARGET_DIR)/serializable_proxy_example.host && cp $(EXAMPLE_DIR)/serializable-proxy-example/target/release/bin/serializable_proxy_example.client $(EXAMPLE_TARGET_DIR)/serializable_proxy_example.client
 	pushd $(EXAMPLE_DIR)/cluster-example && $(CJPM) clean && $(CJPM) build && popd && cp $(EXAMPLE_DIR)/cluster-example/target/release/bin/cluster_example.head_server $(EXAMPLE_TARGET_DIR)/cluster_example.head_server && cp $(EXAMPLE_DIR)/cluster-example/target/release/bin/cluster_example.worker $(EXAMPLE_TARGET_DIR)/cluster_example.worker && cp $(EXAMPLE_DIR)/cluster-example/target/release/bin/cluster_example.entry $(EXAMPLE_TARGET_DIR)/cluster_example.entry
 	pushd $(EXAMPLE_DIR)/chat-application-example && $(CJPM) clean && $(CJPM) build && popd && cp $(EXAMPLE_DIR)/chat-application-example/target/release/bin/chat_app_example.server.head $(EXAMPLE_TARGET_DIR)/chat_app_example.server.head && cp $(EXAMPLE_DIR)/chat-application-example/target/release/bin/chat_app_example.server.worker $(EXAMPLE_TARGET_DIR)/chat_app_example.server.worker && cp $(EXAMPLE_DIR)/chat-application-example/target/release/bin/chat_app_example.client $(EXAMPLE_TARGET_DIR)/chat_app_example.client
-	# pushd $(EXAMPLE_DIR)/agent-example && $(CJPM) clean && $(CJPM) build && popd && cp $(EXAMPLE_DIR)/agent-example/target/release/bin/agent_example $(EXAMPLE_TARGET_DIR)/agent_example
+
+mcp-extension:
+	mkdir -p $(EXAMPLE_TARGET_DIR)
+	pushd $(MCP_SUBPACKAGE_DIR) && $(BASH) -lc 'source "$(CANGJIE_HOME)/envsetup.sh" >/dev/null 2>&1 && $(CJPM) clean && $(CJPM) build' && popd
+	pushd $(AGENT_EXAMPLE_DIR) && $(BASH) -lc 'source "$(CANGJIE_HOME)/envsetup.sh" >/dev/null 2>&1 && $(CJPM) clean && $(CJPM) build' && popd && cp $(AGENT_EXAMPLE_DIR)/target/release/bin/agent_example $(EXAMPLE_TARGET_DIR)/agent_example
 
 build:
 	$(CJPM) build -i
@@ -49,6 +56,7 @@ test:
 	$(CJPM) test src/tests src/tests/end2end src/macros/internal/tests src/tcp_actor_system/tests
 
 clean:
+	pushd $(MCP_SUBPACKAGE_DIR) && $(BASH) -lc 'source "$(CANGJIE_HOME)/envsetup.sh" >/dev/null 2>&1 && $(CJPM) clean' && popd
 	pushd $(EXAMPLE_DIR)/distributed-actors-example && $(CJPM) clean && popd
 	pushd $(EXAMPLE_DIR)/serializable-proxy-example && $(CJPM) clean && popd
 	pushd $(EXAMPLE_DIR)/cluster-example && $(CJPM) clean && popd

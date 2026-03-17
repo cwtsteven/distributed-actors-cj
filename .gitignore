@@ -7,4 +7,5 @@ cjpm.lock
 /.cache/
 *.log
 **/log.txt
+**/build-script-cache/
 .cursorrules

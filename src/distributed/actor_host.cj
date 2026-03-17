@@ -34,7 +34,6 @@ public interface ActorHost {
 * Interface for host info
 */
 public interface HostInfo <: Serializable<HostInfo> & TypeSerializable & Equatable<HostInfo> & Hashable & ToString {
-
     /*
     * Creates a client for the host
     * @return the client for the host
