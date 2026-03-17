@@ -1,5 +1,6 @@
 package actors.distributed
 
+import actors.*
 import stdx.serialization.serialization.*
 
 /*
@@ -42,16 +43,9 @@ public interface ActorClient {
     */
     func containsActor(name: String): Bool
 
-    /*
-    * Makes a remote call to an actor's receiver function and fulfills the provided future with the result
-    * @param invokeInfo - the information about the invoke
-    * @throws ActorNotFoundException - if the actor is not found on the client
-    * @throws ReceiverNotFoundException - if the receiver is not found
-    * @throws RemoteException - if the remote connection fails
-    * @throws IllegalArgumentException - if the arguments are invalid
-    * @throws ActorSystemException - for any system-specific errors
-    */
-    func remoteCall(invokeInfo: InvokeInfo): Unit
+    func tell(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): Unit
+
+    func ask(name: String, receiverName: String, args: Array<DataModel>, config: ReceiverConfig): ActorFuture<DataModel>
 
     /*
     * Gets the host info of the client

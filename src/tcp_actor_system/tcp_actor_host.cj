@@ -47,6 +47,19 @@ public class TCPActorHost <: ActorHost {
     }
 
     /*
+    * Convenience wrapper around export that returns whether the export succeeded.
+    * @param name - the name of the actor to export
+    * @param a - the actor to export
+    * @return true if the actor was exported successfully, false otherwise
+    */
+    public func publish(name: String, a: Distributable): Bool {
+        match (export(name, a)) {
+            case Some(_) => true
+            case None => false
+        }
+    }
+
+    /*
     * Unexports an actor
     * @param name - the name of the actor
     * @return true if the actor was unexported successfully, false otherwise
@@ -183,7 +196,7 @@ public class TCPActorHost <: ActorHost {
 
         spawn {
             logger.debug("wait on local future.")
-            let res = fut.getResult()
+            let res = fut.get()
             logger.debug("local future done.")
             conn.send(Envelope(id, Fulfill(futId, res)))
         }

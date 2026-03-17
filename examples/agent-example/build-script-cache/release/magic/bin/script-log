@@ -1,0 +1,2 @@
+os: mac, arch: aarch64
+target dir ./libs/cangjie-stdx-mac-aarch64-1.0.0.1 exists，skip downloading and unzipping
