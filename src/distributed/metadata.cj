@@ -210,24 +210,3 @@ public struct FieldModel <: ToString & Equatable<FieldModel> {
         "${name}: ${typeModel} [${description}]"
     }
 }
-
-/*
-* Information about a receiver invocation
-*/
-public struct InvokeInfo {
-    /*
-    * Initializes the InvokeInfo
-    * @param name - the name of the invocation
-    * @param receiverName - the name of the receiver
-    * @param args - the arguments of the invocation
-    * @param config - the configuration of the invocation
-    * @param fut - the distributed future of the invocation
-    */
-    public InvokeInfo(
-        public let name!: String,
-        public let receiverName!: String,
-        public let args!: Array<DataModel>,
-        public let config!: ReceiverConfig,
-        public let fut!: ?DistributedFuture
-    ) {}
-}
